@@ -6,22 +6,16 @@
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-    # Force HTTPS (Optional)
+    # Force HTTPS (Optional, can be uncommented if needed)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # RewriteBase:
-    # LOCALHOST: /PETRODIESEL2/public/
-    # LIVE: /public/ (Assuming URL is app.petrodiesel.net/public/)
-    
-    # FOR LIVE UPLOAD: Use /public/
-    RewriteBase /PETRODIESEL2/public/
-    # RewriteBase /public/
+    # Send Requests To Front Controller...
+    # Correct Base for Live Server (app.petrodiesel.net/public)
+    RewriteBase /public/
 
     RewriteRule ^index\.php$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
 </IfModule>
-
-

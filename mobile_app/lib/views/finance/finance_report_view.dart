@@ -3,100 +3,140 @@ import 'package:get/get.dart';
 import '../../controllers/finance_controller.dart';
 
 class FinanceReportView extends StatelessWidget {
-  final FinanceController controller = Get.find();
+  const FinanceReportView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Refresh history on load
-    controller.fetchHistory();
+    final FinanceController controller = Get.find();
 
     return Scaffold(
-      appBar: AppBar(title: Text('التقارير المالية')),
-      body: Column(
-        children: [
-          // Totals Header
-          Obx(() => Container(
-                padding: EdgeInsets.all(20),
-                color: Colors.blue.shade50,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoCard('اجمالي الإيرادات',
-                          controller.incomeTotal.value, Colors.green),
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(
-                      child: _buildInfoCard('اجمالي المنصرفات',
-                          controller.expenseTotal.value, Colors.red),
-                    ),
-                  ],
-                ),
-              )),
+      appBar: AppBar(
+        title: const Text('تقرير المالية'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => controller.fetchHistory(),
+          )
+        ],
+      ),
+      body: Obx(() {
+        if (controller.transactions.isEmpty) {
+          return const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.receipt_long, size: 80, color: Colors.grey),
+                SizedBox(height: 20),
+                Text('لا توجد معاملات',
+                    style: TextStyle(fontSize: 18, color: Colors.grey)),
+              ],
+            ),
+          );
+        }
 
-          Expanded(
-            child: Obx(() {
-              if (controller.transactions.isEmpty) {
-                return Center(child: Text('لا توجد بيانات للفترة الحالية'));
-              }
+        return Column(
+          children: [
+            // Summary Cards
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.grey[100],
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      'الإيرادات',
+                      controller.incomeTotal.value,
+                      Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      'المنصرفات',
+                      controller.expenseTotal.value,
+                      Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-              return ListView.separated(
-                padding: EdgeInsets.all(16),
+            // Transactions List
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
                 itemCount: controller.transactions.length,
-                separatorBuilder: (_, __) => Divider(),
                 itemBuilder: (context, index) {
                   final t = controller.transactions[index];
                   final isIncome = t.type == 'income';
-
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isIncome
-                          ? Colors.green.withOpacity(0.1)
-                          : Colors.red.withOpacity(0.1),
-                      child: Icon(
-                        isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                        color: isIncome ? Colors.green : Colors.red,
-                        size: 20,
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: isIncome
+                            ? Colors.green.shade100
+                            : Colors.red.shade100,
+                        child: Icon(
+                          isIncome ? Icons.arrow_downward : Icons.arrow_upward,
+                          color: isIncome ? Colors.green : Colors.red,
+                        ),
                       ),
-                    ),
-                    title: Text(t.description ?? 'بدون وصف',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text('${t.date} • ${t.category ?? "عام"}'),
-                    trailing: Text(
-                      '${t.amount.toStringAsFixed(2)}',
-                      style: TextStyle(
-                        color: isIncome ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                      title: Text(t.description ?? 'بدون وصف'),
+                      subtitle: Text(t.date ?? ''),
+                      trailing: Text(
+                        t.amount.toStringAsFixed(2),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: isIncome ? Colors.green : Colors.red,
+                        ),
                       ),
                     ),
                   );
                 },
-              );
-            }),
-          ),
-        ],
-      ),
+              ),
+            ),
+          ],
+        );
+      }),
     );
   }
 
-  Widget _buildInfoCard(String title, double value, Color color) {
+  Widget _buildSummaryCard(String title, double amount, Color color) {
     return Container(
-      padding: EdgeInsets.all(15),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 5)],
-        border: Border(right: BorderSide(color: color, width: 4)),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-          SizedBox(height: 5),
           Text(
-            value.toStringAsFixed(2),
+            title,
             style: TextStyle(
-                color: color, fontWeight: FontWeight.bold, fontSize: 18),
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            amount.toStringAsFixed(2),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
           ),
         ],
       ),

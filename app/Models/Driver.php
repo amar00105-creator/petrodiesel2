@@ -35,7 +35,7 @@ class Driver extends Model
         $stmt->execute([
             ':name' => $data['name'],
             ':truck_number' => $data['truck_number'],
-            ':phone' => !empty($data['phone']) ? $data['phone'] : null
+            ':phone' => $data['phone'] ?? ''
         ]);
         return $this->db->lastInsertId();
     }
@@ -45,10 +45,10 @@ class Driver extends Model
         $sql = "UPDATE drivers SET name = :name, truck_number = :truck_number, phone = :phone WHERE id = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
-            ':id' => $id,
             ':name' => $data['name'],
             ':truck_number' => $data['truck_number'],
-            ':phone' => !empty($data['phone']) ? $data['phone'] : null
+            ':phone' => $data['phone'] ?? '',
+            ':id' => $id
         ]);
     }
 

@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../models/finance_account.dart';
@@ -100,7 +101,8 @@ class FinanceController extends GetxController {
 
       calculateTotals();
     } catch (e) {
-      print(e);
+      developer.log('Failed to fetch history',
+          name: 'FinanceController', error: e);
     }
   }
 

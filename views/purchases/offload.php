@@ -1,17 +1,3 @@
-<?php
-// Expects $purchase, $tanks
-?>
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>تفريغ الشحنة | بتروديزل</title>
-    <link href="<?= BASE_URL ?>/css/style.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body style="background: #f5f7fa; font-family: 'Tajawal', sans-serif;">
-
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-8">
@@ -20,7 +6,7 @@
                     <h3 class="fw-bold mb-0"><i class="fas fa-truck-loading me-2"></i> تفريغ وقود من الشاحنة</h3>
                 </div>
                 <div class="card-body p-4">
-                    
+
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <h5 class="text-muted">تفاصيل الشحنة</h5>
@@ -38,13 +24,13 @@
 
                     <form action="<?= BASE_URL ?>/purchases/processOffload" method="POST">
                         <input type="hidden" name="purchase_id" value="<?= $purchase['id'] ?>">
-                        
+
                         <div class="mb-4">
                             <label class="form-label fw-bold">اختر البئر (التنك) المراد التفريغ فيه</label>
                             <select name="tank_id" class="form-select form-select-lg" required>
                                 <?php foreach ($tanks as $tank): ?>
                                     <option value="<?= $tank['id'] ?>" <?= ($tank['id'] == $purchase['tank_id']) ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($tank['name']) ?> - <?= htmlspecialchars($tank['product_type']) ?> 
+                                        <?= htmlspecialchars($tank['name']) ?> - <?= htmlspecialchars($tank['product_type']) ?>
                                         (الحالي: <?= number_format($tank['current_volume']) ?> لتر)
                                     </option>
                                 <?php endforeach; ?>
@@ -71,5 +57,6 @@
     </div>
 </div>
 
-</body>
-</html>
+<style>
+    /* If styles were needed they could go here, but main layout handles most */
+</style>

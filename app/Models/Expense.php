@@ -17,10 +17,12 @@ class Expense extends Model
     {
         $sql = "INSERT INTO expenses (
                     station_id, category, description, amount, 
-                    user_id, source_type, source_id, expense_date
+                    user_id, source_type, source_id, expense_date,
+                    related_entity_type, related_entity_id
                 ) VALUES (
                     :station_id, :category, :description, :amount,
-                    :user_id, :source_type, :source_id, :expense_date
+                    :user_id, :source_type, :source_id, :expense_date,
+                    :related_entity_type, :related_entity_id
                 )";
 
         $stmt = $this->db->prepare($sql);
@@ -32,7 +34,9 @@ class Expense extends Model
             ':user_id' => $data['user_id'],
             ':source_type' => $data['source_type'],
             ':source_id' => $data['source_id'],
-            ':expense_date' => $data['expense_date'] ?? date('Y-m-d')
+            ':expense_date' => $data['expense_date'] ?? date('Y-m-d'),
+            ':related_entity_type' => $data['related_entity_type'] ?? null,
+            ':related_entity_id' => $data['related_entity_id'] ?? null
         ]);
 
         return $this->db->lastInsertId();

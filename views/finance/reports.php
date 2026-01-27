@@ -1,23 +1,4 @@
-
-<style>
-    /* Finance Reports Styles */
-    .filter-input {
-        background: white;
-        border: 1px solid #bae6fd;
-        border-radius: 10px;
-        padding: 10px;
-    }
-
-    .summary-box {
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-        color: white;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-</style>
-
-<div class="container py-4">
+<div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold" style="color: var(--dark-blue);">التقارير المالية</h2>
         <a href="<?= BASE_URL ?>/finance" class="btn btn-outline-primary rounded-pill px-4">
@@ -30,18 +11,18 @@
         <form method="GET" class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label text-muted">من تاريخ</label>
-                <input type="date" name="start_date" class="form-control filter-input" value="<?= $data['filters']['start_date'] ?>">
+                <input type="date" name="start_date" class="form-control filter-input" value="<?= $filters['start_date'] ?>">
             </div>
             <div class="col-md-3">
                 <label class="form-label text-muted">إلى تاريخ</label>
-                <input type="date" name="end_date" class="form-control filter-input" value="<?= $data['filters']['end_date'] ?>">
+                <input type="date" name="end_date" class="form-control filter-input" value="<?= $filters['end_date'] ?>">
             </div>
             <div class="col-md-3">
                 <label class="form-label text-muted">النوع</label>
                 <select name="type" class="form-select filter-input">
                     <option value="">الكل</option>
-                    <option value="income" <?= $data['filters']['type'] == 'income' ? 'selected' : '' ?>>إيرادات</option>
-                    <option value="expense" <?= $data['filters']['type'] == 'expense' ? 'selected' : '' ?>>منصرفات</option>
+                    <option value="income" <?= $filters['type'] == 'income' ? 'selected' : '' ?>>إيرادات</option>
+                    <option value="expense" <?= $filters['type'] == 'expense' ? 'selected' : '' ?>>منصرفات</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -57,19 +38,19 @@
         <div class="col-md-4">
             <div class="summary-box" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
                 <p class="mb-1 opacity-75">إجمالي الإيرادات</p>
-                <h3 class="fw-bold mb-0"><?= number_format($data['totals']['income'], 2) ?></h3>
+                <h3 class="fw-bold mb-0"><?= number_format($totals['income'], 2) ?></h3>
             </div>
         </div>
         <div class="col-md-4">
             <div class="summary-box" style="background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);">
                 <p class="mb-1 opacity-75">إجمالي المنصرفات</p>
-                <h3 class="fw-bold mb-0"><?= number_format($data['totals']['expense'], 2) ?></h3>
+                <h3 class="fw-bold mb-0"><?= number_format($totals['expense'], 2) ?></h3>
             </div>
         </div>
         <div class="col-md-4">
             <div class="summary-box" style="background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);">
                 <p class="mb-1 opacity-75">صافي التدفق</p>
-                <h3 class="fw-bold mb-0"><?= number_format($data['totals']['income'] - $data['totals']['expense'], 2) ?></h3>
+                <h3 class="fw-bold mb-0"><?= number_format($totals['income'] - $totals['expense'], 2) ?></h3>
             </div>
         </div>
     </div>
@@ -87,27 +68,29 @@
                 </tr>
             </thead>
             <tbody>
-                <?php if(empty($data['transactions'])): ?>
-                    <tr><td colspan="5" class="text-center p-5 text-muted">لا توجد بيانات للعرض</td></tr>
-                <?php else: ?>
-                    <?php foreach ($data['transactions'] as $t): ?>
+                <?php if (empty($transactions)): ?>
                     <tr>
-                        <td class="p-3 border-bottom"><?= $t['date'] ?></td>
-                        <td class="p-3 border-bottom"><?= $t['description'] ?></td>
-                        <td class="p-3 border-bottom">
-                            <?php if($t['type'] == 'income'): ?>
-                                <span class="badge bg-success bg-opacity-10 text-success">إيراد</span>
-                            <?php elseif($t['type'] == 'expense'): ?>
-                                <span class="badge bg-danger bg-opacity-10 text-danger">منصرف</span>
-                            <?php else: ?>
-                                <span class="badge bg-info bg-opacity-10 text-info">تحويل</span>
-                            <?php endif; ?>
-                        </td>
-                        <td class="p-3 border-bottom"><?= $t['category_name'] ?></td>
-                        <td class="p-3 border-bottom fw-bold <?= $t['type'] == 'expense' ? 'text-danger' : 'text-success' ?>">
-                            <?= number_format($t['amount'], 2) ?>
-                        </td>
+                        <td colspan="5" class="text-center p-5 text-muted">لا توجد بيانات للعرض</td>
                     </tr>
+                <?php else: ?>
+                    <?php foreach ($transactions as $t): ?>
+                        <tr>
+                            <td class="p-3 border-bottom"><?= $t['date'] ?></td>
+                            <td class="p-3 border-bottom"><?= $t['description'] ?></td>
+                            <td class="p-3 border-bottom">
+                                <?php if ($t['type'] == 'income'): ?>
+                                    <span class="badge bg-success bg-opacity-10 text-success">إيراد</span>
+                                <?php elseif ($t['type'] == 'expense'): ?>
+                                    <span class="badge bg-danger bg-opacity-10 text-danger">منصرف</span>
+                                <?php else: ?>
+                                    <span class="badge bg-info bg-opacity-10 text-info">تحويل</span>
+                                <?php endif; ?>
+                            </td>
+                            <td class="p-3 border-bottom"><?= $t['category_name'] ?></td>
+                            <td class="p-3 border-bottom fw-bold <?= $t['type'] == 'expense' ? 'text-danger' : 'text-success' ?>">
+                                <?= number_format($t['amount'], 2) ?>
+                            </td>
+                        </tr>
                     <?php endforeach; ?>
                 <?php endif; ?>
             </tbody>
@@ -115,4 +98,36 @@
     </div>
 </div>
 
-</div>
+<style>
+    /* Keeping styles for table and cards */
+    :root {
+        --primary-blue: #0ea5e9;
+        --light-blue: #e0f2fe;
+        --dark-blue: #0369a1;
+        --glass-bg: rgba(255, 255, 255, 0.95);
+        --glass-border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .glass-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: var(--glass-border);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+
+    .filter-input {
+        background: white;
+        border: 1px solid #bae6fd;
+        border-radius: 10px;
+        padding: 10px;
+    }
+
+    .summary-box {
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+</style>

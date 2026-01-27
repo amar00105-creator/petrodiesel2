@@ -100,13 +100,13 @@ $title = 'تسجيل مصروف جديد';
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const typeSelect = document.getElementById('source_type');
         const idSelect = document.getElementById('source_id');
         const safeOptions = document.getElementById('safe-options').innerHTML;
         const bankOptions = document.getElementById('bank-options').innerHTML;
 
-        typeSelect.addEventListener('change', function () {
+        typeSelect.addEventListener('change', function() {
             if (this.value === 'safe') {
                 idSelect.innerHTML = safeOptions;
             } else {

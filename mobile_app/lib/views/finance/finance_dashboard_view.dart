@@ -5,26 +5,27 @@ import 'add_transaction_view.dart';
 import 'finance_report_view.dart';
 
 class FinanceDashboardView extends StatelessWidget {
-  final FinanceController controller = Get.put(FinanceController());
+  const FinanceDashboardView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final FinanceController controller = Get.put(FinanceController());
     controller.fetchBalances();
     controller.fetchHistory();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('المالية (Finance)'),
+        title: const Text('المالية (Finance)'),
         actions: [
           IconButton(
-            icon: Icon(Icons.bar_chart),
-            onPressed: () => Get.to(() => FinanceReportView()),
+            icon: const Icon(Icons.bar_chart),
+            onPressed: () => Get.to(() => const FinanceReportView()),
           )
         ],
       ),
       body: Obx(() {
         if (controller.isLoading.value && !controller.balancesLoaded.value) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         }
 
         return RefreshIndicator(
@@ -33,39 +34,40 @@ class FinanceDashboardView extends StatelessWidget {
             await controller.fetchHistory();
           },
           child: SingleChildScrollView(
-            padding: EdgeInsets.all(16),
-            physics: AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Summary Cards
                 _buildBalanceSection('الخزائن (Safes)', controller.safes),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 _buildBalanceSection(
                     'الحسابات البنكية (Banks)', controller.banks),
 
-                SizedBox(height: 30),
+                const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('أحدث المعاملات',
+                    const Text('أحدث المعاملات',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     TextButton(
-                        onPressed: () => Get.to(() => FinanceReportView()),
-                        child: Text('عرض الكل'))
+                        onPressed: () =>
+                            Get.to(() => const FinanceReportView()),
+                        child: const Text('عرض الكل'))
                   ],
                 ),
-                _buildRecentTransactions(),
+                _buildRecentTransactions(controller),
               ],
             ),
           ),
         );
       }),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.to(() => AddTransactionView()),
-        label: Text('اضافة معاملة'),
-        icon: Icon(Icons.add),
+        onPressed: () => Get.to(() => const AddTransactionView()),
+        label: const Text('اضافة معاملة'),
+        icon: const Icon(Icons.add),
         backgroundColor: Colors.blue[800],
       ),
     );
@@ -80,10 +82,10 @@ class FinanceDashboardView extends StatelessWidget {
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: Colors.grey[700])),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         if (accounts.isEmpty)
-          Text('لا توجد حسابات', style: TextStyle(color: Colors.grey)),
-        Container(
+          const Text('لا توجد حسابات', style: TextStyle(color: Colors.grey)),
+        SizedBox(
           height: 140,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -92,8 +94,8 @@ class FinanceDashboardView extends StatelessWidget {
               final acc = accounts[index];
               return Container(
                 width: 200,
-                margin: EdgeInsets.only(left: 10),
-                padding: EdgeInsets.all(16),
+                margin: const EdgeInsets.only(left: 10),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Colors.blue.shade800, Colors.blue.shade500],
@@ -101,7 +103,7 @@ class FinanceDashboardView extends StatelessWidget {
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
+                  boxShadow: const [
                     BoxShadow(
                         color: Colors.black12,
                         blurRadius: 8,
@@ -112,14 +114,14 @@ class FinanceDashboardView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Icon(Icons.account_balance_wallet,
+                    const Icon(Icons.account_balance_wallet,
                         color: Colors.white70, size: 30),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           acc.name,
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.bold),
@@ -127,12 +129,12 @@ class FinanceDashboardView extends StatelessWidget {
                         ),
                         if (acc.accountNumber != null)
                           Text(acc.accountNumber!,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Colors.white70, fontSize: 12)),
-                        SizedBox(height: 5),
+                        const SizedBox(height: 5),
                         Text(
                           '${acc.balance.toStringAsFixed(2)} SDG',
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
                               fontWeight: FontWeight.bold),
@@ -149,23 +151,23 @@ class FinanceDashboardView extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentTransactions() {
+  Widget _buildRecentTransactions(FinanceController controller) {
     return Obx(() {
       if (controller.transactions.isEmpty) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 20),
           child: Center(child: Text('لا توجد معاملات حديثة')),
         );
       }
       return ListView.builder(
         shrinkWrap: true,
-        physics: NeverScrollableScrollPhysics(),
+        physics: const NeverScrollableScrollPhysics(),
         itemCount: controller.transactions.take(5).length,
         itemBuilder: (context, index) {
           final t = controller.transactions[index];
           final isIncome = t.type == 'income';
           return Card(
-            margin: EdgeInsets.symmetric(vertical: 5),
+            margin: const EdgeInsets.symmetric(vertical: 5),
             elevation: 2,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -181,7 +183,7 @@ class FinanceDashboardView extends StatelessWidget {
               title: Text(t.description ?? 'بدون وصف'),
               subtitle: Text(t.date ?? ''),
               trailing: Text(
-                '${t.amount.toStringAsFixed(2)}',
+                t.amount.toStringAsFixed(2),
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

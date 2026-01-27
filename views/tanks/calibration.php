@@ -1,24 +1,10 @@
-<?php
-// Expects $tanks array
-?>
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <title>معايرة الآبار | بتروديزل</title>
-    <link href="<?= BASE_URL ?>/css/style.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body style="background: #f5f7fa; font-family: 'Tajawal', sans-serif;">
-
 <div class="container py-5">
     <div class="row justify-content-center">
         <div class="col-md-6">
             <div class="card shadow-lg border-0 rounded-4">
                 <div class="card-body p-4">
                     <h3 class="fw-bold text-center mb-4 text-primary">تسجيل معايرة (القياس)</h3>
-                    
+
                     <form action="<?= BASE_URL ?>/tanks/saveCalibration" method="POST">
                         <div class="mb-3">
                             <label class="form-label fw-bold">البئر / التنك</label>
@@ -66,6 +52,3 @@
         </div>
     </div>
 </div>
-
-</body>
-</html>

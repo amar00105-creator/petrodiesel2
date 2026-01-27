@@ -17,3 +17,7 @@ mobile_app/.pub-cache/
 
 # Logs
 *.log
+node_modules
+
+# Local config
+app/Config/db_config.php

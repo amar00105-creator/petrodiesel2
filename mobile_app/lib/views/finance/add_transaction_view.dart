@@ -4,8 +4,10 @@ import '../../controllers/finance_controller.dart';
 import '../../models/finance_account.dart';
 
 class AddTransactionView extends StatefulWidget {
+  const AddTransactionView({super.key});
+
   @override
-  _AddTransactionViewState createState() => _AddTransactionViewState();
+  State<AddTransactionView> createState() => _AddTransactionViewState();
 }
 
 class _AddTransactionViewState extends State<AddTransactionView> {
@@ -20,42 +22,43 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('اضافة معاملة')),
+      appBar: AppBar(title: const Text('اضافة معاملة')),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
               // Type Selector
-              Row(
-                children: [
-                  Expanded(
-                    child: RadioListTile(
-                      title: Text('منصرف (Expense)'),
-                      value: 'expense',
-                      groupValue: type,
-                      onChanged: (val) => setState(() => type = val.toString()),
-                      activeColor: Colors.red,
+              // Type Selector
+              RadioGroup<String>(
+                groupValue: type,
+                onChanged: (val) => setState(() => type = val.toString()),
+                child: const Row(
+                  children: [
+                    Expanded(
+                      child: RadioListTile(
+                        title: Text('منصرف (Expense)'),
+                        value: 'expense',
+                        activeColor: Colors.red,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: RadioListTile(
-                      title: Text('إيراد (Income)'),
-                      value: 'income',
-                      groupValue: type,
-                      onChanged: (val) => setState(() => type = val.toString()),
-                      activeColor: Colors.green,
+                    Expanded(
+                      child: RadioListTile(
+                        title: Text('إيراد (Income)'),
+                        value: 'income',
+                        activeColor: Colors.green,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
 
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Amount
               TextFormField(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'المبلغ',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.attach_money),
@@ -69,18 +72,17 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                 onSaved: (val) => amount = double.parse(val!),
               ),
 
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Account Selector
               Obx(() {
                 final allAccounts = [...controller.safes, ...controller.banks];
                 return DropdownButtonFormField<FinanceAccount>(
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'الحساب (Safe/Bank)',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.account_balance),
                   ),
-                  value: selectedAccount,
                   items: allAccounts.map((acc) {
                     return DropdownMenuItem(
                       value: acc,
@@ -92,11 +94,11 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                 );
               }),
 
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               // Description
               TextFormField(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   labelText: 'الوصف / البيان',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.description),
@@ -105,7 +107,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                 onSaved: (val) => description = val ?? '',
               ),
 
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
 
               SizedBox(
                 width: double.infinity,
@@ -116,7 +118,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                         type == 'expense' ? Colors.red : Colors.green,
                   ),
                   onPressed: _submit,
-                  child: Text(
+                  child: const Text(
                     'حفظ المعاملة',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),

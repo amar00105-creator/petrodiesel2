@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../controllers/auth_controller.dart';
@@ -48,7 +49,8 @@ class SalesController extends GetxController {
         }
       }
     } catch (e) {
-      print("Error fetching customers: $e");
+      developer.log('Error fetching customers',
+          name: 'SalesController', error: e);
     }
   }
 
@@ -69,7 +71,8 @@ class SalesController extends GetxController {
         }
       }
     } catch (e) {
-      print("Error fetching history: $e");
+      developer.log('Error fetching history',
+          name: 'SalesController', error: e);
     }
   }
 

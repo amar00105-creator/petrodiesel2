@@ -6,10 +6,18 @@ use App\Config\Database;
 
 class Model
 {
-    protected $db;
+    // protected $db; // Removed to force usage of __get
 
     public function __construct()
     {
-        $this->db = Database::connect();
+        // No cached connection
+    }
+
+    public function __get($name)
+    {
+        if ($name === 'db') {
+            return \App\Config\Database::connect();
+        }
+        return null;
     }
 }

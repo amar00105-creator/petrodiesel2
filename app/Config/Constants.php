@@ -8,6 +8,11 @@ class Constants
     // Adjust logic if needed for specific server setups
     public static function getBaseUrl()
     {
+        // Enforce Live URL for consistent behavior
+        if ($_SERVER['HTTP_HOST'] === 'app.petrodiesel.net') {
+            return "https://app.petrodiesel.net/public";
+        }
+
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
         $host = $_SERVER['HTTP_HOST'];
         $script = $_SERVER['SCRIPT_NAME'];

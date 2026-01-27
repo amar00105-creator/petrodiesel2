@@ -1,0 +1,100 @@
+﻿Calculated URI: /PETRODIESEL2/public/expenses
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/expenses
+Original URI: /PETRODIESEL2/public/expenses
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/expenses
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/expenses
+Original URI: /PETRODIESEL2/public/expenses
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/expenses
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/expenses
+Original URI: /PETRODIESEL2/public/expenses
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/expenses
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/expenses
+Original URI: /phpmyadmi
+Script Dir: /
+Calculated URI: /phpmyadmi
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /phpmyadmi
+Original URI: /PETRODIESEL2/public/
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/
+Original URI: /PETRODIESEL2/public/
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/
+Original URI: /PETRODIESEL2/public/
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/
+Original URI: /PETRODIESEL2/public/
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/
+Original URI: /PETRODIESEL2/public/
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/
+Original URI: /PETRODIESEL2/public/index.php
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/index.php
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/index.php
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/login
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/login
+Original URI: /PETRODIESEL2/PUBLIC/login
+Script Dir: /
+Calculated URI: /PETRODIESEL2/PUBLIC/login
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/PUBLIC/login
+Original URI: /PETRODIESEL2/PUBLIC/login
+Script Dir: /
+Calculated URI: /PETRODIESEL2/PUBLIC/login
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/PUBLIC/login
+Original URI: /PETRODIESEL2/PUBLIC/login
+Script Dir: /
+Calculated URI: /PETRODIESEL2/PUBLIC/login
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/PUBLIC/login
+Original URI: /PETRODIESEL2/public/
+Script Dir: /
+Calculated URI: /PETRODIESEL2/public/
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /PETRODIESEL2/public/
+Original URI: /favicon.ico
+Script Dir: /
+Calculated URI: /favicon.ico
+Method: GET
+Routes Count: 97
+404 Not Found for URI: /favicon.ico

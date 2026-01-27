@@ -1,0 +1,11 @@
+{
+  "resources/js/main.jsx": {
+    "file": "assets/main-Dy9s3CLL-1769472346605.js",
+    "name": "main",
+    "src": "resources/js/main.jsx",
+    "isEntry": true,
+    "css": [
+      "assets/main-Dy_sLhRD-1769472346605.css"
+    ]
+  }
+}

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +8,7 @@ class AuthController extends GetxController {
   var isLoggedIn = false.obs;
   var isLoading = false.obs;
   var token = ''.obs;
-  var user = {}.obs;
+  var user = Rx<Map<String, dynamic>>({});
 
   // Change this to your local IP address for emulator (10.0.2.2 for Android emulator)
   // For Real Device/Same Network: Use PC's IP address (e.g., http://192.168.1.5/PETRODIESEL...)
@@ -30,11 +31,11 @@ class AuthController extends GetxController {
   }
 
   Future<bool> login(String email, String password) async {
-    print('Login called with $email');
+    developer.log('Login called with $email', name: 'AuthController');
     isLoading.value = true;
     try {
       final url = Uri.parse('$baseUrl/login');
-      print('Sending POST request to: $url');
+      developer.log('Sending POST request to: $url', name: 'AuthController');
 
       final response = await http.post(
         url,
@@ -42,8 +43,9 @@ class AuthController extends GetxController {
         body: jsonEncode({'email': email, 'password': password}),
       );
 
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
+      developer.log('Response status: ${response.statusCode}',
+          name: 'AuthController');
+      developer.log('Response body: ${response.body}', name: 'AuthController');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -66,7 +68,7 @@ class AuthController extends GetxController {
             'Error', 'Server Error: ${response.statusCode}\n${response.body}');
       }
     } catch (e) {
-      print('Login Error: $e');
+      developer.log('Login Error: $e', name: 'AuthController', error: e);
       Get.snackbar('Error', 'Connection Error: $e');
     } finally {
       isLoading.value = false;

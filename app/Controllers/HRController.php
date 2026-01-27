@@ -4,7 +4,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Helpers\AuthHelper;
-use App\Models\User;
+use App\Models\Staff;
 use App\Models\Worker;
 use App\Models\Driver;
 use App\Models\Supplier;
@@ -17,11 +17,12 @@ class HRController extends Controller
     public function __construct()
     {
         $this->models = [
-            'employee' => new User(),
+            'employee' => new Staff(),
             'worker' => new Worker(),
             'driver' => new Driver(),
             'supplier' => new Supplier(),
-            'customer' => new Customer()
+            'customer' => new Customer(),
+            'payroll' => new \App\Models\Payroll()
         ];
     }
 
@@ -44,7 +45,24 @@ class HRController extends Controller
             'drivers' => $this->models['driver']->getAll(),
             'suppliers' => $this->models['supplier']->getAll($stationId),
             'customers' => $this->models['customer']->getAll($stationId),
-            'userRole' => $user['role'] // Pass role for UI logic
+            // We can load initial salaries if needed, or fetch via AJAX
+            'userRole' => $user['role'],
+            'additional_js' => \App\Helpers\ViteHelper::load('resources/js/main.jsx')
+        ];
+
+        // Initial Load Data
+        $data = [
+            'user' => $user,
+            'tab' => $_GET['tab'] ?? 'employees',
+            'employees' => $this->models['employee']->getAll($stationId),
+            'workers' => $this->models['worker']->getAll($stationId),
+            'drivers' => $this->models['driver']->getAll(),
+            'suppliers' => $this->models['supplier']->getAll($stationId),
+            'customers' => $this->models['customer']->getAll($stationId),
+            // We can load initial salaries if needed, or fetch via AJAX
+            'userRole' => $user['role'],
+            'additional_js' => \App\Helpers\ViteHelper::load('resources/js/main.jsx'),
+            'hide_topbar' => true
         ];
 
         $this->view('hr/index', $data);
@@ -55,11 +73,9 @@ class HRController extends Controller
     public function handleApi()
     {
         header('Content-Type: application/json');
-        
-        // DEBUG LOGGING
+
         $debugFile = __DIR__ . '/../../debug_hr.log';
-        $logMsg = date('Y-m-d H:i:s') . " - Request: " . print_r($_REQUEST, true) . "\n";
-        file_put_contents($debugFile, $logMsg, FILE_APPEND);
+        // log...
 
         $user = AuthHelper::user();
         if (!$user) {
@@ -79,45 +95,98 @@ class HRController extends Controller
         $role = $user['role'];
         $stationId = $user['station_id'] ?? 1;
 
-        // RBAC Checks
+        // RBAC Checks (Granular)
+        $permissionMap = [
+            'employee' => 'employees',
+            'customer' => 'customers',
+            'driver' => 'drivers',
+            'worker' => 'workers',
+            'supplier' => 'suppliers',
+            'payroll' => 'payroll'
+        ];
+
+        $permPrefix = $permissionMap[$entity] ?? $entity;
+
         if ($action === 'delete') {
-             if ($role !== 'admin' && $role !== 'super_admin') {
-                 echo json_encode(['success' => false, 'message' => 'Permission denied. Admins only.']);
-                 exit;
-             }
-        } elseif ($action === 'store' || $action === 'update') {
-             if ($role !== 'admin' && $role !== 'super_admin' && $role !== 'manager') {
-                 echo json_encode(['success' => false, 'message' => 'Permission denied. Viewers cannot edit.']);
-                 exit;
-             }
+            if (!AuthHelper::can($permPrefix . '_delete')) {
+                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '_delete permission']);
+                exit;
+            }
+        } elseif (in_array($action, ['store', 'update', 'set_salary', 'add_entry'])) {
+            if (!AuthHelper::can($permPrefix . '_edit')) { // Assume _edit covers create/update
+                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '_edit permission']);
+                exit;
+            }
         }
 
         try {
+            if ($entity === 'payroll') {
+                $subAction = $action;
+                // specific payroll actions
+                if ($subAction === 'get_salary') {
+                    $eType = $_GET['e_type'];
+                    $eId = $_GET['e_id'];
+                    $amount = $model->getSalary($eType, $eId);
+                    echo json_encode(['success' => true, 'amount' => $amount]);
+                } elseif ($subAction === 'set_salary') {
+                    $eType = $_POST['e_type'];
+                    $eId = $_POST['e_id'];
+                    $amount = $_POST['amount'];
+                    $model->setSalary($eType, $eId, $amount);
+                    echo json_encode(['success' => true]);
+                } elseif ($subAction === 'add_entry') {
+                    $data = [
+                        'entity_type' => $_POST['e_type'],
+                        'entity_id' => $_POST['e_id'],
+                        'type' => $_POST['type'],
+                        'amount' => $_POST['amount'],
+                        'notes' => $_POST['notes'] ?? '',
+                        'date' => $_POST['date'] ?? date('Y-m-d'),
+                        'created_by' => $user['id']
+                    ];
+                    $model->addEntry($data);
+                    echo json_encode(['success' => true]);
+                } elseif ($subAction === 'get_entries') {
+                    $eType = $_GET['e_type'];
+                    $eId = $_GET['e_id'];
+                    $month = $_GET['month'] ?? date('m');
+                    $year = $_GET['year'] ?? date('Y');
+                    $entries = $model->getEntries($eType, $eId, $month, $year);
+                    echo json_encode(['success' => true, 'data' => $entries]);
+                } elseif ($subAction === 'get_monthly_summary') {
+                    $month = $_GET['month'] ?? date('m');
+                    $year = $_GET['year'] ?? date('Y');
+                    $summary = $model->getMonthlySummary($month, $year);
+                    echo json_encode(['success' => true, 'data' => $summary]);
+                }
+                return;
+            }
+
+            // Normal Entity Actions
             if ($action === 'store') {
                 $postData = $_POST;
                 $postData['station_id'] = $stationId;
-                
-                // Debug Post Data
-                file_put_contents($debugFile, "Store Data: " . print_r($postData, true) . "\n", FILE_APPEND);
+
+                // Validate station_id for all entities to prevent SQL errors
+                if (empty($postData['station_id'])) {
+                    $postData['station_id'] = 0;
+                }
 
                 if ($entity === 'employee') {
-                     if (!empty($postData['password'])) {
-                         $postData['password_hash'] = password_hash($postData['password'], PASSWORD_DEFAULT);
-                     }
-                     if (empty($postData['email'])) {
-                        $postData['email'] = strtolower(str_replace(' ', '.', $postData['name'])) . rand(100,999) . '@petrodiesel.net';
-                     }
+                    if (!empty($postData['password'])) {
+                        $postData['password_hash'] = password_hash($postData['password'], PASSWORD_DEFAULT);
+                    }
+                    if (empty($postData['email'])) {
+                        $postData['email'] = strtolower(str_replace(' ', '.', $postData['name'])) . rand(100, 999) . '@petrodiesel.net';
+                    }
                 }
 
                 $id = $model->create($postData);
-                file_put_contents($debugFile, "Result ID: $id\n", FILE_APPEND);
-                
                 echo json_encode(['success' => true, 'message' => 'Created successfully', 'id' => $id]);
-
             } elseif ($action === 'update') {
                 $id = $_POST['id'];
                 if (!$id) throw new \Exception("Missing ID");
-                
+
                 $postData = $_POST;
                 if ($entity === 'employee') {
                     if (empty($postData['password'])) {
@@ -129,23 +198,19 @@ class HRController extends Controller
 
                 $model->update($id, $postData);
                 echo json_encode(['success' => true, 'message' => 'Updated successfully']);
-
             } elseif ($action === 'delete') {
                 $id = $_POST['id'];
                 if (!$id) throw new \Exception("Missing ID");
-                
                 $model->delete($id);
                 echo json_encode(['success' => true, 'message' => 'Deleted successfully']);
-                
             } elseif ($action === 'list') {
                 $stationId = $user['station_id'] ?? null;
                 if ($entity === 'driver') {
-                    $data = $model->getAll(); 
+                    $data = $model->getAll();
                 } else {
                     $data = $model->getAll($stationId);
                 }
                 echo json_encode(['success' => true, 'data' => $data]);
-
             } elseif ($action === 'get') {
                 $id = $_GET['id'] ?? null;
                 if (!$id) throw new \Exception("Missing ID");
@@ -154,10 +219,8 @@ class HRController extends Controller
             } else {
                 echo json_encode(['success' => false, 'message' => 'Invalid action']);
             }
-
         } catch (\Exception $e) {
             $errMsg = $e->getMessage();
-            file_put_contents($debugFile, "ERROR: $errMsg\n", FILE_APPEND);
             echo json_encode(['success' => false, 'message' => $errMsg]);
         }
     }

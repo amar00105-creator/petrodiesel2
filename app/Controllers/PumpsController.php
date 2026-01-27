@@ -33,7 +33,12 @@ class PumpsController extends Controller
         $stmt->execute([$user['station_id']]);
         $tanks = $stmt->fetchAll();
 
-        $this->view('pumps/create', ['tanks' => $tanks]);
+        // Get workers for dropdown
+        $stmt = $db->prepare("SELECT * FROM workers WHERE station_id = ? AND status = 'active'");
+        $stmt->execute([$user['station_id']]);
+        $workers = $stmt->fetchAll();
+
+        $this->view('pumps/create', ['tanks' => $tanks, 'workers' => $workers]);
     }
 
     public function store()

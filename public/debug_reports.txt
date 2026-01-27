@@ -1,0 +1,8 @@
+Flow Request: Type=safe ID=1 Group=daily Start=2025-12-31 End=2026-01-24
+Flow Request: Type=safe ID=1 Group=daily Start=2025-12-31 End=2026-01-24
+Flow Request: Type=safe ID=2 Group=daily Start=2025-12-01 End=2026-01-24
+Flow Request: Type=safe ID=2 Group=fuel Start=2025-12-01 End=2026-01-24
+Flow Request: Type=bank ID=1 Group=fuel Start=2025-12-01 End=2026-01-24
+Rows Found: 0 | Opening: 0
+Flow Request: Type=safe ID=2 Group=fuel Start=2025-12-01 End=2026-01-24
+Rows Found: 9 | Opening: 0

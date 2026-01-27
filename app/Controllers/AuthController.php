@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\User;
+use App\Models\Staff;
 use App\Helpers\AuthHelper;
 
 class AuthController extends Controller
@@ -15,7 +15,7 @@ class AuthController extends Controller
             $email = $_POST['email'] ?? '';
             $password = $_POST['password'] ?? '';
 
-            $userModel = new User();
+            $userModel = new Staff();
             $user = $userModel->findByEmail($email);
 
             if ($user && password_verify($password, $user['password_hash'])) {
@@ -34,5 +34,36 @@ class AuthController extends Controller
     {
         AuthHelper::logout();
         $this->redirect('/login');
+    }
+    public function verify_password()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            $user = AuthHelper::user();
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'Not logged in']);
+                exit;
+            }
+
+            // We need to fetch the password hash from DB again to be sure
+            $userModel = new Staff();
+            $dbUser = $userModel->findByEmail($user['email']); // Assuming user table calls it email
+
+            if (!$dbUser) {
+                // Try User model if Staff didn't work (AuthHelper might use generic array)
+                $userModel = new \App\Models\User();
+                $dbUser = $userModel->findByEmail($user['email']);
+            }
+
+            $password = $_POST['password'] ?? '';
+
+            if ($dbUser && password_verify($password, $dbUser['password_hash'])) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Invalid password']);
+            }
+            exit;
+        }
     }
 }

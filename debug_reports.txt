@@ -1,0 +1,4 @@
+Flow Request: Type=safe ID=1 Group=daily Start=2026-01-01 End=2026-01-24
+Flow Request: Type=safe ID=1 Group=daily Start=2026-01-01 End=2026-01-24
+Flow Request: Type=safe ID=1 Group=daily Start=2026-01-01 End=2026-01-24
+Rows Found: 13 | Opening: 0

@@ -23,13 +23,13 @@ class ViteHelper
             if (isset($manifest[$entry])) {
                 $item = $manifest[$entry];
                 $baseUrl = defined('BASE_URL') ? BASE_URL : '';
-                $scriptFile = $baseUrl . '/build/' . $item['file'] . "?v={$version}";
+                $scriptFile = $baseUrl . '/build/' . $item['file'];
 
                 $html = "<script type=\"module\" src=\"{$scriptFile}\"></script>";
 
                 if (isset($item['css'])) {
                     foreach ($item['css'] as $cssFile) {
-                        $cssPath = $baseUrl . '/build/' . $cssFile . "?v={$version}";
+                        $cssPath = $baseUrl . '/build/' . $cssFile;
                         $html .= "<link rel=\"stylesheet\" href=\"{$cssPath}\">";
                     }
                 }

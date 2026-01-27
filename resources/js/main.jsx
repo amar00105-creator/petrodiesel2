@@ -1,31 +1,33 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import AddPump from './AddPump';
-import PumpList from './PumpList';
-import ManagePump from './ManagePump';
-import AddSale from './AddSale';
-import WorkerList from './WorkerList';
-import SupplierList from './SupplierList';
-import PurchaseList from './PurchaseList';
-import TankList from './TankList';
-import AccountingDashboard from './AccountingDashboard';
-import BanksPage from './BanksPage';
-import SafesPage from './SafesPage';
-import FinancialAssetsPage from './FinancialAssetsPage';
-import HumanResources from './HumanResources';
-import Partners from './Partners';
-import ExpenseList from './ExpenseList';
-import CreatePurchase from './CreatePurchase';
-import EditPurchase from './EditPurchase';
-import SalesList from './SalesList';
-import Settings from './Settings';
-import Dashboard from './Dashboard';
-import Reports from './Reports';
-import StationList from './StationList';
 import FuturisticHeader from './components/ui/FuturisticHeader';
 import AutoLock from './components/AutoLock';
 import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Lazy Load Components
+const AddPump = React.lazy(() => import('./AddPump'));
+const PumpList = React.lazy(() => import('./PumpList'));
+const ManagePump = React.lazy(() => import('./ManagePump'));
+const AddSale = React.lazy(() => import('./AddSale'));
+const WorkerList = React.lazy(() => import('./WorkerList'));
+const SupplierList = React.lazy(() => import('./SupplierList'));
+const PurchaseList = React.lazy(() => import('./PurchaseList'));
+const TankList = React.lazy(() => import('./TankList'));
+const AccountingDashboard = React.lazy(() => import('./AccountingDashboard'));
+const BanksPage = React.lazy(() => import('./BanksPage'));
+const SafesPage = React.lazy(() => import('./SafesPage'));
+const FinancialAssetsPage = React.lazy(() => import('./FinancialAssetsPage'));
+const HumanResources = React.lazy(() => import('./HumanResources'));
+const Partners = React.lazy(() => import('./Partners'));
+const ExpenseList = React.lazy(() => import('./ExpenseList'));
+const CreatePurchase = React.lazy(() => import('./CreatePurchase'));
+const EditPurchase = React.lazy(() => import('./EditPurchase'));
+const SalesList = React.lazy(() => import('./SalesList'));
+const Settings = React.lazy(() => import('./Settings'));
+const Dashboard = React.lazy(() => import('./Dashboard'));
+const Reports = React.lazy(() => import('./Reports'));
+const StationList = React.lazy(() => import('./StationList'));
 
 // Import Tailwind directives via CSS
 import '../css/app.css';

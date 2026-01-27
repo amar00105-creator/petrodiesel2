@@ -23447,3 +23447,33 @@ Script Dir: /PETRODIESEL2/public
 Calculated URI: /pumps
 Method: GET
 Routes Count: 110
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/create
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/create
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/store
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/store
+Method: POST
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 110

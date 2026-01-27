@@ -115,110 +115,113 @@ class PurchasesController extends Controller
             $data = $_POST;
             $data['station_id'] = $user['station_id'] ?? 1; // Fallback to 1 if superadmin/null
 
-            // Validation
-            $missingFields = [];
-            if (empty($data['supplier_id'])) $missingFields[] = 'المورد';
-            if (empty($data['volume_ordered']) || $data['volume_ordered'] <= 0) $missingFields[] = 'الكمية';
-            if (empty($data['price_per_liter']) || $data['price_per_liter'] <= 0) $missingFields[] = 'السعر';
+            try {
+                // Validation
+                $missingFields = [];
+                if (empty($data['supplier_id'])) $missingFields[] = 'المورد';
+                if (empty($data['volume_ordered']) || $data['volume_ordered'] <= 0) $missingFields[] = 'الكمية';
+                if (empty($data['price_per_liter']) || $data['price_per_liter'] <= 0) $missingFields[] = 'السعر';
 
-            // New Validation: Driver and Truck are MANDATORY
-            if (empty($data['driver_name']) && empty($data['driver_id'])) $missingFields[] = 'السائق';
-            if (empty($data['truck_number'])) $missingFields[] = 'رقم الشاحنة';
+                // New Validation: Driver and Truck are MANDATORY
+                if (empty($data['driver_name']) && empty($data['driver_id'])) $missingFields[] = 'السائق';
+                if (empty($data['truck_number'])) $missingFields[] = 'رقم الشاحنة';
 
-            if (empty($data['fuel_type_id']) && empty($data['tank_id'])) {
-                $missingFields[] = 'نوع الوقود';
-            }
+                if (empty($data['fuel_type_id']) && empty($data['tank_id'])) {
+                    $missingFields[] = 'نوع الوقود';
+                }
 
-            if (!empty($missingFields)) {
-                $errorMsg = "الرجاء تعبئة الحقول الإلزامية: " . implode(', ', $missingFields);
+                if (!empty($missingFields)) {
+                    throw new \Exception("الرجاء تعبئة الحقول الإلزامية: " . implode(', ', $missingFields));
+                }
+
+                // Handle Driver Logic
+                $driverModel = new Driver();
+                if (!empty($data['driver_name'])) {
+                    $existingDriver = $driverModel->findByName($data['driver_name']);
+                    if ($existingDriver) {
+                        $data['driver_id'] = $existingDriver['id'];
+                    } else {
+                        $newDriverId = $driverModel->create([
+                            'name' => $data['driver_name'],
+                            'truck_number' => $data['truck_number'],
+                            'phone' => $data['driver_phone'] ?? ''
+                        ]);
+                        $data['driver_id'] = $newDriverId;
+                    }
+                }
+
+                // Ensure driver_id is null if empty (prevents FK error with empty string)
+                if (empty($data['driver_id'])) {
+                    $data['driver_id'] = null;
+                }
+
+                // Handle File Uploads
+                $uploadDir = 'uploads/purchases/';
+                if (!file_exists(Constants::getPublicPath() . '/' . $uploadDir)) {
+                    if (!mkdir(Constants::getPublicPath() . '/' . $uploadDir, 0777, true)) {
+                        // Proceed without upload if mkdir fails, or log warning
+                    }
+                }
+
+                $data['invoice_image'] = $this->uploadFile($_FILES['invoice_image'] ?? null, $uploadDir);
+                $data['delivery_note_image'] = $this->uploadFile($_FILES['delivery_note_image'] ?? null, $uploadDir);
+
+                // If tank_id is empty, set to null
+                if (empty($data['tank_id'])) {
+                    $data['tank_id'] = null;
+                } else {
+                    // Ensure fuel_type_id is set if tank is selected
+                    if (empty($data['fuel_type_id'])) {
+                        $db = \App\Config\Database::connect();
+                        $stmt = $db->prepare("SELECT fuel_type_id FROM tanks WHERE id = ?");
+                        $stmt->execute([$data['tank_id']]);
+                        $fetchedFuelId = $stmt->fetchColumn();
+                        if ($fetchedFuelId) {
+                            $data['fuel_type_id'] = $fetchedFuelId;
+                        }
+                    }
+                }
+
+                // Final Fallback: if still no fuel_type_id, try to get the first available one to prevent FK crash
+                if (empty($data['fuel_type_id'])) {
+                    $db = \App\Config\Database::connect();
+                    $stmt = $db->query("SELECT id FROM fuel_types LIMIT 1");
+                    $data['fuel_type_id'] = $stmt->fetchColumn();
+                }
+
+                // Create Purchase
+                // Ensure status is 'ordered' so it appears in pending discharge
+                $data['status'] = 'ordered';
+
+                // Set volume_received to match volume_ordered if not provided (initial state)
+                if (!isset($data['volume_received']) || $data['volume_received'] === '') {
+                    $data['volume_received'] = $data['volume_ordered'];
+                }
+
+                $purchaseModel = new Purchase();
+                $purchaseModel->create($data);
+
+                // Update Supplier Balance (Credit)
+                $balanceChange = $data['total_cost'] - ($data['paid_amount'] ?? 0);
+                $supplierModel = new Supplier();
+                $supplierModel->updateBalance($data['supplier_id'], $balanceChange);
 
                 if ($this->isAjax()) {
                     header('Content-Type: application/json');
-                    echo json_encode(['success' => false, 'message' => $errorMsg]);
+                    echo json_encode(['success' => true, 'message' => 'تم حفظ الفاتورة بنجاح']);
                     exit;
                 }
 
-                $this->redirect('/purchases/create?error=' . urlencode($errorMsg));
-                return;
-            }
-
-            // Handle Driver Logic
-            $driverModel = new Driver();
-            if (!empty($data['driver_name'])) {
-                $existingDriver = $driverModel->findByName($data['driver_name']);
-                if ($existingDriver) {
-                    $data['driver_id'] = $existingDriver['id'];
-                } else {
-                    $newDriverId = $driverModel->create([
-                        'name' => $data['driver_name'],
-                        'truck_number' => $data['truck_number'],
-                        'phone' => $data['driver_phone'] ?? ''
-                    ]);
-                    $data['driver_id'] = $newDriverId;
+                $this->redirect('/purchases');
+            } catch (\Exception $e) {
+                if ($this->isAjax()) {
+                    header('Content-Type: application/json');
+                    http_response_code(500); // Send 500 but with JSON body
+                    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+                    exit;
                 }
+                $this->redirect('/purchases/create?error=' . urlencode($e->getMessage()));
             }
-
-            // Ensure driver_id is null if empty (prevents FK error with empty string)
-            if (empty($data['driver_id'])) {
-                $data['driver_id'] = null;
-            }
-
-            // Handle File Uploads
-            $uploadDir = 'uploads/purchases/';
-            if (!file_exists(Constants::getPublicPath() . '/' . $uploadDir)) {
-                mkdir(Constants::getPublicPath() . '/' . $uploadDir, 0777, true);
-            }
-
-            $data['invoice_image'] = $this->uploadFile($_FILES['invoice_image'] ?? null, $uploadDir);
-            $data['delivery_note_image'] = $this->uploadFile($_FILES['delivery_note_image'] ?? null, $uploadDir);
-
-            // If tank_id is empty, set to null
-            if (empty($data['tank_id'])) {
-                $data['tank_id'] = null;
-            } else {
-                // Ensure fuel_type_id is set if tank is selected
-                if (empty($data['fuel_type_id'])) {
-                    $db = \App\Config\Database::connect();
-                    $stmt = $db->prepare("SELECT fuel_type_id FROM tanks WHERE id = ?");
-                    $stmt->execute([$data['tank_id']]);
-                    $fetchedFuelId = $stmt->fetchColumn();
-                    if ($fetchedFuelId) {
-                        $data['fuel_type_id'] = $fetchedFuelId;
-                    }
-                }
-            }
-
-            // Final Fallback: if still no fuel_type_id, try to get the first available one to prevent FK crash
-            if (empty($data['fuel_type_id'])) {
-                $db = \App\Config\Database::connect();
-                $stmt = $db->query("SELECT id FROM fuel_types LIMIT 1");
-                $data['fuel_type_id'] = $stmt->fetchColumn();
-            }
-
-            // Create Purchase
-            // Ensure status is 'ordered' so it appears in pending discharge
-            $data['status'] = 'ordered';
-
-            // Set volume_received to match volume_ordered if not provided (initial state)
-            if (!isset($data['volume_received']) || $data['volume_received'] === '') {
-                $data['volume_received'] = $data['volume_ordered'];
-            }
-
-            $purchaseModel = new Purchase();
-            $purchaseModel->create($data);
-
-            // Update Supplier Balance (Credit)
-            $balanceChange = $data['total_cost'] - ($data['paid_amount'] ?? 0);
-            $supplierModel = new Supplier();
-            $supplierModel->updateBalance($data['supplier_id'], $balanceChange);
-
-            if ($this->isAjax()) {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'تم حفظ الفاتورة بنجاح']);
-                exit;
-            }
-
-            $this->redirect('/purchases');
         }
     }
 

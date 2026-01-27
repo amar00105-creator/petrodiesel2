@@ -58,7 +58,7 @@ Upload-Directory "$localRoot\views" "/views"
 Write-Host "--- Uploading /public (Selected files) ---"
 $publicItems = Get-ChildItem "$localRoot\public"
 foreach ($item in $publicItems) {
-    if ($item.Name -eq "build" -or $item.Name -eq "uploads" -or $item.Name -eq ".git" -or $item.Name -eq "node_modules") { continue }
+    if ($item.Name -eq "uploads" -or $item.Name -eq ".git" -or $item.Name -eq "node_modules") { continue }
     
     $remotePath = "/public/$($item.Name)"
     if ($item.Attributes.HasFlag([System.IO.FileAttributes]::Directory)) {

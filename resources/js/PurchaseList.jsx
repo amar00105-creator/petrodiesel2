@@ -61,7 +61,8 @@ export default function PurchaseList({ purchases = [], tanks = [] }) {
     // Filter Items for Table
     // The GlobalTable handles SEARCH text internally, but we handle specific dropdowns here
     // However, GlobalTable expects 'data' prop. We can pre-filter data here before passing it.
-    const filteredPurchases = purchases.filter(p => {
+    const safePurchases = Array.isArray(purchases) ? purchases : [];
+    const filteredPurchases = safePurchases.filter(p => {
         const matchesSupplier = filterSupplier ? p.supplier_name === filterSupplier : true;
         const matchesStatus = filterStatus ? p.status === filterStatus : true;
         const purchaseDate = new Date(p.created_at || p.date).setHours(0,0,0,0);

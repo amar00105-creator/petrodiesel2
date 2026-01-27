@@ -25,6 +25,7 @@ import StationList from './StationList';
 import FuturisticHeader from './components/ui/FuturisticHeader';
 import AutoLock from './components/AutoLock';
 import { Toaster } from 'sonner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Import Tailwind directives via CSS
 import '../css/app.css';
@@ -262,41 +263,45 @@ if (rootElement) {
             }
     }
 
+
+
     const user = getData('user');
     const allStations = getData('allStations');
     const stats = getStats(); // Now contains activeUsers from view
 
     root.render(
         <React.StrictMode>
-            <Toaster 
-                position="top-left" 
-                richColors 
-                toastOptions={{
-                    className: 'font-cairo !bg-white/95 !backdrop-blur-md !border-slate-200 !shadow-2xl !rounded-2xl',
-                    style: {
-                        fontFamily: 'Cairo, sans-serif',
-                    },
-                    classNames: {
-                        toast: 'group toast group-[.toaster]:bg-white group-[.toaster]:text-slate-900 group-[.toaster]:border-border group-[.toaster]:shadow-lg',
-                        title: 'group-[.toast]:font-bold group-[.toast]:text-base',
-                        description: 'group-[.toast]:text-slate-500 group-[.toast]:text-sm',
-                        actionButton: 'group-[.toast]:bg-slate-900 group-[.toast]:text-slate-50',
-                        cancelButton: 'group-[.toast]:bg-slate-100 group-[.toast]:text-slate-500',
-                        success: 'group-[.toaster]:!bg-emerald-50 group-[.toaster]:!border-emerald-200 group-[.toaster]:!text-emerald-900',
-                        error: 'group-[.toaster]:!bg-red-50 group-[.toaster]:!border-red-200 group-[.toaster]:!text-red-900',
-                    }
-                }}
-            />
-            <FuturisticHeader 
-                page={page} 
-                user={user} 
-                stats={stats} 
-                allStations={allStations} 
-            />
-            <AutoLock />
-            <React.Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
-                <Component {...props} />
-            </React.Suspense>
+            <ErrorBoundary>
+                <Toaster 
+                    position="top-left" 
+                    richColors 
+                    toastOptions={{
+                        className: 'font-cairo !bg-white/95 !backdrop-blur-md !border-slate-200 !shadow-2xl !rounded-2xl',
+                        style: {
+                            fontFamily: 'Cairo, sans-serif',
+                        },
+                        classNames: {
+                            toast: 'group toast group-[.toaster]:bg-white group-[.toaster]:text-slate-900 group-[.toaster]:border-border group-[.toaster]:shadow-lg',
+                            title: 'group-[.toast]:font-bold group-[.toast]:text-base',
+                            description: 'group-[.toast]:text-slate-500 group-[.toast]:text-sm',
+                            actionButton: 'group-[.toast]:bg-slate-900 group-[.toast]:text-slate-50',
+                            cancelButton: 'group-[.toast]:bg-slate-100 group-[.toast]:text-slate-500',
+                            success: 'group-[.toaster]:!bg-emerald-50 group-[.toaster]:!border-emerald-200 group-[.toaster]:!text-emerald-900',
+                            error: 'group-[.toaster]:!bg-red-50 group-[.toaster]:!border-red-200 group-[.toaster]:!text-red-900',
+                        }
+                    }}
+                />
+                <FuturisticHeader 
+                    page={page} 
+                    user={user} 
+                    stats={stats} 
+                    allStations={allStations} 
+                />
+                <AutoLock />
+                <React.Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+                    <Component {...props} />
+                </React.Suspense>
+            </ErrorBoundary>
         </React.StrictMode>
     );
 }

@@ -28,10 +28,8 @@ class PurchasesController extends Controller
         $purchases = $purchaseModel->getAll($stationId);
 
         // Fetch Tanks for Discharge Modal
-        $db = \App\Config\Database::connect();
-        $stmt = $db->prepare("SELECT * FROM tanks WHERE station_id = ?");
-        $stmt->execute([$stationId]);
-        $tanks = $stmt->fetchAll();
+        $tankModel = new Tank();
+        $tanks = $tankModel->getAll($stationId);
 
         $this->view('purchases/index', [
             'purchases' => $purchases,

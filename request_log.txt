@@ -4612,3 +4612,5 @@
 2026-01-27 01:04:13 GET /PETRODIESEL2/public/purchases
 2026-01-27 01:04:16 GET /PETRODIESEL2/public/purchases/getPending
 2026-01-27 01:05:17 GET /PETRODIESEL2/public/sales
+2026-01-27 01:15:35 GET /PETRODIESEL2/public/purchases
+2026-01-27 01:15:37 GET /PETRODIESEL2/public/purchases/getPending

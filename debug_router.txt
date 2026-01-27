@@ -23267,3 +23267,13 @@ Script Dir: /PETRODIESEL2/public
 Calculated URI: /sales
 Method: GET
 Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 110

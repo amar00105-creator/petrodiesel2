@@ -69,7 +69,14 @@ export default function CreatePurchase({ suppliers = [], tanks = [], drivers = [
                 }
             });
 
-            const result = await response.json();
+            let result;
+            try {
+                result = await response.json();
+            } catch (jsonError) {
+                // If JSON parse fails, it's likely a PHP Fatal Error (HTML)
+                console.error("JSON Parse Error:", jsonError);
+                throw new Error("Invalid Server Response (Not JSON)");
+            }
 
             if (result.success) {
                 setShowSuccess(true);
@@ -82,7 +89,7 @@ export default function CreatePurchase({ suppliers = [], tanks = [], drivers = [
             }
         } catch (error) {
             console.error(error);
-            toast.error('تعذر الاتصال بالخادم');
+            toast.error('خطأ: ' + error.message);
             setLoading(false);
         }
     };

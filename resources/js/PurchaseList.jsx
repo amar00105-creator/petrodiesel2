@@ -34,7 +34,7 @@ export default function PurchaseList({ purchases = [], tanks = [] }) {
         const form = new FormData();
         form.append('id', itemToDelete.id);
         try {
-            const response = await fetch('/PETRODIESEL2/public/purchases/delete_ajax', { method: 'POST', body: form });
+            const response = await fetch(`${window.BASE_URL}/purchases/delete_ajax`, { method: 'POST', body: form });
             const text = await response.text();
             let data;
             try { data = JSON.parse(text); } catch { throw new Error("Invalid Server Response"); }
@@ -121,7 +121,7 @@ export default function PurchaseList({ purchases = [], tanks = [] }) {
                     <Droplet className="w-4 h-4"/>
                 </button>
             )}
-            <a href={`/PETRODIESEL2/public/purchases/edit?id=${item.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4"/></a>
+            <a href={`${window.BASE_URL}/purchases/edit?id=${item.id}`} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4"/></a>
             <button onClick={() => openDeleteModal(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
         </>
     );
@@ -154,7 +154,7 @@ export default function PurchaseList({ purchases = [], tanks = [] }) {
                 data={filteredPurchases}
                 columns={columns}
                 actions={renderActions}
-                onAdd={() => window.location.href = '/PETRODIESEL2/public/purchases/create'}
+                onAdd={() => window.location.href = `${window.BASE_URL}/purchases/create`}
                 addButtonLabel="فاتورة جديدة"
                 searchPlaceholder="بحث برقم الفاتورة أو المورد..."
                 filters={filters}

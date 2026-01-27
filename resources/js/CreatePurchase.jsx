@@ -61,7 +61,7 @@ export default function CreatePurchase({ suppliers = [], tanks = [], drivers = [
             // Append calculated fields explicitely if needed or rely on form
             formData.set('total_cost', total);
 
-            const response = await fetch('/PETRODIESEL2/public/purchases/store', {
+            const response = await fetch(`${window.BASE_URL}/purchases/store`, {
                 method: 'POST',
                 body: formData,
                 headers: {
@@ -74,7 +74,7 @@ export default function CreatePurchase({ suppliers = [], tanks = [], drivers = [
             if (result.success) {
                 setShowSuccess(true);
                 setTimeout(() => {
-                    window.location.href = '/PETRODIESEL2/public/purchases';
+                    window.location.href = `${window.BASE_URL}/purchases`;
                 }, 2500);
             } else {
                 toast.error(result.message || 'حدث خطأ غير معروف');

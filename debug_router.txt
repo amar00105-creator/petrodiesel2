@@ -23277,3 +23277,93 @@ Script Dir: /PETRODIESEL2/public
 Calculated URI: /purchases/getPending
 Method: GET
 Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases/processDischarge
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/processDischarge
+Method: POST
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/stations/save_ajax
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /stations/save_ajax
+Method: POST
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/stations/delete_ajax
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /stations/delete_ajax
+Method: POST
+Routes Count: 110
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 110

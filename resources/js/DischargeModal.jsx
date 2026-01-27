@@ -24,7 +24,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
     const fetchPendingShipments = async () => {
         setLoading(true);
         try {
-            const res = await fetch('/PETRODIESEL2/public/purchases/getPending');
+            const res = await fetch(`${window.BASE_URL}/purchases/getPending`);
             const data = await res.json();
             if (data.success) {
                 setPendingShipments(data.data);
@@ -54,6 +54,12 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
         const fuelTypeKeyword = getFuelKeyword(shipment.fuel_type);
 
         const relevantTanks = tanks.filter(t => {
+            // Priority 1: Match by ID (Most Robust)
+            if (shipment.fuel_type_id && t.fuel_type_id) {
+                return String(shipment.fuel_type_id) === String(t.fuel_type_id);
+            }
+
+            // Priority 2: Fallback to Name Matching
             if (!fuelTypeKeyword) return true; 
             
             // properties from raw DB objects: product_type
@@ -114,7 +120,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
 
         setLoading(true);
         try {
-            const response = await fetch('/PETRODIESEL2/public/purchases/processDischarge', {
+            const response = await fetch(`${window.BASE_URL}/purchases/processDischarge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

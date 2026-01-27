@@ -12,8 +12,8 @@ class ViteHelper
      */
     public static function load($entry)
     {
-        $devServerUrl = 'http://localhost:5173';
         $manifestPath = __DIR__ . '/../../public/build/.vite/manifest.json';
+        $isLive = defined('BASE_URL') && strpos(BASE_URL, 'app.petrodiesel.net') !== false;
 
         // Check if manifest exists (Production Build)
         if (file_exists($manifestPath)) {
@@ -38,7 +38,13 @@ class ViteHelper
             }
         }
 
-        // Default to Dev Server
+        // If on Live and manifest is missing, DO NOT fallback to localhost
+        if ($isLive) {
+            return "<script>console.error('Vite Manifest not found! Please ensure public/build is uploaded.'); alert('Deployment Error: Build assets missing. Please upload public/build folder.');</script>";
+        }
+
+        // Default to Dev Server (Localhost only)
+        $devServerUrl = 'http://localhost:5173';
         return "
             <script type=\"module\" src=\"{$devServerUrl}/@vite/client\"></script>
             <script type=\"module\">

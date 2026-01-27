@@ -68,7 +68,7 @@ export default function EditPurchase({ purchase, suppliers = [], drivers = [], t
                 </div>
             </div>
 
-            <form id="editForm" action="/PETRODIESEL2/public/purchases/update" method="POST" className="space-y-6" onSubmit={handleSubmit}>
+            <form id="editForm" action={`${window.BASE_URL}/purchases/update`} method="POST" className="space-y-6" onSubmit={handleSubmit}>
                 <input type="hidden" name="id" value={purchase?.id} />
                 <input type="hidden" name="total_cost" value={total} />
                 

@@ -97,7 +97,7 @@ export default function AddPurchase({ suppliers, tanks }) {
                     <Text className="text-blue-200 uppercase tracking-widest mb-2 font-mono relative z-10">إجمالي الفاتورة</Text>
                     <div className="text-5xl font-black text-white font-mono tracking-tighter relative z-10">
                         {formData.total_cost.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                        <span className="text-xl text-blue-400 ml-2">SAR</span>
+                        <span className="text-xl text-blue-400 ml-2">SDG</span>
                     </div>
                 </Card>
 

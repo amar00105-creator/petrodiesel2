@@ -1,6 +1,9 @@
 <?php
 // views/reports/index.php
 ?>
+<script>
+    window.BASE_URL = '/PETRODIESEL2/public';
+</script>
 <!-- React Root -->
 <div id="root"
     data-page="reports"

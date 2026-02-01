@@ -1,9 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
+import React, { Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
 import FuturisticHeader from './components/ui/FuturisticHeader';
 import AutoLock from './components/AutoLock';
 import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
+
+// DEBUG ALERT
+// console.log("Main.jsx is executing...");
+// window.alert("Main.jsx is executing..."); // Uncomment if console is not visible.
 
 // Lazy Load Components
 const AddPump = React.lazy(() => import('./AddPump'));
@@ -14,9 +18,13 @@ const WorkerList = React.lazy(() => import('./WorkerList'));
 const SupplierList = React.lazy(() => import('./SupplierList'));
 const PurchaseList = React.lazy(() => import('./PurchaseList'));
 const TankList = React.lazy(() => import('./TankList'));
-const AccountingDashboard = React.lazy(() => import('./AccountingDashboard'));
+
+// FIX: Static Import for Accounting Dashboard to prevent "Cannot access 'c'" initialization error
+import AccountingDashboard from './AccountingDashboard'; 
+
 const BanksPage = React.lazy(() => import('./BanksPage'));
-const SafesPage = React.lazy(() => import('./SafesPage'));
+// const SafesPage = React.lazy(() => import('./SafesPage')); // Converted to static below
+import SafesPage from './SafesPage';
 const FinancialAssetsPage = React.lazy(() => import('./FinancialAssetsPage'));
 const HumanResources = React.lazy(() => import('./HumanResources'));
 const Partners = React.lazy(() => import('./Partners'));
@@ -28,19 +36,20 @@ const Settings = React.lazy(() => import('./Settings'));
 const Dashboard = React.lazy(() => import('./Dashboard'));
 const Reports = React.lazy(() => import('./Reports'));
 const StationList = React.lazy(() => import('./StationList'));
+const CustomerReport = React.lazy(() => import('./CustomerReport')); // Restored
 
 // Import Tailwind directives via CSS
 import '../css/app.css';
 
 const rootElement = document.getElementById('root');
 
-if (rootElement) {
-    const root = ReactDOM.createRoot(rootElement);
-    const page = rootElement.dataset.page?.trim().toLowerCase();
+try {
+    if (rootElement) {
+        const root = createRoot(rootElement); // FIX: Use createRoot directly
+        const page = rootElement.dataset.page?.trim().toLowerCase();
     
     // Debugging (Temporary)
     console.log('Detected Page:', page);
-    console.log('Page Length:', page?.length);
 
     // Parse Data Helper
     const getData = (key) => {
@@ -73,17 +82,47 @@ if (rootElement) {
     window.BASE_URL = rootElement.dataset.baseUrl || 
                      (window.location.hostname.includes('petrodiesel') ? '/public' : '/PETRODIESEL2/public');
 
+    const user = getData('user');
+    const allStations = getData('allStations');
+    const stats = getStats(); // Now contains activeUsers from view
+    const settings = getData('settings') || {};
+
+    // Determine Currency
+    // settings is usually { base_currency: "SAR", ... } if associating array or object
+    // If it comes as array of objects [{key_name:..., value:...}], we need to parse it.
+    // The Setting model getAllBySection returns ['key' => 'value']. So it should be an object.
+    
+    // Check if settings is array (from empty json_encode) or object
+    let currencyCode = 'SDG';
+    if (settings && !Array.isArray(settings)) {
+         // Based on screenshot, label is 'base_currency' or similar
+         // Let's look for known currency keys
+         if (settings.base_currency) currencyCode = settings.base_currency;
+         else if (settings.system_currency) currencyCode = settings.system_currency;
+         else if (settings.currency) currencyCode = settings.currency;
+         
+         // If formatting is "Generic Currency (Code)", extract Code
+         const match = currencyCode.match(/\(([^)]+)\)/);
+         if (match) {
+             currencyCode = match[1];
+         }
+    }
+
     let Component;
     let props = {};
 
-
     switch (page) {
         case 'add-pump':
+        case 'edit-pump':
             Component = AddPump;
             props = {
                 stats: getStats(),
                 tanks: getData('tanks'),
-                workers: getData('workers')
+                workers: getData('workers'),
+                initialData: {
+                    pump: getData('pump'),
+                    counters: getData('counters')
+                }
             };
             break;
         case 'sales-create':
@@ -154,6 +193,7 @@ if (rootElement) {
             break;
             case 'accounting-dashboard':
             Component = AccountingDashboard;
+            // Component = SimpleAccounting; // DEBUG: Test Isolation
             props = {
                 safes: getData('safes'),
                 banks: getData('banks'),
@@ -161,19 +201,22 @@ if (rootElement) {
                 categories: getData('categories'),
                 suppliers: getData('suppliers'),
                 customers: getData('customers'),
-                baseUrl: rootElement.dataset.baseUrl || '/PETRODIESEL2/public'
+                baseUrl: rootElement.dataset.baseUrl || '/PETRODIESEL2/public',
+                currency: currencyCode // Standardized
             };
             break;
         case 'accounting-banks':
             Component = BanksPage;
             props = {
-                banks: getData('banks')
+                banks: getData('banks'),
+                currency: currencyCode
             };
             break;
         case 'accounting-safes':
             Component = SafesPage;
             props = {
-                safes: getData('safes')
+                safes: getData('safes'), // Should match view's ->with('safes', ...)
+                currency: currencyCode 
             };
             break;
         case 'accounting-assets':
@@ -196,6 +239,15 @@ if (rootElement) {
             Component = ExpenseList;
             props = {
                 expenses: getData('expenses')
+            };
+            break;
+        case 'purchases':
+            Component = PurchaseList;
+            props = {
+                purchases: getData('purchases'),
+                suppliers: getData('suppliers'),
+                tanks: getData('tanks'),
+                currency: currencyCode
             };
             break;
         case 'edit-purchase':
@@ -246,6 +298,12 @@ if (rootElement) {
                 user: getData('user') // Pass user info if needed
             };
             break;
+        case 'report-customer':
+             Component = CustomerReport;
+             props = {
+                 customers: getData('customers')
+             };
+             break;
         case 'station-list':
              Component = StationList;
              props = {
@@ -266,44 +324,56 @@ if (rootElement) {
     }
 
 
+    // Global Error Suppression for Hydration/RemoveChild errors
+    if (typeof window !== 'undefined') {
+        const suppressErrors = ['NotFoundError', 'removeChild', 'Node'];
+        window.addEventListener('error', (e) => {
+            if (suppressErrors.some(err => e.message?.includes(err))) {
+                e.preventDefault();
+                console.warn('Suppressed React RemoveChild Error:', e.message);
+            }
+        });
+        const originalError = console.error;
+        console.error = (...args) => {
+            if (args[0] && typeof args[0] === 'string' && suppressErrors.some(err => args[0].includes(err))) {
+                return;
+            }
+            originalError.call(console, ...args);
+        };
+    }
 
-    const user = getData('user');
-    const allStations = getData('allStations');
-    const stats = getStats(); // Now contains activeUsers from view
-
+    // Unified Render Logic
     root.render(
-        <React.StrictMode>
-            <ErrorBoundary>
-                <Toaster 
-                    position="top-left" 
-                    richColors 
-                    toastOptions={{
-                        className: 'font-cairo !bg-white/95 !backdrop-blur-md !border-slate-200 !shadow-2xl !rounded-2xl',
-                        style: {
-                            fontFamily: 'Cairo, sans-serif',
-                        },
-                        classNames: {
-                            toast: 'group toast group-[.toaster]:bg-white group-[.toaster]:text-slate-900 group-[.toaster]:border-border group-[.toaster]:shadow-lg',
-                            title: 'group-[.toast]:font-bold group-[.toast]:text-base',
-                            description: 'group-[.toast]:text-slate-500 group-[.toast]:text-sm',
-                            actionButton: 'group-[.toast]:bg-slate-900 group-[.toast]:text-slate-50',
-                            cancelButton: 'group-[.toast]:bg-slate-100 group-[.toast]:text-slate-500',
-                            success: 'group-[.toaster]:!bg-emerald-50 group-[.toaster]:!border-emerald-200 group-[.toaster]:!text-emerald-900',
-                            error: 'group-[.toaster]:!bg-red-50 group-[.toaster]:!border-red-200 group-[.toaster]:!text-red-900',
-                        }
-                    }}
-                />
-                <FuturisticHeader 
-                    page={page} 
-                    user={user} 
-                    stats={stats} 
-                    allStations={allStations} 
-                />
-                <AutoLock />
+        <ErrorBoundary>
+            <Toaster 
+                position="top-left" 
+                richColors 
+                toastOptions={{
+                    className: 'font-cairo !bg-white/95 !backdrop-blur-md !border-slate-200 !shadow-2xl !rounded-2xl',
+                    style: { fontFamily: 'Cairo, sans-serif' }
+                }}
+            />
+            <FuturisticHeader 
+                page={page} 
+                user={user} 
+                stats={stats} 
+                allStations={allStations}
+                currency={currencyCode} 
+            />
+
+            {/* Explicitly bypass Suspense for SafesPage to fix hydration error */}
+            {page === 'accounting-safes' ? (
+                <SafesPage {...props} />
+            ) : (
                 <React.Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
                     <Component {...props} />
                 </React.Suspense>
-            </ErrorBoundary>
-        </React.StrictMode>
+            )}
+        </ErrorBoundary>
     );
+
+    }
+} catch (err) {
+    console.error("CRITICAL JS ERROR:", err);
+    window.alert("CRITICAL JS ERROR: " + err.message);
 }

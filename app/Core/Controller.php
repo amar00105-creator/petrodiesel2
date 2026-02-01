@@ -38,8 +38,8 @@ class Controller
         // Extract data to variables
         extract($data);
 
-        $viewPath = "../views/" . $view . ".php";
-        $layoutPath = "../views/layouts/" . $layout . ".php";
+        $viewPath = __DIR__ . "/../../views/" . $view . ".php";
+        $layoutPath = __DIR__ . "/../../views/layouts/" . $layout . ".php";
 
         if (file_exists($viewPath)) {
             // If layout is requested, render view into a variable, then include layout

@@ -11,8 +11,8 @@ class Purchase extends Model
         $sql = "SELECT p.*, 
                        s.name as supplier_name, 
                        t.name as tank_name, 
-                       d.name as driver_name_resolved,
-                       ft.name as fuel_type_name
+                       ft.name as fuel_type_name,
+                       d.name as driver_name_resolved
                 FROM purchases p 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id 
                 LEFT JOIN tanks t ON p.tank_id = t.id 

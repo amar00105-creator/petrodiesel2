@@ -108,7 +108,7 @@ export default function AddExpense() {
                         <Text className="text-slate-400 text-xs mb-1">القيمة المسجلة</Text>
                         <Metric className="text-white font-mono text-4xl">
                             {formData.amount ? Number(formData.amount).toLocaleString() : '0.00'} 
-                            <span className="text-base font-normal text-slate-500 ml-2">SAR</span>
+                            <span className="text-base font-normal text-slate-500 ml-2">SDG</span>
                         </Metric>
                      </div>
                  </Card>
@@ -155,7 +155,7 @@ export default function AddExpense() {
                             </div>
 
                             <div>
-                                <label className="text-sm font-bold text-slate-700 mb-2 block">المبلغ (SAR)</label>
+                                <label className="text-sm font-bold text-slate-700 mb-2 block">المبلغ (SDG)</label>
                                 <input 
                                     type="number" 
                                     step="0.01"

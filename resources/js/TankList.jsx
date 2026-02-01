@@ -5,7 +5,7 @@ import { Search, Download, Trash2, Edit, Truck, Droplet, AlertTriangle, CheckCir
 import { toast } from 'sonner';
 import DischargeModal from './DischargeModal';
 import AddTankModal from './AddTankModal';
-import CalibrationModal from './CalibrationModal';
+import SimpleCalibrationModal from './SimpleCalibrationModal';
 
 export default function TankList({ tanks = [], suppliers = [], fuelSettings = [], fuelTypes = [] }) {
     const [search, setSearch] = useState('');
@@ -64,6 +64,8 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
             fuel_type_id: tank.fuel_type_id, // Pass this through for editing
             total_cap: capacity,
             current: current,
+            current_volume: current, // Add for modal compatibility
+            capacity_liters: capacity, // Add for modal compatibility
             current_price: tank.current_price, // Pass through
             percentage: Math.min(100, Math.max(0, Number(percentage.toFixed(1)))),
             status: percentage < 20 ? 'Low Stock' : 'Active'
@@ -313,10 +315,11 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
             />
 
             {/* Calibration Modal */}
-            <CalibrationModal 
+            <SimpleCalibrationModal 
                 isOpen={calibrationModalOpen}
                 onClose={() => setCalibrationModalOpen(false)}
                 tank={selectedTank}
+                onSuccess={handleSuccess}
             />
         </motion.div>
     );

@@ -18,10 +18,13 @@ import {
   Clock,
   User,
   Globe,
+  Bell,
+  Maximize,
 } from "lucide-react";
 
 const FuturisticHeader = ({ page, user, stats, allStations }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [serverTimeOffset, setServerTimeOffset] = useState(0); // Offset in milliseconds
   
   // Theme Toggle State
   const [isDark, setIsDark] = useState(() => {
@@ -45,10 +48,44 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
     }
   }, [isDark]);
 
+  // Sync with server time on mount
   useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(interval);
+    const syncServerTime = async () => {
+      try {
+        const res = await fetch(`${window.BASE_URL || ''}/api/server-time`);
+        const data = await res.json();
+        if (data.success) {
+          // Parse server datetime string as UTC, then calculate offset
+          // Server sends datetime in its local timezone (Africa/Khartoum)
+          // We need to treat it as if it's the "correct" time
+          const serverDateTime = data.datetime; // "2026-02-01 02:14:39"
+          
+          // Create a date object from server time string
+          // The trick: we parse it as if it's local time, which gives us the server's perspective
+          const [datePart, timePart] = serverDateTime.split(' ');
+          const [year, month, day] = datePart.split('-');
+          const [hour, minute, second] = timePart.split(':');
+          
+          // Create date in local timezone but with server's values
+          const serverTimeAsLocal = new Date(year, month - 1, day, hour, minute, second).getTime();
+          const clientTime = Date.now();
+          
+          setServerTimeOffset(serverTimeAsLocal - clientTime);
+        }
+      } catch (err) {
+        console.warn('Failed to sync server time, using client time', err);
+      }
+    };
+    syncServerTime();
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Use server-adjusted time
+      setCurrentTime(new Date(Date.now() + serverTimeOffset));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [serverTimeOffset]);
 
   const handleStationSwitch = async (e) => {
     const stationId = e.target.value;
@@ -65,18 +102,28 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
     }
   };
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  };
+
   // 1. Configuration Mapping
   const config = {
     default: {
       title: "لوحة التحكم",
       subtitle: "النظرة العامة والإحصائيات",
       icon: Home,
-      color: "from-slate-700 to-blue-900",
-      glow: "shadow-blue-900/50",
-      border: "border-blue-500/30",
-      headerBg: "bg-gradient-to-r from-slate-950/95 to-blue-950/95",
+      color: "from-emerald-900 to-teal-900",
+      glow: "shadow-emerald-900/50",
+      border: "border-emerald-500/30",
+      headerBg: "bg-gradient-to-r from-emerald-950/95 to-teal-950/95",
       textColor: "text-white",
-      subtitleColor: "text-slate-200",
+      subtitleColor: "text-emerald-200",
     },
     "sales-create": {
       title: "نقطة البيع",
@@ -312,7 +359,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
         initial={{ opacity: 0, scale: 0.94, filter: "blur(12px)" }}
         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} // "Luxury" Easing
-        className={`relative z-10 px-6 py-8 ${headerBg} backdrop-blur-2xl border-x border-t border-b-4 ${activeConfig.border} rounded-2xl shadow-2xl ${activeConfig.glow} overflow-hidden flex items-center justify-between transition-all duration-500`}
+        className={`relative z-10 px-6 py-7 ${headerBg} backdrop-blur-2xl border-x border-t border-b-4 ${activeConfig.border} rounded-2xl shadow-2xl ${activeConfig.glow} overflow-hidden flex items-center justify-between transition-all duration-500`}
         style={{
           boxShadow: `inset 0 0 20px rgba(255,255,255,0.1)`,
         }}
@@ -353,103 +400,131 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
           </div>
         </div>
 
-        {/* Decorative Elements & Info */}
-        <div className="hidden md:flex items-center gap-4 z-10">
-          {/* Theme Toggle */}
-          <button 
-            onClick={() => setIsDark(!isDark)}
-            className="p-2 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all backdrop-blur-md"
-            title={isDark ? "الوضع النهاري" : "الوضع الليلي"}
-          >
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
 
-          {/* User Info */}
-          {user && (
-            <div className="flex flex-col items-end text-sm">
-              <span className="font-bold text-white flex items-center gap-1">
-                <User size={14} /> {user.name}
-              </span>
-              <span className="text-xs text-white/70">
-                {user.role === "super_admin" ? "Super Admin" : "User"}
-              </span>
-            </div>
-          )}
+        {/* CENTER: Station Name (Moved Here) - Large & Centered */}
 
-          {/* Station Switcher or Name */}
-          {allStations && allStations.length > 0 ? (
-            <div className="relative group">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20">
-                <Globe size={14} className="text-blue-300" />
-                <select
-                  onChange={handleStationSwitch}
-                  value={user?.station_id || ""}
-                  className="bg-transparent text-white text-sm font-bold outline-none cursor-pointer appearance-none pr-8"
-                  style={{ backgroundImage: "none" }}
-                >
-                  <option className="text-slate-900" value="all">
-                    Global View
-                  </option>
-                  {allStations.map((s) => (
-                    <option key={s.id} className="text-slate-900" value={s.id}>
-                      {s.name}
+
+        {/* Decorative Elements & Info - Reorganized into 2 Rows */}
+        <div className="hidden md:flex items-center justify-end gap-6 z-10">
+
+          {/* Station Name - Large (Moved Next to Widgets) */}
+            {allStations && allStations.length > 0 ? (
+              <div className="relative group">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10 bg-white/5 shadow-inner">
+                  <Globe size={18} className="text-emerald-400 animate-pulse" />
+                  <select
+                    onChange={handleStationSwitch}
+                    value={user?.station_id || ""}
+                    className="bg-transparent text-white text-lg font-black tracking-wide outline-none cursor-pointer appearance-none text-center"
+                    style={{ backgroundImage: "none", minWidth: "120px" }}
+                  >
+                    <option className="text-slate-900" value="all">
+                      Global View
                     </option>
-                  ))}
-                </select>
+                    {allStations.map((s) => (
+                      <option key={s.id} className="text-slate-900" value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            ) : (
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10 bg-white/5 shadow-inner">
+                <Globe size={18} className="text-emerald-400 animate-pulse" />
+                <span className="text-lg font-black text-white tracking-wide shadow-black drop-shadow-md">
+                  {user?.station_id
+                    ? user.station_name || "Station #" + user.station_id
+                    : "Global Access"}
+                </span>
+              </div>
+            )}
+          
+          <div className="flex flex-col items-end gap-1">
+            {/* TOP ROW: Main Inputs (Station, User, Time) */}
+            <div className="flex items-center gap-3">
+              {/* User Info */}
+              {user && (
+                <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg border border-white/10">
+                  <User size={12} className="text-slate-200" /> 
+                  <div className="flex flex-col items-end leading-none">
+                    <span className="font-bold text-xs text-white">
+                    {user.name}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Time & Date - Compact */}
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20">
+                <div className="flex items-center gap-2 text-base font-mono font-bold text-white">
+                  <span>
+                    {currentTime.toLocaleDateString("en-GB", {
+                      day: "numeric",
+                      month: "numeric",
+                    })}
+                  </span>
+                  <span className="opacity-50">|</span>
+                  <span>
+                    {currentTime.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    })}
+                  </span>
+                </div>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col items-end text-sm">
-              <span className="font-bold text-white flex items-center gap-1">
-                <Globe size={14} className="text-emerald-300" />
-                {user?.station_id
-                  ? user.station_name || "Station #" + user.station_id
-                  : "Global Access"}
-              </span>
-            </div>
-          )}
 
-          {/* Time & Date - Unified Box */}
-          <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-2 rounded-xl border border-white/20">
-            <Clock size={16} className="text-blue-300 self-center" />
-            <div className="flex flex-col items-start">
-              <div className="text-[10px] text-white/70 font-medium">
-                {currentTime.toLocaleDateString("ar-SA", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+            {/* BOTTOM ROW: Status, Metrics, Actions */}
+            <div className="flex items-center gap-3">
+              {/* Status */}
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/5 rounded-full border border-white/10">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r ${activeConfig.color} opacity-75`}></span>
+                  <span className={`relative inline-flex rounded-full h-1.5 w-1.5 bg-gradient-to-r ${activeConfig.color}`}></span>
+                </span>
+                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider">
+                  System Active
+                </span>
               </div>
-              <div className="text-sm text-white font-mono font-bold">
-                {currentTime.toLocaleTimeString("en-US", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                })}
+
+              {/* Active Users */}
+              <div className="flex items-center gap-1 text-[10px] text-emerald-300 font-bold">
+                <Activity size={10} />
+                {stats?.activeUsers || 1} Users
+              </div>
+
+              {/* Separator */}
+              <div className="h-3 w-px bg-white/20 mx-1"></div>
+
+              {/* Action Group */}
+              <div className="flex items-center gap-2">
+                {/* Bell */}
+                <div className="relative p-1.5 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all cursor-pointer group">
+                  <Bell size={18} />
+                  <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full border border-white/20"></span>
+                </div>
+
+                {/* Theme */}
+                <button 
+                  onClick={() => setIsDark(!isDark)}
+                  className="p-1.5 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                  title="Theme"
+                >
+                  {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+
+                {/* Fullscreen */}
+                <button 
+                  onClick={toggleFullScreen}
+                  className="p-1.5 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                  title="Fullscreen"
+                >
+                  <Maximize size={18} />
+                </button>
               </div>
             </div>
-          </div>
-
-          {/* Active Users */}
-          <div className="flex items-center gap-2 text-xs text-emerald-300 font-bold border-r border-white/10 pr-4">
-            <Activity size={12} />
-            {stats?.activeUsers || 1} Active Users
-          </div>
-
-          {/* Status Indicator */}
-          <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
-            <span className="relative flex h-2 w-2">
-              <span
-                className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r ${activeConfig.color} opacity-75`}
-              ></span>
-              <span
-                className={`relative inline-flex rounded-full h-2 w-2 bg-gradient-to-r ${activeConfig.color}`}
-              ></span>
-            </span>
-            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-300">
-              SYSTEM ACTIVE
-            </span>
           </div>
         </div>
       </motion.div>

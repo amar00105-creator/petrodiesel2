@@ -11,7 +11,7 @@ export default function AddAccount() {
         account_number: '', // For bank
         bank_name: '', // For bank
         balance: '',
-        currency: 'SAR',
+        currency: 'SDG',
         description: ''
     });
 
@@ -50,7 +50,7 @@ export default function AddAccount() {
                         <Text className="text-slate-300 text-xs mb-1">الرصيد الافتتاحي</Text>
                         <Metric className="text-white font-mono text-4xl">
                             {formData.balance ? Number(formData.balance).toLocaleString() : '0.00'} 
-                            <span className="text-base font-normal text-slate-400 ml-2">SAR</span>
+                            <span className="text-base font-normal text-slate-400 ml-2">SDG</span>
                         </Metric>
                      </div>
                  </Card>
@@ -165,7 +165,7 @@ export default function AddAccount() {
                                     onChange={handleChange}
                                     className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none"
                                 >
-                                    <option value="SAR">ريال سعودي (SAR)</option>
+                                    <option value="SDG">جنيه سوداني (SDG)</option>
                                     <option value="USD">دولار أمريكي (USD)</option>
                                 </select>
                             </div>

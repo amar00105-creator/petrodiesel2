@@ -19,6 +19,12 @@ class PurchasesController extends Controller
         AuthHelper::requireLogin();
     }
 
+    private function getSettings()
+    {
+        $settingModel = new \App\Models\Setting();
+        return $settingModel->getAllBySection('general');
+    }
+
     public function index()
     {
         $user = AuthHelper::user();
@@ -31,9 +37,12 @@ class PurchasesController extends Controller
         $tankModel = new Tank();
         $tanks = $tankModel->getAll($stationId);
 
+        $settings = $this->getSettings();
+
         $this->view('purchases/index', [
             'purchases' => $purchases,
             'tanks' => $tanks,
+            'settings' => $settings,
             'hide_topbar' => true,
             'page_title' => 'إدارة المشتريات'
         ]);

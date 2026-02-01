@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+use PDO;
 
 class Sale extends Model
 {
@@ -103,7 +104,8 @@ class Sale extends Model
                        safes.name as safe_name,
                        banks.bank_name as bank_name,
                        t.to_type as account_type,
-                       t.to_id as account_id
+                       t.to_id as account_id,
+                       ft.name as fuel_type
                 FROM sales s
                 LEFT JOIN counters c ON s.counter_id = c.id
                 LEFT JOIN pumps p ON c.pump_id = p.id
@@ -112,6 +114,8 @@ class Sale extends Model
                 LEFT JOIN transactions t ON (t.related_entity_id = s.id AND t.related_entity_type = 'sales' AND t.type = 'income')
                 LEFT JOIN safes ON (t.to_type = 'safe' AND t.to_id = safes.id)
                 LEFT JOIN banks ON (t.to_type = 'bank' AND t.to_id = banks.id)
+                LEFT JOIN tanks tank ON p.tank_id = tank.id
+                LEFT JOIN fuel_types ft ON tank.fuel_type_id = ft.id
                 WHERE s.id = ?";
 
         $stmt = $this->db->prepare($sql);
@@ -150,15 +154,15 @@ class Sale extends Model
             $params[] = $stationId;
         }
 
-        $sql .= " GROUP BY ft.id ORDER BY total_revenue DESC";
+        $sql .= " GROUP BY t.fuel_type_id, ft.name, ft.color_hex ORDER BY total_revenue DESC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
-        return $stmt->fetchAll();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     public function getWorkerPerformance($start, $end, $stationId = 'all')
     {
-        $sql = "SELECT w.name as worker_name, count(s.id) as shifts_count, SUM(s.total_amount) as total_sales, SUM(s.volume_sold) as total_volume
+        $sql = "SELECT s.worker_id, w.name as worker_name, count(s.id) as shifts_count, SUM(s.total_amount) as total_sales, SUM(s.volume_sold) as total_volume
                 FROM sales s
                 LEFT JOIN workers w ON s.worker_id = w.id
                 WHERE s.sale_date BETWEEN ? AND ? AND w.name IS NOT NULL";
@@ -203,6 +207,8 @@ class Sale extends Model
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+
+
     // --- Helpers for Financial Flow Report ---
 
     // Option B: Daily Total for specific account
@@ -229,13 +235,40 @@ class Sale extends Model
                 JOIN counters c ON s.counter_id = c.id
                 JOIN pumps p ON c.pump_id = p.id
                 JOIN tanks tank ON p.tank_id = tank.id
-                JOIN fuel_types ft ON tank.fuel_type_id = ft.id
+                LEFT JOIN fuel_types ft ON tank.fuel_type_id = ft.id
                 WHERE t.to_type = ? AND t.to_id = ? AND s.sale_date BETWEEN ? AND ?
-                GROUP BY s.sale_date, ft.id /* Group by ID to handle same names correctly, though name is selected */
+                GROUP BY s.sale_date, ft.id, ft.name
                 ORDER BY s.sale_date ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$accountType, $accountId, $start, $end]);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function getRecent($limit = 10, $stationId = 'all')
+    {
+        $sql = "SELECT s.*, 
+                       p.name as pump_name, 
+                       w.name as worker_name, 
+                       ft.name as fuel_type
+                FROM sales s
+                LEFT JOIN counters c ON s.counter_id = c.id
+                LEFT JOIN pumps p ON c.pump_id = p.id
+                LEFT JOIN tanks t ON p.tank_id = t.id
+                LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
+                LEFT JOIN workers w ON s.worker_id = w.id
+                WHERE 1=1";
+
+        $params = [];
+        if ($stationId !== 'all') {
+            $sql .= " AND s.station_id = ?";
+            $params[] = $stationId;
+        }
+
+        $sql .= " ORDER BY s.created_at DESC LIMIT " . intval($limit);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

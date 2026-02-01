@@ -98,8 +98,8 @@ class SettingsController extends Controller
             foreach ($_POST as $key => $value) {
                 if ($key === 'section') continue;
 
-                // Update Setting
-                $settingModel->set($key, $value, $section);
+                // Update Setting - Correct parameter order: key, value, stationId, section, type
+                $settingModel->set($key, $value, null, $section, 'string');
 
                 // Specific Logic for Fuel Prices
                 if ($section === 'fuel') {

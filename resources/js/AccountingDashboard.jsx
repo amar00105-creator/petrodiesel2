@@ -9,34 +9,35 @@ import {
     Landmark, 
     Vault, 
     Plus, 
-    Minus,
-    ArrowUpRight,
-    ArrowDownRight,
-    Wallet,
-    ChevronLeft,
-    FileText,
-    Search,
-    CreditCard,
-    Settings,
-    Edit2,
-    Trash2,
-    PlusCircle,
-    X,
-    Save,
-    AlertTriangle
+    Minus, 
+    ArrowUpRight, 
+    ArrowDownRight, 
+    Wallet, 
+    ChevronLeft, 
+    FileText, 
+    Search, 
+    CreditCard, 
+    Settings, 
+    Edit2, 
+    Trash2, 
+    PlusCircle, 
+    X, 
+    Save, 
+    AlertTriangle, 
+    Globe 
 } from 'lucide-react';
 import { Card, Text, Title } from '@tremor/react';
 
-// Modals
+// Modals - Real Imports
 import AddTransactionModal from './AddTransactionModal';
-import EditTransactionModal from './EditTransactionModal';
 import AddAssetModal from './AddAssetModal';
 import TransferModal from './TransferModal';
 import ReportsModal from './ReportsModal';
 import BankDetailsModal from './BankDetailsModal';
 import SafeDetailsModal from './SafeDetailsModal';
+import EditTransactionModal from './EditTransactionModal'; 
 
-export default function AccountingDashboard({ safes = [], banks = [], transactions = [], categories = [], suppliers = [], customers = [], baseUrl = '/PETRODIESEL2/public' }) {
+export default function AccountingDashboard({ safes = [], banks = [], transactions = [], categories = [], suppliers = [], customers = [], baseUrl = '/PETRODIESEL2/public', currency = 'SDG' }) {
     
     // --- State ---
     const [activeModal, setActiveModal] = useState(null); 
@@ -58,19 +59,19 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
     const [isAdding, setIsAdding] = useState(false); // Mode: adding new item
     
     // Forms state
-    const [manageForm, setManageForm] = useState({ name: '', account_number: '', balance: 0 });
+    const [manageForm, setManageForm] = useState({ name: '', account_number: '', balance: 0, account_scope: 'local' });
 
     const openManageModal = (type) => {
         setManageModal({ open: true, type });
         setIsAdding(false);
         setEditItem(null);
-        setManageForm({ name: '', account_number: '', balance: 0 });
+        setManageForm({ name: '', account_number: '', balance: 0, account_scope: 'local' });
     };
 
     const handleEditInit = (item) => {
         setEditItem(item);
         setIsAdding(false);
-        setManageForm({ name: item.name, account_number: item.account_number || '', balance: item.balance });
+        setManageForm({ name: item.name, account_number: item.account_number || '', balance: item.balance, account_scope: item.account_scope || 'local' });
     };
 
     const handleManageSubmit = async (e) => {
@@ -84,14 +85,13 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
         formData.append('id', editItem?.id || '');
         formData.append('name', manageForm.name);
         if (isBank) formData.append('account_number', manageForm.account_number);
-        if (isAdding) formData.append('balance', manageForm.balance); // Initial balance only on create
+        formData.append('account_scope', manageForm.account_scope);
+        if (isAdding) formData.append('balance', manageForm.balance); 
 
         try {
             const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const data = await res.json();
             if (data.success) {
-                // Determine redirect or reload. Since we are in SPA-like, ideally we refresh data.
-                // For now, reload window to refresh props from server (Laravel view refresh)
                 window.location.reload(); 
             } else {
                 alert('فشلت العملية: ' + data.message);
@@ -220,8 +220,6 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
     };
 
     // Filter transactions based on selections
-    // Simplified: No filtering logic needed as UI filters are removed.
-    // Assuming transactions prop contains the "Recent Transactions" already filtered by backend limiter if applies.
     const filteredTransactions = transactions;
 
     // Direct Stats (No dynamic filtering)
@@ -291,17 +289,19 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                 isOpen={activeModal === 'bank-details'}
                 onClose={closeModal}
                 bankId={selectedBankId}
+                currency={currency}
             />
             <SafeDetailsModal
                 isOpen={activeModal === 'safe-details'}
                 onClose={closeModal}
                 safeId={selectedSafeId}
+                currency={currency}
             />
 
             {/* 2. Top Section (Stats Cards - 3 Columns) - Interactive Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                {/* Bank Balances - Simplified */}
+                {/* Bank Balances */}
                 <motion.div variants={itemVariants} 
                     className="relative rounded-2xl border bg-white border-slate-100 p-6 overflow-hidden"
                 >
@@ -315,13 +315,13 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
 
                         <div className="flex items-center gap-3">
                              <div className="text-xl font-bold font-mono text-slate-800">
-                                {totalBankBalanceStr} <span className="text-xs text-slate-500 font-sans">ر.س</span>
+                                {totalBankBalanceStr} <span className="text-xs text-slate-500 font-sans">{currency}</span>
                             </div>
                         </div>
                     </div>
                 </motion.div>
 
-                {/* Cash in Safes - Simplified */}
+                {/* Cash in Safes */}
                 <motion.div variants={itemVariants} 
                     className="relative rounded-2xl border bg-white border-slate-100 p-6 overflow-hidden"
                 >
@@ -335,14 +335,13 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
 
                         <div className="flex items-center gap-3">
                              <div className="text-xl font-bold font-mono text-slate-800">
-                                {totalSafeBalanceStr} <span className="text-xs text-slate-500 font-sans">ر.س</span>
+                                {totalSafeBalanceStr} <span className="text-xs text-slate-500 font-sans">{currency}</span>
                             </div>
                         </div>
                     </div>
                 </motion.div>
 
-                {/* Total Balance - Clickable to Reset */}
-                {/* Total Balance - Simplified */}
+                {/* Total Balance */}
                 <motion.div
                     variants={itemVariants}
                     className="rounded-2xl p-6 shadow-xl shadow-emerald-900/20 flex items-center justify-between bg-gradient-to-br from-emerald-600 via-emerald-700 to-emerald-900 text-white relative overflow-hidden"
@@ -367,22 +366,24 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                         <div className="text-2xl font-bold font-mono tracking-tight">
                             {totalBalanceStr}
                         </div>
-                        <span className="text-sm opacity-80 font-sans">ر.س</span>
+                        <span className="text-sm opacity-80 font-sans">{currency}</span>
                     </div>
                 </motion.div>
             </div>
 
-            {/* 3. Middle Section (Quick Actions - 4 Column Grid) */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* 3. Middle Section (Quick Actions - 5 Column Grid) */}
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 {[
                     { title: 'إضافة إيراد', icon: Plus, color: 'emerald', action: 'income', subtitle: 'تسجيل مبيعات' },
                     { title: 'تسجيل منصرف', icon: Minus, color: 'rose', action: 'expense', subtitle: 'تسجيل مصروفات' },
-                    { title: 'تحويل أرصدة', icon: ArrowRightLeft, color: 'blue', action: 'transfer', subtitle: 'بين الخزائن والبنوك' },
+                    { title: 'إضافة خزنة', icon: Vault, color: 'blue', action: () => openManageModal('safes'), subtitle: 'خزنة نقدية جديدة', isFunction: true },
+                    { title: 'إضافة بنك', icon: Landmark, color: 'indigo', action: () => openManageModal('banks'), subtitle: 'حساب بنكي جديد', isFunction: true },
+                    { title: 'تحويل أرصدة', icon: ArrowRightLeft, color: 'cyan', action: 'transfer', subtitle: 'بين الخزائن والبنوك' },
                 ].map((item, idx) => (
                     <motion.button 
                         key={idx}
                         variants={itemVariants}
-                        onClick={() => setActiveModal(item.action)}
+                        onClick={() => item.isFunction ? item.action() : setActiveModal(item.action)}
                         className={`
                             bg-white p-4 rounded-xl shadow-sm border border-slate-100 
                             hover:shadow-lg hover:border-${item.color}-200 hover:-translate-y-1 
@@ -396,7 +397,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                             <item.icon className="w-4 h-4" />
                         </div>
                         <div className="text-center">
-                            <div className="font-bold text-slate-800 text-sm group-hover:text-${item.color}-700">{item.title}</div>
+                            <div className={`font-bold text-slate-800 text-sm group-hover:text-${item.color}-700`}>{item.title}</div>
                             <div className="text-[10px] text-slate-400 mt-0.5">{item.subtitle}</div>
                         </div>
                     </motion.button>
@@ -436,7 +437,9 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                             <tbody>
                                 {filteredTransactions.map((transaction, index) => (
                                     <tr key={index} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                        <td className="p-4 text-slate-500 font-mono text-sm">{transaction.date}</td>
+                                        <td className="p-4 text-slate-500 font-mono text-sm">
+                                            {transaction.created_at ? transaction.created_at.split(' ')[0] : transaction.date}
+                                        </td>
                                         <td className="p-4 font-medium text-slate-700">
                                             <div>{transaction.description}</div>
                                             {transaction.reference_number && (
@@ -492,7 +495,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
             {/* --- Manage Modal (Banks/Safes) --- */}
             {manageModal.open && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
                         {/* Header */}
                         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <div className="flex items-center gap-3">
@@ -562,6 +565,19 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                             />
                                         </div>
                                     )}
+                                    
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-1">نطاق الحساب</label>
+                                        <select
+                                            className="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
+                                            value={manageForm.account_scope}
+                                            onChange={e => setManageForm({...manageForm, account_scope: e.target.value})}
+                                        >
+                                            <option value="local">محلي - خاص بالمحطة</option>
+                                            <option value="global">عام - لجميع المحطات</option>
+                                        </select>
+                                        <p className="text-xs text-slate-500 mt-1">الحساب العام يظهر لجميع المحطات، المحلي يظهر لهذه المحطة فقط</p>
+                                    </div>
                                     <div className="flex justify-end gap-2 mt-4">
                                         <button 
                                             type="button" 
@@ -586,7 +602,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                         <button 
                                             onClick={() => {
                                                 setIsAdding(true);
-                                                setManageForm({ name: '', account_number: '', balance: 0 });
+                                                setManageForm({ name: '', account_number: '', balance: 0, account_scope: 'local' });
                                             }}
                                             className="flex items-center gap-2 text-sm font-bold text-white bg-indigo-600 px-4 py-2 rounded-lg hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all hover:-translate-y-0.5"
                                         >
@@ -594,14 +610,14 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                         </button>
                                     </div>
 
-                                    <div className="border rounded-xl overflow-hidden">
+                                    <div className="border rounded-xl overflow-x-auto">
                                         <table className="w-full text-right">
                                             <thead className="bg-slate-50 text-slate-500 text-xs font-bold uppercase">
                                                 <tr>
                                                     <th className="px-5 py-3">الاسم</th>
                                                     {manageModal.type === 'banks' && <th className="px-5 py-3">رقم الحساب</th>}
                                                     <th className="px-5 py-3">الرصيد الحالي</th>
-                                                    <th className="px-5 py-3 text-left">إجراءات</th>
+                                                    <th className="px-5 py-3 text-left w-32">إجراءات</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-100 bg-white">
@@ -613,17 +629,17 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                                     (manageModal.type === 'banks' ? banks : safes).map(item => (
                                                         <tr key={item.id} className="group hover:bg-slate-50 transition-colors">
                                                             <td className="px-5 py-3 font-bold text-slate-700 flex items-center gap-3">
-                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${manageModal.type === 'banks' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'}`}>
-                                                                    {manageModal.type === 'banks' ? <Landmark className="w-4 h-4" /> : <Vault className="w-4 h-4" />}
+                                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.account_scope === 'global' ? 'bg-purple-100 text-purple-600' : (manageModal.type === 'banks' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600')}`}>
+                                                                    {item.account_scope === 'global' ? <Globe className="w-4 h-4" /> : (manageModal.type === 'banks' ? <Landmark className="w-4 h-4" /> : <Vault className="w-4 h-4" />)}
                                                                 </div>
                                                                 {item.name}
                                                             </td>
                                                             {manageModal.type === 'banks' && <td className="px-5 py-3 text-sm font-mono text-slate-500">{item.account_number || '-'}</td>}
-                                                            <td className="px-5 py-3 font-mono font-bold text-emerald-600" dir="ltr">
-                                                                {parseFloat(item.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">SAR</span>
+                                                            <td className="px-5 py-3 font-mono font-bold text-emerald-600 whitespace-nowrap" dir="ltr">
+                                                                {parseFloat(item.balance).toLocaleString('en-US', { minimumFractionDigits: 2 })} <span className="text-xs text-slate-400">{currency}</span>
                                                             </td>
                                                             <td className="px-5 py-3">
-                                                                <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                                                <div className="flex items-center justify-end gap-2">
                                                                     <button 
                                                                         onClick={() => handleEditInit(item)}
                                                                         className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"

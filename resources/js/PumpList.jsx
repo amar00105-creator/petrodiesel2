@@ -6,14 +6,6 @@ import EditPumpModal from './EditPumpModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
-    const [selectedPump, setSelectedPump] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const handleEdit = (pump) => {
-        setSelectedPump(pump);
-        setIsModalOpen(true);
-    };
-
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
@@ -170,12 +162,12 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                                 </div>
 
                                 <Flex className="mt-auto pt-4 border-t border-slate-100 gap-2">
-                                    <button
-                                        onClick={() => handleEdit(pump)}
+                                    <a
+                                        href={`/PETRODIESEL2/public/pumps/edit?id=${pump.id}`}
                                         className="flex-1 py-2 px-3 rounded-lg bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 font-medium text-sm transition-colors flex items-center justify-center gap-2"
                                     >
-                                        <Settings className="w-4 h-4" /> إدارة
-                                    </button>
+                                        <Settings className="w-4 h-4" /> تعديل
+                                    </a>
                                     <button
                                         onClick={() => openDeleteModal(pump)}
                                         className="py-2 px-3 rounded-lg bg-slate-50 hover:bg-red-50 text-slate-600 hover:text-red-500 transition-colors"
@@ -189,19 +181,7 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                 </Grid>
             )}
 
-            {/* Modal */}
-            {selectedPump && (
-                <EditPumpModal 
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setSelectedPump(null);
-                    }}
-                    pump={selectedPump}
-                    tanks={tanks}
-                    workers={workers}
-                />
-            )}
+            {/* Modal - Removed as we now use full page edit */}
         </motion.div>
     );
 }

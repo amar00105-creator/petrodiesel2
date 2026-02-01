@@ -13,7 +13,26 @@ class ViteHelper
     public static function load($entry)
     {
         $manifestPath = __DIR__ . '/../../public/build/.vite/manifest.json';
+        $hotPath = __DIR__ . '/../../public/hot';
         $isLive = defined('BASE_URL') && strpos(BASE_URL, 'app.petrodiesel.net') !== false;
+
+        // PRIORITIZE DEV SERVER IF HOT FILE EXISTS
+        if (file_exists($hotPath)) {
+            $devServerUrl = trim(file_get_contents($hotPath));
+            if (empty($devServerUrl)) $devServerUrl = 'http://localhost:5173';
+
+            return "
+                <script type=\"module\" src=\"{$devServerUrl}/@vite/client\"></script>
+                <script type=\"module\">
+                    import RefreshRuntime from '{$devServerUrl}/@react-refresh'
+                    RefreshRuntime.injectIntoGlobalHook(window)
+                    window.\$RefreshReg\$ = () => {}
+                    window.\$RefreshSig\$ = () => (type) => type
+                    window.__vite_plugin_react_preamble_installed__ = true
+                </script>
+                <script type=\"module\" src=\"{$devServerUrl}/{$entry}\"></script>
+            ";
+        }
 
         // Check if manifest exists (Production Build)
         if (file_exists($manifestPath)) {
@@ -23,13 +42,13 @@ class ViteHelper
             if (isset($manifest[$entry])) {
                 $item = $manifest[$entry];
                 $baseUrl = defined('BASE_URL') ? BASE_URL : '';
-                $scriptFile = $baseUrl . '/build/' . $item['file'];
+                $scriptFile = $baseUrl . '/build/' . $item['file'] . "?v={$version}";
 
                 $html = "<script type=\"module\" src=\"{$scriptFile}\"></script>";
 
                 if (isset($item['css'])) {
                     foreach ($item['css'] as $cssFile) {
-                        $cssPath = $baseUrl . '/build/' . $cssFile;
+                        $cssPath = $baseUrl . '/build/' . $cssFile . "?v={$version}";
                         $html .= "<link rel=\"stylesheet\" href=\"{$cssPath}\">";
                     }
                 }

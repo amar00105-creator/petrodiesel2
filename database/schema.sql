@@ -92,15 +92,17 @@ CREATE TABLE IF NOT EXISTS `counters` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`pump_id`) REFERENCES `pumps`(`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
--- 9. Suppliers
+-- 9. Suppliers (Global - shared across all stations)
 CREATE TABLE IF NOT EXISTS `suppliers` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `station_id` INT NOT NULL,
+    `station_id` INT NULL COMMENT 'NULL = Global supplier for all stations',
     `name` VARCHAR(100) NOT NULL,
     `phone` VARCHAR(50),
     `balance` DECIMAL(15, 2) DEFAULT 0.00 COMMENT 'Positive = We owe them',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (`station_id`) REFERENCES `stations`(`id`) ON DELETE CASCADE
+    INDEX idx_suppliers_station (station_id),
+    FOREIGN KEY (`station_id`) REFERENCES `stations`(`id`) ON DELETE
+    SET NULL
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_unicode_ci;
 -- 10. Customers (Debtors)
 CREATE TABLE IF NOT EXISTS `customers` (

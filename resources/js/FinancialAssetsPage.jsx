@@ -111,7 +111,7 @@ export default function FinancialAssetsPage({ banks = [], safes = [] }) {
                             </div>
                             <div className="text-6xl font-bold font-mono tracking-tight">
                                 {totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                                <span className="text-2xl text-emerald-200 mr-3">ر.س</span>
+                                <span className="text-2xl text-emerald-200 mr-3">ج.س</span>
                             </div>
                         </div>
                         <div className="text-right">
@@ -239,7 +239,7 @@ export default function FinancialAssetsPage({ banks = [], safes = [] }) {
                                     <div className="font-mono font-bold text-slate-800">
                                         {parseFloat(bank.balance).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                     </div>
-                                    <div className="text-xs text-slate-500">ر.س</div>
+                                    <div className="text-xs text-slate-500">ج.س</div>
                                 </div>
                             </div>
                         ))}
@@ -279,7 +279,7 @@ export default function FinancialAssetsPage({ banks = [], safes = [] }) {
                                     <div className="font-mono font-bold text-slate-800">
                                         {parseFloat(safe.balance).toLocaleString('en-US', { maximumFractionDigits: 0 })}
                                     </div>
-                                    <div className="text-xs text-slate-500">ر.س</div>
+                                    <div className="text-xs text-slate-500">ج.س</div>
                                 </div>
                             </div>
                         ))}

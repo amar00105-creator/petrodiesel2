@@ -38,6 +38,12 @@ class FinanceController extends Controller
         $this->customerModel = new Customer();
     }
 
+    private function getSettings()
+    {
+        $settingModel = new \App\Models\Setting();
+        return $settingModel->getAllBySection('general');
+    }
+
     public function index()
     {
         $user = AuthHelper::user();
@@ -77,8 +83,11 @@ class FinanceController extends Controller
             $allStations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
+        $settings = $this->getSettings();
+
         $this->view('finance/index', [
             'user' => $user,
+            'settings' => $settings,
             'safes' => $safes,
             'banks' => $banks,
             'recent_transactions' => $recent_transactions,
@@ -87,7 +96,7 @@ class FinanceController extends Controller
             'customers' => $customers,
             'allStations' => $allStations,
             'hide_topbar' => true,
-            'additional_js' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>' . ViteHelper::load('resources/js/main.jsx'),
+            'additional_js' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>',
             'additional_css' => '
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
             <style>
@@ -129,11 +138,13 @@ class FinanceController extends Controller
         $user = AuthHelper::user();
         $name = $_POST['name'];
         $balance = $_POST['balance'] ?? 0;
+        $scope = $_POST['account_scope'] ?? 'local';
 
         $this->safeModel->create([
             'station_id' => $user['station_id'] ?? 1,
             'name' => $name,
-            'balance' => $balance
+            'balance' => $balance,
+            'account_scope' => $scope
         ]);
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -151,12 +162,14 @@ class FinanceController extends Controller
         $name = $_POST['name'];
         $accNum = $_POST['account_number'];
         $balance = $_POST['balance'] ?? 0;
+        $scope = $_POST['account_scope'] ?? 'local';
 
         $this->bankModel->create([
             'station_id' => $user['station_id'] ?? 1,
             'name' => $name,
             'account_number' => $accNum,
-            'balance' => $balance
+            'balance' => $balance,
+            'account_scope' => $scope
         ]);
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -172,15 +185,16 @@ class FinanceController extends Controller
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
+        $user = AuthHelper::user();
         $id = $_POST['id'];
         $name = $_POST['name'];
-        // Usually we don't update balance manually here unless requested, 
-        // strictly name update for safety, or balance adjustment via transaction.
-        // But user asked for "Modify and Delete". Let's allow name edit.
+        $scope = $_POST['account_scope'] ?? 'local';
 
-        $db = \App\Config\Database::connect();
-        $stmt = $db->prepare("UPDATE safes SET name = ? WHERE id = ?");
-        $stmt->execute([$name, $id]);
+        $this->safeModel->update($id, [
+            'name' => $name,
+            'account_scope' => $scope,
+            'station_id' => $user['station_id'] ?? 1 // Only used if scope is local
+        ]);
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
             header('Content-Type: application/json');
@@ -195,15 +209,34 @@ class FinanceController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         $id = $_POST['id'];
 
-        // TODO: Check if safe has transactions? Usually prevent delete if has transactions.
-        // For now, assuming standard delete.
-        $this->safeModel->delete($id);
+        try {
+            // Check for transactions
+            $transactions = $this->transactionModel->getByAccount('safe', $id, 1);
+            if (count($transactions) > 0) {
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => 'لا يمكن حذف الخزنة لوجود عمليات مالية مسجلة عليها']);
+                    exit;
+                }
+                header('Location: ' . BASE_URL . '/finance?error=' . urlencode('لا يمكن حذف الخزنة لوجود عمليات مالية مسجلة عليها'));
+                return;
+            }
 
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'message' => 'Safe deleted successfully']);
-            exit;
+            $this->safeModel->delete($id);
+
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Safe deleted successfully']);
+                exit;
+            }
+        } catch (\Exception $e) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'خطأ في الحذف: ' . $e->getMessage()]);
+                exit;
+            }
         }
+
         header('Location: ' . BASE_URL . '/finance');
     }
 
@@ -211,13 +244,18 @@ class FinanceController extends Controller
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
+        $user = AuthHelper::user();
         $id = $_POST['id'];
         $name = $_POST['name'];
         $accNum = $_POST['account_number'];
+        $scope = $_POST['account_scope'] ?? 'local';
 
-        $db = \App\Config\Database::connect();
-        $stmt = $db->prepare("UPDATE banks SET name = ?, account_number = ? WHERE id = ?");
-        $stmt->execute([$name, $accNum, $id]);
+        $this->bankModel->update($id, [
+            'name' => $name,
+            'account_number' => $accNum,
+            'account_scope' => $scope,
+            'station_id' => $user['station_id'] ?? 1 // Only used if scope is local
+        ]);
 
         if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
             header('Content-Type: application/json');
@@ -232,12 +270,32 @@ class FinanceController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         $id = $_POST['id'];
 
-        $this->bankModel->delete($id);
+        try {
+            // Check for transactions
+            $transactions = $this->transactionModel->getByAccount('bank', $id, 1);
+            if (count($transactions) > 0) {
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => 'لا يمكن حذف البنك لوجود عمليات مالية مسجلة عليه']);
+                    exit;
+                }
+                header('Location: ' . BASE_URL . '/finance?error=' . urlencode('لا يمكن حذف البنك لوجود عمليات مالية مسجلة عليه'));
+                return;
+            }
 
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'message' => 'Bank deleted successfully']);
-            exit;
+            $this->bankModel->delete($id);
+
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Bank deleted successfully']);
+                exit;
+            }
+        } catch (\Exception $e) {
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'خطأ في الحذف: ' . $e->getMessage()]);
+                exit;
+            }
         }
         header('Location: ' . BASE_URL . '/finance');
     }
@@ -265,31 +323,69 @@ class FinanceController extends Controller
         }
 
         try {
-            // 1. Deduct from Source
-            if ($fromType == 'safe') $this->safeModel->updateBalance($fromId, -$amount);
-            elseif ($fromType == 'bank') $this->bankModel->updateBalance($fromId, -$amount);
+            // Check Destination Scope
+            $destAccount = ($toType == 'safe') ? $this->safeModel->find($toId) : $this->bankModel->find($toId);
+            $sourceAccount = ($fromType == 'safe') ? $this->safeModel->find($fromId) : $this->bankModel->find($fromId);
 
-            // 2. Add to Dest
-            if ($toType == 'safe') $this->safeModel->updateBalance($toId, $amount);
-            elseif ($toType == 'bank') $this->bankModel->updateBalance($toId, $amount);
+            // Logic: Local -> Global requires Approval (Pending Request)
+            $isLocalToGlobal = ($sourceAccount['account_scope'] == 'local' && $destAccount['account_scope'] == 'global');
 
-            // 3. Log Transaction
-            $this->transactionModel->create([
-                'station_id' => $user['station_id'] ?? 1,
-                'type' => 'transfer',
-                'amount' => $amount,
-                'from_type' => $fromType,
-                'from_id' => $fromId,
-                'to_type' => $toType,
-                'to_id' => $toId,
-                'description' => "Transfer: $desc",
-                'created_by' => $user['id']
-            ]);
+            if ($isLocalToGlobal) {
+                // 1. Deduct from Source Immediately (Frozen)
+                if ($fromType == 'safe') $this->safeModel->updateBalance($fromId, -$amount);
+                elseif ($fromType == 'bank') $this->bankModel->updateBalance($fromId, -$amount);
 
-            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
-                header('Content-Type: application/json');
-                echo json_encode(['success' => true, 'message' => 'Transfer successful']);
-                exit;
+                // 2. Create Transfer Request
+                require_once __DIR__ . '/../Models/TransferRequest.php';
+                $transferRequestModel = new \App\Models\TransferRequest();
+
+                $transferRequestModel->create([
+                    'from_type' => $fromType,
+                    'from_id' => $fromId,
+                    'from_scope' => $sourceAccount['account_scope'],
+                    'to_type' => $toType,
+                    'to_id' => $toId,
+                    'to_scope' => $destAccount['account_scope'],
+                    'amount' => $amount,
+                    'description' => $desc,
+                    'requested_by' => $user['id'],
+                    'station_id' => $user['station_id'] ?? null
+                ]);
+
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'message' => 'تم إرسال طلب التحويل للموافقة (بانتظار قبول الخزينة العامة)']);
+                    exit;
+                }
+            } else {
+                // Direct Transfer (Local->Local or Global->Global or Global->Local if permitted)
+
+                // 1. Deduct from Source
+                if ($fromType == 'safe') $this->safeModel->updateBalance($fromId, -$amount);
+                elseif ($fromType == 'bank') $this->bankModel->updateBalance($fromId, -$amount);
+
+                // 2. Add to Dest
+                if ($toType == 'safe') $this->safeModel->updateBalance($toId, $amount);
+                elseif ($toType == 'bank') $this->bankModel->updateBalance($toId, $amount);
+
+                // 3. Log Transaction
+                $this->transactionModel->create([
+                    'station_id' => $user['station_id'] ?? 1,
+                    'type' => 'transfer',
+                    'amount' => $amount,
+                    'from_type' => $fromType,
+                    'from_id' => $fromId,
+                    'to_type' => $toType,
+                    'to_id' => $toId,
+                    'description' => "Transfer: $desc",
+                    'created_by' => $user['id']
+                ]);
+
+                if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => true, 'message' => 'Transfer successful']);
+                    exit;
+                }
             }
         } catch (\Exception $e) {
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -446,7 +542,11 @@ class FinanceController extends Controller
             exit;
         }
 
-        $transactions = $this->transactionModel->getByAccount('bank', $id);
+        // Get date filters
+        $startDate = $_GET['start_date'] ?? null;
+        $endDate = $_GET['end_date'] ?? null;
+
+        $transactions = $this->transactionModel->getByAccount('bank', $id, 500, $startDate, $endDate);
 
         header('Content-Type: application/json');
         echo json_encode([
@@ -473,7 +573,11 @@ class FinanceController extends Controller
             exit;
         }
 
-        $transactions = $this->transactionModel->getByAccount('safe', $id);
+        // Get date filters
+        $startDate = $_GET['start_date'] ?? null;
+        $endDate = $_GET['end_date'] ?? null;
+
+        $transactions = $this->transactionModel->getByAccount('safe', $id, 500, $startDate, $endDate);
 
         header('Content-Type: application/json');
         echo json_encode([
@@ -491,9 +595,22 @@ class FinanceController extends Controller
         $user = AuthHelper::user();
         $banks = $this->bankModel->getAll();
 
+        require_once __DIR__ . '/../Models/TransferRequest.php';
+        $trModel = new \App\Models\TransferRequest();
+        $allPending = $trModel->getPending($user['station_id']);
+
+        // Filter: Only requests FROM a bank
+        $pendingRequests = array_filter($allPending, function ($r) {
+            return $r['from_type'] === 'bank';
+        });
+
+        $settings = $this->getSettings();
+
         $this->view('finance/banks', [
             'user' => $user,
+            'settings' => $settings,
             'banks' => $banks,
+            'pendingRequests' => array_values($pendingRequests),
             'hide_topbar' => true,
             'additional_js' => ViteHelper::load('resources/js/main.jsx'),
             'additional_css' => ''
@@ -506,9 +623,22 @@ class FinanceController extends Controller
         $user = AuthHelper::user();
         $safes = $this->safeModel->getAll();
 
+        require_once __DIR__ . '/../Models/TransferRequest.php';
+        $trModel = new \App\Models\TransferRequest();
+        $allPending = $trModel->getPending($user['station_id']);
+
+        // Filter: Only requests FROM a safe
+        $pendingRequests = array_filter($allPending, function ($r) {
+            return $r['from_type'] === 'safe';
+        });
+
+        $settings = $this->getSettings();
+
         $this->view('finance/safes', [
             'user' => $user,
+            'settings' => $settings,
             'safes' => $safes,
+            'pendingRequests' => array_values($pendingRequests),
             'hide_topbar' => true,
             'additional_js' => ViteHelper::load('resources/js/main.jsx'),
             'additional_css' => ''
@@ -630,5 +760,276 @@ class FinanceController extends Controller
             exit;
         }
         header('Location: ' . BASE_URL . '/finance');
+    }
+
+    // ==================== MULTI-LEVEL TRANSFER SYSTEM ====================
+
+    /**
+     * Request a transfer from local to global (or vice versa)
+     */
+    public function requestTransfer()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method']);
+            return;
+        }
+
+        $user = AuthHelper::user();
+        require_once __DIR__ . '/../Models/TransferRequest.php';
+        $transferRequestModel = new \App\Models\TransferRequest();
+
+        try {
+            // Validate input
+            $fromId = (int)($_POST['from_id'] ?? 0);
+            $toId = (int)($_POST['to_id'] ?? 0);
+            $amount = (float)($_POST['amount'] ?? 0);
+            $description = $_POST['description'] ?? '';
+
+            if ($fromId <= 0 || $toId <= 0 || $amount <= 0) {
+                $this->jsonResponse(['success' => false, 'message' => 'بيانات غير صحيحة']);
+                return;
+            }
+
+            // Get source bank details
+            $sourceBank = $this->bankModel->find($fromId);
+            if (!$sourceBank) {
+                $this->jsonResponse(['success' => false, 'message' => 'الحساب المصدر غير موجود']);
+                return;
+            }
+
+            // Verify user has access to source account
+            if ($sourceBank['account_scope'] === 'local' && $sourceBank['station_id'] != $user['station_id']) {
+                $this->jsonResponse(['success' => false, 'message' => 'غير مصرح لك بالوصول لهذا الحساب']);
+                return;
+            }
+
+            // Check sufficient balance
+            if ($sourceBank['balance'] < $amount) {
+                $this->jsonResponse(['success' => false, 'message' => 'الرصيد غير كافٍ']);
+                return;
+            }
+
+            // Get destination bank details
+            $destBank = $this->bankModel->find($toId);
+            if (!$destBank) {
+                $this->jsonResponse(['success' => false, 'message' => 'الحساب الوجهة غير موجود']);
+                return;
+            }
+
+            // Deduct from source immediately (funds frozen in pending state)
+            $this->bankModel->updateBalance($fromId, -$amount);
+
+            // Create transfer request
+            $requestCode = $transferRequestModel->create([
+                'from_type' => 'bank',
+                'from_id' => $fromId,
+                'from_scope' => $sourceBank['account_scope'],
+                'to_type' => 'bank',
+                'to_id' => $toId,
+                'to_scope' => $destBank['account_scope'],
+                'amount' => $amount,
+                'description' => $description,
+                'requested_by' => $user['id'],
+                'station_id' => $user['station_id'] ?? null
+            ]);
+
+            if ($requestCode) {
+                $this->jsonResponse([
+                    'success' => true,
+                    'message' => 'تم إرسال طلب التحويل بنجاح',
+                    'request_code' => $requestCode
+                ]);
+            } else {
+                // Rollback: Return amount to source
+                $this->bankModel->updateBalance($fromId, $amount);
+                $this->jsonResponse(['success' => false, 'message' => 'فشل إنشاء طلب التحويل']);
+            }
+        } catch (\Exception $e) {
+            error_log("Transfer request error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'حدث خطأ في النظام']);
+        }
+    }
+
+    /**
+     * Get all transfer requests (filtered by role)
+     */
+    public function getTransferRequests()
+    {
+        $user = AuthHelper::user();
+        require_once __DIR__ . '/../Models/TransferRequest.php';
+        $transferRequestModel = new \App\Models\TransferRequest();
+
+        try {
+            $status = $_GET['status'] ?? 'pending';
+
+            $filters = ['status' => $status];
+
+            // Non-admin users only see their station's requests
+            if (!in_array($user['role'], ['super_admin', 'admin'])) {
+                $filters['station_id'] = $user['station_id'];
+            }
+
+            $requests = $transferRequestModel->getAll($filters);
+
+            $this->jsonResponse([
+                'success' => true,
+                'requests' => $requests
+            ]);
+        } catch (\Exception $e) {
+            error_log("Get transfer requests error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'فشل تحميل الطلبات']);
+        }
+    }
+
+    /**
+     * Approve a transfer request (Admin only)
+     */
+    public function approveTransfer()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method']);
+            return;
+        }
+
+        $user = AuthHelper::user();
+
+        // Check admin permission
+        if (!in_array($user['role'], ['super_admin', 'admin'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'غير مصرح لك بهذه العملية']);
+            return;
+        }
+
+        require_once __DIR__ . '/../Models/TransferRequest.php';
+        $transferRequestModel = new \App\Models\TransferRequest();
+
+        try {
+            $requestId = (int)($_POST['request_id'] ?? 0);
+            $notes = $_POST['notes'] ?? null;
+
+            if ($requestId <= 0) {
+                $this->jsonResponse(['success' => false, 'message' => 'رقم الطلب غير صحيح']);
+                return;
+            }
+
+            // Get request details
+            $request = $transferRequestModel->find($requestId);
+            if (!$request) {
+                $this->jsonResponse(['success' => false, 'message' => 'الطلب غير موجود']);
+                return;
+            }
+
+            if ($request['status'] !== 'pending') {
+                $this->jsonResponse(['success' => false, 'message' => 'الطلب تمت معالجته مسبقاً']);
+                return;
+            }
+
+            // Credit amount to destination account
+            $this->bankModel->updateBalance($request['to_id'], $request['amount']);
+
+            // Create transaction record
+            $transactionId = $this->transactionModel->create([
+                'station_id' => $request['station_id'],
+                'type' => 'transfer',
+                'from_type' => $request['from_type'],
+                'from_id' => $request['from_id'],
+                'to_type' => $request['to_type'],
+                'to_id' => $request['to_id'],
+                'amount' => $request['amount'],
+                'description' => "تحويل معتمد: " . $request['request_code'] . " - " . ($request['description'] ?? ''),
+                'date' => date('Y-m-d'),
+                'created_by' => $user['id']
+            ]);
+
+            // Update request status
+            $transferRequestModel->approve($requestId, $user['id'], $transactionId, $notes);
+
+            $this->jsonResponse([
+                'success' => true,
+                'message' => 'تم اعتماد التحويل بنجاح'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Approve transfer error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'فشل اعتماد التحويل']);
+        }
+    }
+
+    /**
+     * Reject a transfer request (Admin只)
+     */
+    public function rejectTransfer()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->jsonResponse(['success' => false, 'message' => 'Invalid request method']);
+            return;
+        }
+
+        $user = AuthHelper::user();
+
+        // Check admin permission
+        if (!in_array($user['role'], ['super_admin', 'admin'])) {
+            $this->jsonResponse(['success' => false, 'message' => 'غير مصرح لك بهذه العملية']);
+            return;
+        }
+
+        require_once __DIR__ . '/../Models/TransferRequest.php';
+        $transferRequestModel = new \App\Models\TransferRequest();
+
+        try {
+            $requestId = (int)($_POST['request_id'] ?? 0);
+            $notes = $_POST['notes'] ?? 'تم رفض الطلب';
+
+            if ($requestId <= 0) {
+                $this->jsonResponse(['success' => false, 'message' => 'رقم الطلب غير صحيح']);
+                return;
+            }
+
+            // Get request details
+            $request = $transferRequestModel->find($requestId);
+            if (!$request) {
+                $this->jsonResponse(['success' => false, 'message' => 'الطلب غير موجود']);
+                return;
+            }
+
+            if ($request['status'] !== 'pending') {
+                $this->jsonResponse(['success' => false, 'message' => 'الطلب تمت معالجته مسبقاً']);
+                return;
+            }
+
+            // Return amount to source account
+            $this->bankModel->updateBalance($request['from_id'], $request['amount']);
+
+            // Update request status
+            $transferRequestModel->reject($requestId, $user['id'], $notes);
+
+            $this->jsonResponse([
+                'success' => true,
+                'message' => 'تم رفض الطلب وإعادة المبلغ'
+            ]);
+        } catch (\Exception $e) {
+            error_log("Reject transfer error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'فشل رفض الطلب']);
+        }
+    }
+
+    /**
+     * Get local and global banks for transfer dropdowns
+     */
+    public function getBanksForTransfer()
+    {
+        $user = AuthHelper::user();
+
+        try {
+            $localBanks = $this->bankModel->getLocalByStation($user['station_id']);
+            $globalBanks = $this->bankModel->getGlobal();
+
+            $this->jsonResponse([
+                'success' => true,
+                'local_banks' => $localBanks,
+                'global_banks' => $globalBanks
+            ]);
+        } catch (\Exception $e) {
+            error_log("Get banks for transfer error: " . $e->getMessage());
+            $this->jsonResponse(['success' => false, 'message' => 'فشل تحميل البنوك']);
+        }
     }
 }

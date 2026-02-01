@@ -34,16 +34,11 @@ class SupplierController extends Controller
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $user = AuthHelper::user();
             $data = $_POST;
-            $data['station_id'] = $_POST['station_id'] ?? $user['station_id'];
 
-            if (empty($data['station_id'])) {
-                $data['station_id'] = 0; // Default to Admin/Global station
-            }
-
+            // Suppliers are now global - no station_id needed
             $supplierModel = new Supplier();
-            $supplierModel->create($data); // Ensure create method exists in Model or use logic here
+            $supplierModel->create($data);
 
             $this->redirect('/suppliers');
         }
@@ -55,8 +50,6 @@ class SupplierController extends Controller
         header('Content-Type: application/json');
 
         try {
-            $user = AuthHelper::user();
-
             // Get JSON input
             $input = json_decode(file_get_contents('php://input'), true);
 
@@ -65,15 +58,11 @@ class SupplierController extends Controller
                 exit;
             }
 
+            // Suppliers are now global - no station_id needed
             $data = [
                 'name' => $input['name'],
-                'phone' => $input['phone'] ?? '',
-                'station_id' => $input['station_id'] ?? $user['station_id']
+                'phone' => $input['phone'] ?? ''
             ];
-
-            if (empty($data['station_id'])) {
-                $data['station_id'] = 0; // Default to Admin/Global
-            }
 
             $supplierModel = new Supplier();
             $newId = $supplierModel->create($data);

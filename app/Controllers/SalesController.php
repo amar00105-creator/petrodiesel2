@@ -42,24 +42,19 @@ class SalesController extends Controller
     private function getNewInvoiceNumber($stationId)
     {
         $db = \App\Config\Database::connect();
-        // Get the last ID to calculate sequence. 
-        // We use ID instead of relying on a separate counter for simplicity.
-        // If we want S-YY-MM-XXXX where XXXX is a running sequence *per month* or global?
-        // User said: S + 26 + 01 + Sequence (e.g. S26011 - S26012).
-        // This looks like S-YY-MM-[ID] or S-YY-MM-[Count].
-        // Let's use ID for uniqueness or Count + 1.
-
-        // Let's get the max ID
-        $stmt = $db->prepare("SELECT MAX(id) as max_id FROM sales");
-        $stmt->execute();
-        $row = $stmt->fetch();
-        $nextId = ($row['max_id'] ?? 0) + 1;
 
         $year = date('y'); // 26
-        $month = date('m'); // 01
+        $month = date('m'); // 02
 
-        // Format: S2601[ID]
-        return 'S' . $year . $month . $nextId;
+        // Count existing invoices in current month for this station
+        $prefix = 'S' . $year . $month;
+        $stmt = $db->prepare("SELECT COUNT(*) as count FROM sales WHERE invoice_number LIKE ? AND station_id = ?");
+        $stmt->execute([$prefix . '%', $stationId]);
+        $row = $stmt->fetch();
+        $sequence = ($row['count'] ?? 0) + 1;
+
+        // Format: S2602001, S2602002, etc.
+        return $prefix . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
     public function getNextInvoiceNumber()
@@ -218,7 +213,7 @@ class SalesController extends Controller
             // Fetch Pump and Assigned Worker
             $db = \App\Config\Database::connect();
             $stmt = $db->prepare("
-                SELECT t.current_price, ft.name as product_type, w.name as worker_name, w.id as worker_id 
+                SELECT t.current_price, t.name as tank_name, ft.name as product_type, w.name as worker_name, w.id as worker_id 
                 FROM tanks t 
                 JOIN pumps p ON p.tank_id = t.id 
                 JOIN counters c ON c.pump_id = p.id 
@@ -234,6 +229,7 @@ class SalesController extends Controller
                 'current_reading' => $counter['current_reading'],
                 'price' => $info['current_price'],
                 'product_type' => $info['product_type'],
+                'tank_name' => $info['tank_name'] ?? 'غير معروف',
                 'worker_name' => $info['worker_name'] ?? 'غير معرف',
                 'worker_id' => $info['worker_id']
             ]);
@@ -244,6 +240,8 @@ class SalesController extends Controller
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $db = \App\Config\Database::connect();
+
             try {
                 $user = AuthHelper::user();
                 $data = $_POST;
@@ -282,6 +280,9 @@ class SalesController extends Controller
                 $data['volume_sold'] = $data['closing_reading'] - $data['opening_reading'];
                 $data['total_amount'] = $data['volume_sold'] * $data['unit_price'];
 
+                // ========== BEGIN TRANSACTION ==========
+                $db->beginTransaction();
+
                 // Save Sale
                 $saleModel = new Sale();
                 $saleId = $saleModel->create($data);
@@ -291,7 +292,6 @@ class SalesController extends Controller
                 $counterModel->updateReading($data['counter_id'], $data['closing_reading']);
 
                 // Deduct from Tank
-                $db = \App\Config\Database::connect();
                 $stmt = $db->prepare("SELECT t.id FROM tanks t JOIN pumps p ON p.tank_id = t.id JOIN counters c ON c.pump_id = p.id WHERE c.id = ?");
                 $stmt->execute([$data['counter_id']]);
                 $tank = $stmt->fetch();
@@ -360,6 +360,9 @@ class SalesController extends Controller
                     $stmt->execute([$data['total_amount'], $data['customer_id']]);
                 }
 
+                // ========== COMMIT TRANSACTION ==========
+                $db->commit();
+
                 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                     header('Content-Type: application/json');
                     echo json_encode(['success' => true, 'message' => 'Sale added successfully']);
@@ -367,6 +370,11 @@ class SalesController extends Controller
                 }
                 $this->redirect('/sales');
             } catch (\Exception $e) {
+                // ========== ROLLBACK ON ERROR ==========
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+
                 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                     header('Content-Type: application/json');
                     // Return the specific error message to help debugging

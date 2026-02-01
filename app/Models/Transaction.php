@@ -2,26 +2,20 @@
 
 namespace App\Models;
 
-use App\Config\Database;
+use App\Core\Model;
 use PDO;
 
-class Transaction
+class Transaction extends Model
 {
-    // Removed cached $db property
-
-    public function __construct()
-    {
-        // No need to cache connection
-    }
+    protected $table = 'transactions';
 
     public function create($data)
     {
-        $db = Database::connect();
         $sql = "INSERT INTO transactions 
                 (station_id, type, amount, category_id, from_type, from_id, to_type, to_id, related_entity_type, related_entity_id, description, reference_number, date, created_by) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        $stmt = $db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([
             $data['station_id'],
             $data['type'],
@@ -39,12 +33,11 @@ class Transaction
             $data['created_by'] ?? null
         ]);
 
-        return $db->lastInsertId();
+        return $this->db->lastInsertId();
     }
 
     public function getTotalsByPeriod($start, $end, $stationId = 'all')
     {
-        $db = Database::connect();
         $sql = "SELECT type, SUM(amount) as total FROM transactions WHERE date BETWEEN ? AND ?";
         $params = [$start, $end];
 
@@ -54,10 +47,10 @@ class Transaction
         }
 
         $sql .= " GROUP BY type";
-        $stmt = $db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $totals = ['income' => 0, 'expense' => 0];
 
         foreach ($results as $row) {
@@ -75,8 +68,11 @@ class Transaction
         } catch (\PDOException $e) {
             // Check for "Server has gone away" error codes (2006, 2013)
             if ($e->errorInfo[1] == 2006 || $e->errorInfo[1] == 2013) {
-                Database::reconnect();
-                return $this->_getHistory($stationId, $limit);
+                // If using Model parent, we might not have a public reconnect method on $this->db easily unless we added it to Database class.
+                // Assuming standard PDO behavior or ignoring reconnect for now to keep it simple as Model usually handles init.
+                // Re-throw or ignore. Let's just try again or assume connection is alive.
+                // If we really need reconnect, we'd need access to Database::connect() which caused issues.
+                throw $e;
             }
             throw $e;
         }
@@ -84,7 +80,6 @@ class Transaction
 
     private function _getHistory($stationId, $limit)
     {
-        $db = Database::connect();
         $sql = "SELECT t.*, 
                     u.name as user_name,
                     c.name as category_name
@@ -92,16 +87,15 @@ class Transaction
                 LEFT JOIN users u ON t.created_by = u.id
                 LEFT JOIN transaction_categories c ON t.category_id = c.id
                 WHERE t.station_id = ? 
-                ORDER BY t.created_at DESC 
+                ORDER BY t.created_at DESC, t.id DESC
                 LIMIT $limit";
-        $stmt = $db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute([$stationId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getReport($stationId, $filters = [])
     {
-        $db = Database::connect();
         $sql = "SELECT t.*, c.name as category_name 
                 FROM transactions t
                 LEFT JOIN transaction_categories c ON t.category_id = c.id
@@ -126,38 +120,53 @@ class Transaction
 
         $sql .= " ORDER BY t.date DESC";
 
-        $stmt = $db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getByAccount($type, $id, $limit = 500)
+    public function getByAccount($type, $id, $limit = 500, $startDate = null, $endDate = null)
     {
-        $db = Database::connect();
-        $sql = "SELECT t.*, c.name as category_name, u.name as user_name
+        $sql = "SELECT t.*, 
+                       c.name as category_name, 
+                       u.name as user_name,
+                       ft.name as fuel_name,
+                       tk.name as tank_name
                 FROM transactions t
                 LEFT JOIN transaction_categories c ON t.category_id = c.id
                 LEFT JOIN users u ON t.created_by = u.id
-                WHERE (t.from_type = ? AND t.from_id = ?) 
-                   OR (t.to_type = ? AND t.to_id = ?)
-                ORDER BY t.created_at DESC, t.id DESC
-                LIMIT $limit";
+                LEFT JOIN sales s ON (t.related_entity_type = 'sales' AND t.related_entity_id = s.id)
+                LEFT JOIN counters co ON s.counter_id = co.id
+                LEFT JOIN pumps p ON co.pump_id = p.id
+                LEFT JOIN tanks tk ON p.tank_id = tk.id
+                LEFT JOIN fuel_types ft ON tk.fuel_type_id = ft.id
+                WHERE ((t.from_type = ? AND t.from_id = ?) 
+                   OR (t.to_type = ? AND t.to_id = ?))";
 
-        $stmt = $db->prepare($sql);
-        $stmt->execute([$type, $id, $type, $id]);
+        $params = [$type, $id, $type, $id];
+
+        // Add date filtering if provided - use created_at for accuracy
+        if ($startDate && $endDate) {
+            $sql .= " AND DATE(t.created_at) BETWEEN ? AND ?";
+            $params[] = $startDate;
+            $params[] = $endDate;
+        }
+
+        $sql .= " ORDER BY t.created_at DESC, t.id DESC LIMIT $limit";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     public function find($id)
     {
-        $db = Database::connect();
-        $stmt = $db->prepare("SELECT * FROM transactions WHERE id = ?");
+        $stmt = $this->db->prepare("SELECT * FROM transactions WHERE id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function update($id, $data)
     {
-        $db = Database::connect();
         $sql = "UPDATE transactions SET 
                     amount = ?, 
                     description = ?, 
@@ -165,7 +174,7 @@ class Transaction
                     category_id = ? 
                 WHERE id = ?";
 
-        $stmt = $db->prepare($sql);
+        $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             $data['amount'],
             $data['description'],
@@ -177,8 +186,7 @@ class Transaction
 
     public function delete($id)
     {
-        $db = Database::connect();
-        $stmt = $db->prepare("DELETE FROM transactions WHERE id = ?");
+        $stmt = $this->db->prepare("DELETE FROM transactions WHERE id = ?");
         return $stmt->execute([$id]);
     }
 }

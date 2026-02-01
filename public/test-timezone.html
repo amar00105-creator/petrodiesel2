@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Timezone</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #f5f5f5; }
+        .box { background: white; padding: 20px; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; }
+        .info { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; }
+        .label { font-weight: bold; color: #555; }
+        .value { color: #2196F3; font-family: monospace; }
+        .error { color: #f44336; }
+        .success { color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <h1>🕐 Timezone Configuration Test</h1>
+    
+    <div class="box">
+        <h2>1. PHP Server Info</h2>
+        <div class="info">
+            <span class="label">Current PHP Timezone:</span>
+            <span class="value"><?php echo date_default_timezone_get(); ?></span>
+        </div>
+        <div class="info">
+            <span class="label">Server Date:</span>
+            <span class="value"><?php echo date('Y-m-d'); ?></span>
+        </div>
+        <div class="info">
+            <span class="label">Server Time:</span>
+            <span class="value"><?php echo date('H:i:s'); ?></span>
+        </div>
+        <div class="info">
+            <span class="label">Full DateTime:</span>
+            <span class="value"><?php echo date('Y-m-d H:i:s'); ?></span>
+        </div>
+    </div>
+
+    <div class="box">
+        <h2>2. Database Setting</h2>
+        <?php
+        require_once __DIR__ . '/app/Config/Database.php';
+        try {
+            $db = \App\Config\Database::connect();
+            $stmt = $db->query("SELECT * FROM settings WHERE key_name = 'timezone'");
+            $setting = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($setting) {
+                echo '<div class="info"><span class="label">Status:</span><span class="value success">✅ Found</span></div>';
+                echo '<div class="info"><span class="label">Timezone:</span><span class="value">' . $setting['value'] . '</span></div>';
+                echo '<div class="info"><span class="label">Section:</span><span class="value">' . $setting['section'] . '</span></div>';
+                echo '<div class="info"><span class="label">Last Updated:</span><span class="value">' . $setting['updated_at'] . '</span></div>';
+            } else {
+                echo '<div class="info"><span class="label">Status:</span><span class="value error">❌ Not Found in Database</span></div>';
+            }
+        } catch (Exception $e) {
+            echo '<div class="info"><span class="label">Error:</span><span class="value error">' . $e->getMessage() . '</span></div>';
+        }
+        ?>
+    </div>
+
+    <div class="box">
+        <h2>3. API Endpoint Test</h2>
+        <button onclick="testAPI()">Test /api/server-time</button>
+        <div id="api-result" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="box">
+        <h2>4. Browser Time (for comparison)</h2>
+        <div class="info">
+            <span class="label">Browser Date/Time:</span>
+            <span class="value" id="browser-time"></span>
+        </div>
+        <div class="info">
+            <span class="label">Browser Timezone:</span>
+            <span class="value" id="browser-tz"></span>
+        </div>
+    </div>
+
+    <script>
+        // Show browser time
+        const now = new Date();
+        document.getElementById('browser-time').textContent = now.toLocaleString();
+        document.getElementById('browser-tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+        // Test API
+        async function testAPI() {
+            const result = document.getElementById('api-result');
+            result.innerHTML = '<div style="color: #FF9800;">⏳ Testing...</div>';
+            
+            try {
+                const res = await fetch('/PETRODIESEL2/public/api/server-time');
+                const data = await res.json();
+                
+                if (data.success) {
+                    result.innerHTML = `
+                        <div style="color: #4CAF50; font-weight: bold;">✅ API Works!</div>
+                        <div class="info"><span class="label">Server Timezone:</span><span class="value">${data.timezone}</span></div>
+                        <div class="info"><span class="label">Server Date:</span><span class="value">${data.date}</span></div>
+                        <div class="info"><span class="label">Server Time:</span><span class="value">${data.time}</span></div>
+                        <div class="info"><span class="label">Timestamp:</span><span class="value">${data.timestamp}</span></div>
+                    `;
+                } else {
+                    result.innerHTML = '<div style="color: #f44336;">❌ API Error: ' + JSON.stringify(data) + '</div>';
+                }
+            } catch (err) {
+                result.innerHTML = '<div style="color: #f44336;">❌ Failed: ' + err.message + '</div>';
+            }
+        }
+    </script>
+</body>
+</html>

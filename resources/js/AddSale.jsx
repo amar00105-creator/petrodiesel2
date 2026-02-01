@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Calculator, User, Droplets, CreditCard, Save, RefreshCw, 
-    Wallet, Building2, AlertCircle, CheckCircle, Search, Truck 
+    Wallet, Building2, AlertCircle, CheckCircle, Search, Truck, Database 
 } from 'lucide-react';
 import { Card, Title, Text, Metric } from '@tremor/react';
 import { toast } from 'sonner';
@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 export default function AddSale({ pumps = [], safes = [], banks = [], customers = [], initialSale = null }) {
     // --- State ---
     const [formData, setFormData] = useState({
-        sale_date: new Date().toISOString().split('T')[0],
+        sale_date: '', // Will be set from server
         pump_id: '',
         counter_id: '',
         opening_reading: '',
@@ -18,8 +18,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
         volume_sold: 0,
         unit_price: 0,
         total_amount: 0,
-        payment_method: 'cash', // cash, credit
-        account_type: 'safe', // safe, bank
+        payment_method: 'cash',
+        account_type: 'safe',
         account_id: '',
         customer_id: '',
         notes: ''
@@ -32,23 +32,44 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
 
     // --- Init ---
     useEffect(() => {
-        // Fetch Invoice Number
-        // Use dynamic BASE_URL
-        fetch(`${window.BASE_URL || ''}/sales/getNextInvoiceNumber`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) setInvoiceNumber(data.invoice_number);
-            })
-            .catch(err => console.error('Failed to fetch invoice number', err));
+        // Set today's date from server timezone
+        const today = new Date();
+        const serverDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD format
+        if (!initialSale) {
+            setFormData(prev => ({ ...prev, sale_date: serverDate }));
+        }
+
+        // If edit mode, use existing invoice number
+        if (initialSale && initialSale.invoice_number) {
+            setInvoiceNumber(initialSale.invoice_number);
+        } else {
+            // Fetch New Invoice Number for creation
+            fetch(`${window.BASE_URL || ''}/sales/getNextInvoiceNumber`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) setInvoiceNumber(data.invoice_number);
+                })
+                .catch(err => console.error('Failed to fetch invoice number', err));
+        }
 
         // Default to first safe if available
         if (safes.length > 0) {
             setFormData(prev => ({ ...prev, account_id: safes[0].id }));
         }
 
-        // If edit mode (future proofing)
+        // If edit mode
         if (initialSale) {
             setFormData(initialSale);
+            // Pre-populate selectedCounter to enable inputs
+            if (initialSale.counter_id) {
+                setSelectedCounter({
+                    fuel_type: initialSale.fuel_type || 'Unknown',
+                    worker_name: initialSale.worker_name || 'Unknown',
+                    worker_id: initialSale.worker_id,
+                    price: parseFloat(initialSale.unit_price || 0),
+                    current_reading: parseFloat(initialSale.opening_reading || 0)
+                });
+            }
         }
     }, [safes, initialSale]);
 
@@ -84,7 +105,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                     worker_name: result.worker_name,
                     worker_id: result.worker_id,
                     price: parseFloat(result.price),
-                    current_reading: parseFloat(result.current_reading)
+                    current_reading: parseFloat(result.current_reading),
+                    tank_name: result.tank_name
                 });
 
                 setFormData(prev => ({
@@ -298,8 +320,27 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                             {/* 2. Readings Row (Compact) */}
                             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                                 
-                                {/* Opening Reading - Professional Badge Icon styling */}
-                                <div className="md:col-span-3 flex justify-start pb-1">
+                                {/* Opening Reading with Tank Name Badge */}
+                                <div className="md:col-span-4 flex flex-col gap-2">
+                                    {/* Tank Name Badge - Shows when counter is selected */}
+                                    <AnimatePresence>
+                                        {selectedCounter && selectedCounter.tank_name && (
+                                            <motion.div 
+                                                initial={{ opacity: 0, y: -10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -10 }}
+                                                className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg px-3 py-1.5 shadow-md"
+                                            >
+                                                <Database className="w-4 h-4" />
+                                                <div className="flex flex-col">
+                                                    <span className="text-[9px] opacity-80">البئر/الخزان</span>
+                                                    <span className="text-sm font-bold leading-none">{selectedCounter.tank_name}</span>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                    
+                                    {/* Previous Reading */}
                                     <div className="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 w-full">
                                         <div className="p-2 bg-white rounded-lg shadow-sm">
                                             <RefreshCw className="w-4 h-4 text-slate-400" />
@@ -313,9 +354,9 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                     </div>
                                 </div>
                                 
-                                {/* Closing Reading - Main Focus */}
-                                <div className="md:col-span-5">
-                                    <label className="text-xs font-bold text-slate-500 mb-1 block">القراءة الحالية (Closing)</label>
+                                {/* Closing Reading - Smaller Size */}
+                                <div className="md:col-span-4">
+                                    <label className="text-xs font-bold text-slate-500 mb-1 block">القراءة الحالية</label>
                                     <div className="relative">
                                         <input 
                                             type="number" 
@@ -323,14 +364,14 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                             onChange={handleReadingChange}
                                             disabled={!selectedCounter}
                                             autoFocus
-                                            className={`w-full font-mono text-xl font-black border rounded-xl p-3 focus:ring-4 outline-none transition-all shadow-sm ${
+                                            className={`w-full font-mono text-base font-bold border rounded-xl p-2.5 focus:ring-4 outline-none transition-all shadow-sm ${
                                                 parseFloat(formData.closing_reading) < parseFloat(formData.opening_reading) 
                                                 ? 'border-red-300 focus:ring-red-500/10 bg-red-50 text-red-600' 
                                                 : 'border-slate-200 focus:ring-blue-500/10 focus:border-blue-400 bg-white text-slate-800'
                                             }`}
-                                            placeholder="000000"
+                                            placeholder={selectedCounter ? formatNumber(selectedCounter.current_reading) : '000000'}
                                         />
-                                        <div className="absolute left-4 top-3.5 text-xs text-slate-300 font-bold">Liters</div>
+                                        <div className="absolute left-3 top-2.5 text-[10px] text-slate-300 font-bold">لتر</div>
                                     </div>
                                     {parseFloat(formData.closing_reading) < parseFloat(formData.opening_reading) && (
                                         <p className="text-[10px] text-red-500 mt-1 font-bold flex items-center gap-1 animate-pulse">
@@ -348,9 +389,9 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                             type="text" 
                                             value={formatNumber(formData.volume_sold)} 
                                             readOnly 
-                                            className="w-full bg-indigo-50/50 text-indigo-600 font-mono text-xl font-black border border-indigo-100 rounded-xl p-3"
+                                            className="w-full bg-indigo-50/50 text-indigo-600 font-mono text-base font-bold border border-indigo-100 rounded-xl p-2.5"
                                         />
-                                        <div className="absolute left-4 top-3.5 text-xs text-indigo-300 font-bold">Liters</div>
+                                        <div className="absolute left-3 top-2.5 text-[10px] text-indigo-300 font-bold">لتر</div>
                                     </div>
                                 </div>
                             </div>

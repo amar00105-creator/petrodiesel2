@@ -12,8 +12,10 @@ export default function SalesList({ sales = [] }) {
     const [filterPump, setFilterPump] = useState('');
     const [filterMethod, setFilterMethod] = useState('');
 
+    const [allSales, setAllSales] = useState(sales); // Local state for optimistic updates
+
     // Normalize Data (Backend -> Frontend)
-    const normalizedSales = (sales || []).map(sale => {
+    const normalizedSales = (allSales || []).map(sale => {
         let accountName = '-';
         const method = (sale.payment_method || sale.method || 'cash').toLowerCase();
         
@@ -79,7 +81,8 @@ export default function SalesList({ sales = [] }) {
             
             if (data.success) {
                 toast.success('تم حذف عملية البيع بنجاح');
-                window.location.reload();
+                // Optimistic Update: Remove from local state
+                setAllSales(prev => prev.filter(s => (s.id || s.sale_id) !== itemToDelete.id));
             } else {
                 toast.error(data.message || 'فشل عملية الحذف');
             }
@@ -128,8 +131,27 @@ export default function SalesList({ sales = [] }) {
                     <Title className="text-3xl font-bold text-navy-900 font-cairo">سجل المبيعات</Title>
                     <Text className="text-slate-500">استعراض وإدارة جميع عمليات بيع الوقود</Text>
                 </div>
-                <div className="flex gap-2">
-                    <Button onClick={() => window.location.href=`${window.BASE_URL}/sales/create`} variant="primary" icon={Plus} className="rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200">فاتورة جديدة</Button>
+                <div className="flex gap-6">
+                    <button onClick={() => window.location.href=`${window.BASE_URL}/sales/create`} className="button">
+                        <span className="text_button">فاتورة جديدة</span>
+                        <div className="dots_border"></div>
+                        <svg
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            height="24"
+                            width="24"
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="sparkle"
+                        >
+                            <path
+                                className="path"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="1.5"
+                                d="M12 4.5v15m7.5-7.5h-15"
+                            ></path>
+                        </svg>
+                    </button>
                     <Button variant="secondary" icon={Download} className="rounded-xl font-bold">تصدير Excel</Button>
                     <Button variant="primary" icon={FileText} className="rounded-xl font-bold bg-navy-900 hover:bg-navy-800">تقرير يومي</Button>
                 </div>
@@ -175,7 +197,7 @@ export default function SalesList({ sales = [] }) {
                                 <th className="p-4 text-sm font-bold text-slate-600">التاريخ والوقت</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">الماكينة / الصنف</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">الكمية (L)</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">المبلغ (SAR)</th>
+                                <th className="p-4 text-sm font-bold text-slate-600">المبلغ (SDG)</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">طريقة الدفع</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">الحساب / العميل</th>
                                 <th className="p-4 text-sm font-bold text-slate-600 text-center">إجراءات</th>

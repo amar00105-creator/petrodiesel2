@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Quick Timezone Test</title>
+    <style>
+        body { font-family: Arial; padding: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 30px; border-radius: 15px; margin: 20px 0; border: 1px solid rgba(255,255,255,0.2); }
+        h1 { font-size: 32px; margin-bottom: 30px; }
+        .info { background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 0; border-radius: 8px; font-size: 18px; }
+        .label { opacity: 0.8; display: block; font-size: 14px; margin-bottom: 5px; }
+        .value { font-family: monospace; font-size: 24px; font-weight: bold; }
+        button { background: #4CAF50; border: none; color: white; padding: 15px 30px; font-size: 16px; border-radius: 8px; cursor: pointer; margin: 10px 0; }
+        button:hover { background: #45a049; }
+        .error { background: rgba(255,0,0,0.2); }
+        .success { background: rgba(0,255,0,0.2); }
+    </style>
+</head>
+<body>
+    <h1>🕐 Timezone Test - Quick Check</h1>
+    
+    <div class="card">
+        <h2>📡 Server Time (from API)</h2>
+        <button onclick="testAPI()">Click to Test API</button>
+        <div id="server-result"></div>
+    </div>
+
+    <div class="card">
+        <h2>💻 Browser Time</h2>
+        <div class="info">
+            <span class="label">Your Browser Date/Time:</span>
+            <span class="value" id="browser-time"></span>
+        </div>
+        <div class="info">
+            <span class="label">Your Browser Timezone:</span>
+            <span class="value" id="browser-tz"></span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>⚡ Test Header Sync</h2>
+        <div id="sync-test" class="info">
+            <span class="label">Simulating Header Behavior...</span>
+            <div id="sync-result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Show browser time
+        function updateBrowserTime() {
+            const now = new Date();
+            document.getElementById('browser-time').textContent = now.toLocaleString('en-GB', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            document.getElementById('browser-tz').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+        updateBrowserTime();
+        setInterval(updateBrowserTime, 1000);
+
+        // Test API
+        async function testAPI() {
+            const result = document.getElementById('server-result');
+            result.innerHTML = '<div class="info">⏳ Loading...</div>';
+            
+            try {
+                const res = await fetch('/PETRODIESEL2/public/api/server-time');
+                const data = await res.json();
+                
+                if (data.success) {
+                    result.innerHTML = `
+                        <div class="info success">
+                            <span class="label">✅ API Works!</span>
+                        </div>
+                        <div class="info">
+                            <span class="label">Server Timezone:</span>
+                            <span class="value">${data.timezone}</span>
+                        </div>
+                        <div class="info">
+                            <span class="label">Server Date:</span>
+                            <span class="value">${data.date}</span>
+                        </div>
+                        <div class="info">
+                            <span class="label">Server Time:</span>
+                            <span class="value">${data.time}</span>
+                        </div>
+                        <div class="info">
+                            <span class="label">Full DateTime:</span>
+                            <span class="value">${data.formatted.display}</span>
+                        </div>
+                    `;
+                    
+                    // Test sync
+                    testHeaderSync(data.timestamp);
+                } else {
+                    result.innerHTML = '<div class="info error">❌ API Error</div>';
+                }
+            } catch (err) {
+                result.innerHTML = `<div class="info error">❌ Failed: ${err.message}</div>`;
+            }
+        }
+
+        // Simulate header sync
+        function testHeaderSync(serverTimestamp) {
+            const syncResult = document.getElementById('sync-result');
+            
+            const serverTime = serverTimestamp * 1000; // Convert to ms
+            const clientTime = Date.now();
+            const offset = serverTime - clientTime;
+            
+            syncResult.innerHTML = `
+                <div class="info">
+                    <span class="label">Server Timestamp (ms):</span>
+                    <span class="value">${serverTime}</span>
+                </div>
+                <div class="info">
+                    <span class="label">Client Timestamp (ms):</span>
+                    <span class="value">${clientTime}</span>
+                </div>
+                <div class="info ${offset !== 0 ? 'success' : ''}">
+                    <span class="label">Time Offset (ms):</span>
+                    <span class="value">${offset} ms (${(offset/1000/60/60).toFixed(2)} hours)</span>
+                </div>
+                <div class="info">
+                    <span class="label">Adjusted Time (what header should show):</span>
+                    <span class="value" id="adjusted-time"></span>
+                </div>
+            `;
+            
+            // Show adjusted time
+            setInterval(() => {
+                const adjusted = new Date(Date.now() + offset);
+                document.getElementById('adjusted-time').textContent = adjusted.toLocaleString('en-GB', {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+            }, 1000);
+        }
+
+        // Auto-test on load
+        setTimeout(testAPI, 500);
+    </script>
+</body>
+</html>

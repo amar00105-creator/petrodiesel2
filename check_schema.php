@@ -1,5 +1,11 @@
 <?php
-$config = require 'app/Config/db_config.php';
-$pdo = new PDO("mysql:host={$config['host']};dbname={$config['db_name']}", $config['username'], $config['password']);
-$cols = $pdo->query("DESCRIBE transactions")->fetchAll(PDO::FETCH_COLUMN);
-echo implode(', ', $cols);
+$config = require __DIR__ . '/app/Config/db_config.php';
+try {
+    $dsn = "mysql:host={$config['host']};dbname={$config['db_name']};charset=utf8mb4";
+    $pdo = new PDO($dsn, $config['username'], $config['password']);
+    $stmt = $pdo->query("DESCRIBE sales");
+    $columns = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    echo "Columns: " . implode(", ", $columns) . "\n";
+} catch (Exception $e) {
+    echo $e->getMessage();
+}

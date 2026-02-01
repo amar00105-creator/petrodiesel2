@@ -129,7 +129,7 @@ export default function ExpenseList({ expenses = [] }) {
                             <tr>
                                 <th className="p-4 text-sm font-bold text-white">البند / العنوان</th>
                                 <th className="p-4 text-sm font-bold text-white">التصنيف</th>
-                                <th className="p-4 text-sm font-bold text-white">المبلغ (SAR)</th>
+                                <th className="p-4 text-sm font-bold text-white">المبلغ (SDG)</th>
                                 <th className="p-4 text-sm font-bold text-white">التاريخ</th>
                                 <th className="p-4 text-sm font-bold text-white">طريقة الدفع</th>
                                 <th className="p-4 text-sm font-bold text-white text-center">إجراءات</th>
@@ -226,7 +226,7 @@ function ExpenseModal({ isOpen, onClose, expense }) {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">المبلغ (SAR)</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">المبلغ (SDG)</label>
                             <input type="number" step="0.01" name="amount" required defaultValue={expense?.amount}
                                 className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
                             />

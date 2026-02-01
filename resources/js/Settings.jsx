@@ -283,26 +283,40 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                 <div>
                                     <label className="text-sm font-bold text-slate-700 mb-1 block">العملة الأساسية</label>
                                     <Select 
-                                        value={generalSettings.currency || 'SAR'} 
+                                        value={generalSettings.currency || 'SDG'} 
                                         onValueChange={(val) => handleGeneralChange('currency', val)}
                                         className="rounded-xl"
                                     >
+                                        <SelectItem value="SDG">جنيه سوداني (SDG)</SelectItem>
                                         <SelectItem value="SAR">ريال سعودي (SAR)</SelectItem>
                                         <SelectItem value="USD">دولار أمريكي (USD)</SelectItem>
-                                        <SelectItem value="SDG">جنيه سوداني (SDG)</SelectItem>
                                     </Select>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block">المنطقة الزمنية (Timezone)</label>
+                                    <Select 
+                                        value={generalSettings.timezone || 'Africa/Khartoum'} 
+                                        onValueChange={(val) => handleGeneralChange('timezone', val)}
+                                        className="rounded-xl"
+                                    >
+                                        <SelectItem value="Africa/Khartoum">🇸🇩 الخرطوم (Khartoum)</SelectItem>
+                                        <SelectItem value="Africa/Cairo">🇪🇬 القاهرة (Cairo)</SelectItem>
+                                        <SelectItem value="Asia/Riyadh">🇸🇦 الرياض (Riyadh)</SelectItem>
+                                        <SelectItem value="Asia/Dubai">🇦🇪 دبي (Dubai)</SelectItem>
+                                        <SelectItem value="Asia/Baghdad">🇮🇶 بغداد (Baghdad)</SelectItem>
+                                        <SelectItem value="Asia/Kuwait">🇰🇼 الكويت (Kuwait)</SelectItem>
+                                        <SelectItem value="Africa/Tripoli">🇱🇾 طرابلس (Tripoli)</SelectItem>
+                                        <SelectItem value="Asia/Beirut">🇱🇧 بيروت (Beirut)</SelectItem>
+                                    </Select>
+                                    <Text className="text-xs text-slate-500 mt-2">
+                                        يُستخدم لضبط التاريخ والوقت في المبيعات، المشتريات، والتقارير
+                                    </Text>
                                 </div>
 
                                 {generalSettings.currency !== 'SAR' && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                                        <label className="text-sm font-bold text-slate-700 mb-1 block">سعر الصرف (مقابل SAR)</label>
-                                        <TextInput 
-                                            type="number" 
-                                            value={generalSettings.exchange_rate || '1.0'}
-                                            onChange={(e) => handleGeneralChange('exchange_rate', e.target.value)}
-                                            className="rounded-xl font-mono" 
-                                        />
-                                        <Text className="text-xs text-slate-400 mt-1">يستخدم للتقارير المحاسبية</Text>
+                                        <Text className="text-xs text-slate-400 mt-1">سيتم استخدام هذه العملة كعملة أساسية للنظام بالكامل</Text>
                                     </motion.div>
                                 )}
                             </Card>
@@ -382,7 +396,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
                                                     <p className="text-xs text-slate-400">السعر الحالي</p>
-                                                    <p className="font-bold font-mono text-lg text-navy-900">{fuel.price_per_liter} <span className="text-xs">{generalSettings.currency || 'SAR'}</span></p>
+                                                    <p className="font-bold font-mono text-lg text-navy-900">{fuel.price_per_liter} <span className="text-xs">{generalSettings.currency || 'SDG'}</span></p>
                                                 </div>
                                                 <div className="flex gap-2">
                                                     <button 

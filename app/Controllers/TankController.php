@@ -272,4 +272,272 @@ class TankController extends Controller
 
         echo json_encode(['success' => true, 'result' => $result]);
     }
+
+    /**
+     * Calculate height using reverse linear interpolation (API endpoint)
+     */
+    public function calculateHeight()
+    {
+        header('Content-Type: application/json');
+
+        $tankId = $_GET['tank_id'] ?? null;
+        $volumeLiters = $_GET['volume_liters'] ?? null;
+
+        if (!$tankId || $volumeLiters === null) {
+            echo json_encode(['success' => false, 'message' => 'Missing parameters']);
+            return;
+        }
+
+        $calibrationModel = new TankCalibration();
+        $result = $calibrationModel->calculateHeight($tankId, floatval($volumeLiters));
+
+        echo json_encode(['success' => true, 'result' => $result]);
+    }
+
+    /**
+     * Calculate height from volume (API endpoint for real-time conversion)
+     */
+    public function calculateHeightFromVolume()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        header('Content-Type: application/json');
+
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            $tankId = $data['tank_id'] ?? null;
+            $volumeLiters = floatval($data['volume_liters'] ?? 0);
+
+            if (!$tankId || $volumeLiters <= 0) {
+                echo json_encode(['success' => false, 'message' => 'بيانات غير صحيحة']);
+                return;
+            }
+
+            $calibrationModel = new TankCalibration();
+            $result = $calibrationModel->calculateHeight($tankId, $volumeLiters);
+
+            if (isset($result['error'])) {
+                echo json_encode(['success' => false, 'message' => $result['error']]);
+                return;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'height_cm' => $result['height'],
+                'method' => $result['method']
+            ]);
+        } catch (Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'خطأ في النظام']);
+        }
+    }
+
+    /**
+     * Process smart calibration (API endpoint)
+     * Uses pre-stored calibration table to calculate volume via linear interpolation
+     * Can optionally update tank volume directly based on sensor reading
+     */
+    public function processSmartCalibration()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        header('Content-Type: application/json');
+
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+
+            $tankId = $data['tank_id'] ?? null;
+            $stickReadingCm = floatval($data['stick_reading_cm'] ?? 0);
+            $sensorReadingLiters = floatval($data['sensor_reading_liters'] ?? 0);
+            $updateTankVolume = boolval($data['update_tank_volume'] ?? false);
+
+            // Validation: Must have at least stick reading OR sensor reading
+            if (!$tankId || ($stickReadingCm <= 0 && $sensorReadingLiters <= 0)) {
+                echo json_encode(['success' => false, 'message' => 'يرجى إدخال قراءة العصا اليدوية أو قراءة النظام الآلي على الأقل']);
+                return;
+            }
+
+            // Use calibration table to calculate volume (only if stick reading is provided)
+            $actualVolumeLiters = 0;
+            $calculationMethod = 'direct_sensor_reading';
+
+            if ($stickReadingCm > 0) {
+                $calibrationModel = new TankCalibration();
+                $calculationResult = $calibrationModel->calculateVolume($tankId, $stickReadingCm);
+
+                // Check if calculation was successful
+                if (isset($calculationResult['error'])) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'لا توجد بيانات معايرة لهذا الخزان. يرجى إضافة نقاط معايرة أولاً من صفحة المعايرة'
+                    ]);
+                    return;
+                }
+
+                $actualVolumeLiters = floatval($calculationResult['volume'] ?? 0);
+                $calculationMethod = $calculationResult['method'] ?? 'linear_interpolation';
+            } else {
+                // No stick reading, use sensor reading directly
+                $actualVolumeLiters = $sensorReadingLiters;
+                $calculationResult = ['method' => 'direct_sensor_reading'];
+            }
+
+            // Calculate variance if sensor reading is provided
+            $variance = 0;
+            $errorPercent = 0;
+            $status = 'pass';
+
+            if ($sensorReadingLiters > 0) {
+                $variance = $actualVolumeLiters - $sensorReadingLiters;
+                $errorPercent = ($actualVolumeLiters > 0) ? round((abs($variance) / $actualVolumeLiters) * 100, 2) : 0;
+
+                // Determine status based on error percentage
+                if ($errorPercent > 10) {
+                    $status = 'fail';
+                } elseif ($errorPercent > 5) {
+                    $status = 'warning';
+                }
+            }
+
+            // Handle tank volume update if requested
+            $tankUpdated = false;
+            $previousVolume = null;
+
+            if ($updateTankVolume && $sensorReadingLiters > 0) {
+                // Get tank details for validation
+                $tankModel = new Tank();
+                $tank = $tankModel->find($tankId);
+
+                if (!$tank) {
+                    echo json_encode(['success' => false, 'message' => 'الخزان غير موجود']);
+                    return;
+                }
+
+                // Validate capacity
+                $capacity = floatval($tank['capacity_liters'] ?? 0);
+                if ($sensorReadingLiters > $capacity) {
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'الكمية المدخلة (' . number_format($sensorReadingLiters, 2) . ' لتر) تتجاوز سعة الخزان (' . number_format($capacity, 2) . ' لتر)'
+                    ]);
+                    return;
+                }
+
+                // Store previous volume
+                $previousVolume = floatval($tank['current_volume'] ?? 0);
+
+                // Update tank volume (set absolute value, not increment)
+                $updateSuccess = $tankModel->update($tankId, ['current_volume' => $sensorReadingLiters]);
+
+                if ($updateSuccess) {
+                    $tankUpdated = true;
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'فشل تحديث رصيد الخزان']);
+                    return;
+                }
+            }
+
+            // Save calibration log to database
+            $user = \App\Helpers\AuthHelper::user();
+            $userId = $user['id'] ?? 1;
+
+            $logData = [
+                'tank_id' => $tankId,
+                'user_id' => $userId,
+                'stick_reading_cm' => $stickReadingCm,
+                'calculated_volume_liters' => $actualVolumeLiters,
+                'sensor_reading_liters' => $sensorReadingLiters,
+                'variance_liters' => $variance,
+                'error_percent' => $errorPercent,
+                'temperature_c' => 25, // Default value
+                'status' => $status,
+                'notes' => 'Smart calibration using ' . $calculationMethod . ($tankUpdated ? ' - Tank volume updated' : ''),
+                'dimensions_json' => json_encode($calculationResult),
+                'tank_updated' => $tankUpdated,
+                'previous_volume' => $previousVolume
+            ];
+
+            $calibrationModel->addCalibrationLog($logData);
+
+            // Return result
+            $result = [
+                'status' => $status,
+                'actual_volume' => round($actualVolumeLiters, 2),
+                'sensor_volume' => round($sensorReadingLiters, 2),
+                'variance' => round($variance, 2),
+                'error_percent' => $errorPercent,
+                'method' => $calculationMethod,
+                'timestamp' => date('Y-m-d H:i:s'),
+                'tank_updated' => $tankUpdated,
+                'previous_volume' => $previousVolume
+            ];
+
+            echo json_encode(['success' => true, 'result' => $result]);
+        } catch (Exception $e) {
+            error_log("Smart Calibration Error: " . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'حدث خطأ في النظام: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Calculate volume based on tank geometry and liquid height
+     */
+    private function calculateGeometricVolume($dimensions, $heightCm)
+    {
+        $shape = $dimensions['shape'] ?? 'horizontal_cylinder';
+        $diameter = floatval($dimensions['diameter'] ?? 0);
+        $length = floatval($dimensions['length'] ?? 0);
+        $width = floatval($dimensions['width'] ?? 0);
+        $height = floatval($dimensions['height'] ?? 0);
+
+        $heightCm = floatval($heightCm);
+
+        if ($heightCm <= 0) return false;
+
+        $volumeLiters = 0;
+
+        switch ($shape) {
+            case 'horizontal_cylinder':
+                // Horizontal cylindrical tank
+                if ($diameter <= 0 || $length <= 0) return false;
+
+                $radius = $diameter / 2;
+
+                // Liquid height from bottom
+                $h = $heightCm;
+
+                // Cross-sectional area of liquid (circular segment)
+                // A = r² * arccos((r-h)/r) - (r-h) * sqrt(2rh - h²)
+                if ($h > $diameter) $h = $diameter; // Cap at full height
+
+                $theta = acos(($radius - $h) / $radius);
+                $area = ($radius * $radius * $theta) - (($radius - $h) * sqrt(2 * $radius * $h - $h * $h));
+
+                // Volume = Area * Length
+                $volumeCm3 = $area * $length;
+                $volumeLiters = $volumeCm3 / 1000; // Convert cm³ to liters
+                break;
+
+            case 'vertical_cylinder':
+                // Vertical cylindrical tank
+                if ($diameter <= 0 || $length <= 0) return false;
+
+                $radius = $diameter / 2;
+                $area = pi() * $radius * $radius;
+                $volumeCm3 = $area * $heightCm;
+                $volumeLiters = $volumeCm3 / 1000;
+                break;
+
+            case 'rectangular':
+                // Rectangular tank
+                if ($width <= 0 || $length <= 0) return false;
+
+                $volumeCm3 = $width * $length * $heightCm;
+                $volumeLiters = $volumeCm3 / 1000;
+                break;
+
+            default:
+                return false;
+        }
+
+        return $volumeLiters > 0 ? $volumeLiters : false;
+    }
 }

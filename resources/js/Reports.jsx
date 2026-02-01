@@ -6,14 +6,16 @@ import { toast } from 'sonner';
 import DailySalesReconciliation from './DailySalesReconciliation';
 import TankSalesReport from './TankSalesReport';
 import SupplierReport from './SupplierReport';
+import CustomerReport from './CustomerReport';
+import FinancialFlowReport from './FinancialFlowReport';
 
 export default function Reports({ user }) {
     // --- State ---
     const [activeTab, setActiveTab] = useState(0); // 0: Financial, 1: Warehouse, 2: Sales, 3: Employees
     const [filters, setFilters] = useState({
         station_id: user?.station_id || 'all',
-        start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-        end_date: new Date().toISOString().split('T')[0],
+        start_date: null, // Will be set from server date
+        end_date: null,   // Will be set from server date
         period: 'month' // month, quarter, year, custom
     });
     
@@ -35,6 +37,8 @@ export default function Reports({ user }) {
             const result = await response.json();
             
             if (result.success) {
+                console.log('📊 Reports Data:', result);
+                console.log('📦 Warehouse Readings:', result?.warehouse?.readings);
                 setStats(result);
             } else {
                 toast.error('فشل تحميل البيانات');
@@ -47,9 +51,45 @@ export default function Reports({ user }) {
         }
     };
 
+    // Initialize dates from server on mount
     useEffect(() => {
-        fetchStats();
-    }, []); // Initial Load
+        const initializeDates = async () => {
+            try {
+                const res = await fetch(`${window.BASE_URL || ''}/api/server-time`);
+                const data = await res.json();
+                if (data.success) {
+                    const serverDate = data.date; // "YYYY-MM-DD"
+                    const [year, month, day] = serverDate.split('-');
+                    
+                    // Set start date to first day of current month
+                    const startDate = `${year}-${month}-01`;
+                    
+                    setFilters(prev => ({
+                        ...prev,
+                        start_date: startDate,
+                        end_date: serverDate
+                    }));
+                }
+            } catch (err) {
+                console.warn('Failed to get server date, using client date');
+                // Fallback to client date
+                const now = new Date();
+                setFilters(prev => ({
+                    ...prev,
+                    start_date: new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0],
+                    end_date: now.toISOString().split('T')[0]
+                }));
+            }
+        };
+        initializeDates();
+    }, []);
+
+    useEffect(() => {
+        // Only fetch if dates are set
+        if (filters.start_date && filters.end_date) {
+            fetchStats();
+        }
+    }, [filters.start_date, filters.end_date]); // Fetch when dates are initialized
 
     // --- Handlers ---
     const handleFilterChange = (e) => {
@@ -57,10 +97,25 @@ export default function Reports({ user }) {
         setFilters(prev => ({ ...prev, [name]: value }));
     };
 
-    const handlePeriodChange = (period) => {
-        const now = new Date();
-        let start = new Date();
-        const end = new Date();
+    const handlePeriodChange = async (period) => {
+        // Get server date to ensure consistency with timezone
+        let serverDateStr;
+        try {
+            const res = await fetch(`${window.BASE_URL || ''}/api/server-time`);
+            const data = await res.json();
+            if (data.success) {
+                serverDateStr = data.date; // "YYYY-MM-DD"
+            }
+        } catch (err) {
+            console.warn('Failed to get server date, using client date');
+        }
+        
+        // Parse server date or fallback to client date
+        const [year, month, day] = (serverDateStr || new Date().toISOString().split('T')[0]).split('-');
+        const now = new Date(year, month - 1, day);
+        
+        let start = new Date(now);
+        const end = new Date(now);
 
         if (period === 'month') {
             start = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -83,70 +138,251 @@ export default function Reports({ user }) {
     const formatCurrency = (amount) => parseFloat(amount || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' }).replace('$', '') + ' SDG';
     const formatNumber = (num) => parseFloat(num || 0).toLocaleString('en-US');
 
-    // Financial Cards
+    // Financial Cards - ENHANCED
+    // Financial Sub-tabs
+    const [financialTab, setFinancialTab] = useState(0); // 0: Usage, 1: Statement
+
+    // Financial Cards - ENHANCED
     const renderFinancial = () => (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-            {/* Net Profit */}
-            <Card decoration="top" decorationColor="emerald" className="bg-white">
-                <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                    <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
-                        <TrendingUp className="w-8 h-8" />
-                    </div>
-                    <div>
-                        <Text>صافي الربح / الخسارة</Text>
-                        <Metric className={stats?.financial?.net_profit >= 0 ? "text-emerald-700" : "text-rose-600"}>
-                            {formatCurrency(stats?.financial?.net_profit)}
-                        </Metric>
-                    </div>
-                </Flex>
-                <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
-                    <div>
-                        <Text className="text-xs">الإيرادات</Text>
-                        <div className="font-bold text-emerald-600">{formatCurrency(stats?.financial?.income)}</div>
-                    </div>
-                    <div>
-                        <Text className="text-xs">المصروفات</Text>
-                        <div className="font-bold text-rose-600">{formatCurrency(stats?.financial?.expense)}</div>
-                    </div>
-                </div>
-            </Card>
+        <div className="space-y-6 animate-fade-in">
+            {/* Financial Sub-Navigation */}
+            <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl w-fit">
+                <button
+                    onClick={() => setFinancialTab(0)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        financialTab === 0 ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    نظرة عامة
+                </button>
+                <button
+                    onClick={() => setFinancialTab(1)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        financialTab === 1 ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    كشف حساب (خزنة/بنك)
+                </button>
+            </div>
 
-            {/* Inventory Valuation */}
-            <Card decoration="top" decorationColor="blue" className="bg-white">
-                <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                    <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-                        <Droplets className="w-8 h-8" />
-                    </div>
-                    <div>
-                        <Text>قيمة المخزون اللحظي (أصول)</Text>
-                        <Metric>{formatCurrency(stats?.financial?.inventory_value)}</Metric>
-                    </div>
-                </Flex>
-                <Text className="mt-2 text-slate-400 text-xs">مجموع (حجم الخزان × السعر الحالي)</Text>
-            </Card>
+            {financialTab === 0 ? (
+                <>
+                {/* Summary Row - 4 Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {/* Net Profit */}
+                    <Card decoration="top" decorationColor="emerald" className="bg-white">
+                        <Flex justifyContent="start" className="space-x-4 space-x-reverse">
+                            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                                <TrendingUp className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <Text>صافي الربح / الخسارة</Text>
+                                <Metric className={stats?.financial?.net_profit >= 0 ? "text-emerald-700" : "text-rose-600"}>
+                                    {formatCurrency(stats?.financial?.net_profit)}
+                                </Metric>
+                            </div>
+                        </Flex>
+                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                            <div>
+                                <Text className="text-xs">الإيرادات</Text>
+                                <div className="font-bold text-emerald-600">{formatCurrency(stats?.financial?.income)}</div>
+                            </div>
+                            <div>
+                                <Text className="text-xs">المصروفات</Text>
+                                <div className="font-bold text-rose-600">{formatCurrency(stats?.financial?.expense)}</div>
+                            </div>
+                        </div>
+                    </Card>
 
-            {/* Debts Summary */}
-            <Card decoration="top" decorationColor="amber" className="bg-white">
-                 <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                    <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
-                        <Briefcase className="w-8 h-8" />
-                    </div>
-                    <div>
-                        <Text>الذمم والديون</Text>
-                        <div className="text-2xl font-bold text-slate-700">ملخص الأرصدة</div>
-                    </div>
-                </Flex>
-                <div className="mt-4 space-y-3">
-                    <Flex className="justify-between">
-                        <Text>ديون الشركات (لنا)</Text>
-                        <Text className="font-bold text-emerald-600">{formatCurrency(stats?.financial?.corporate_debts)}</Text>
-                    </Flex>
-                    <Flex className="justify-between">
-                        <Text>التزامات الموردين (علينا)</Text>
-                        <Text className="font-bold text-rose-600">{formatCurrency(stats?.financial?.supplier_debts)}</Text>
-                    </Flex>
+                    {/* Total Cash (Banks + Safes) */}
+                    <Card decoration="top" decorationColor="indigo" className="bg-white">
+                        <Flex justifyContent="start" className="space-x-4 space-x-reverse">
+                            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+                                <Wallet className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <Text>إجمالي النقد المتاح</Text>
+                                <Metric className="text-indigo-700">
+                                    {formatCurrency(stats?.financial?.total_cash)}
+                                </Metric>
+                            </div>
+                        </Flex>
+                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                            <div>
+                                <Text className="text-xs">الخزائن ({stats?.financial?.safes?.length || 0})</Text>
+                                <div className="font-bold text-blue-600">{formatCurrency(stats?.financial?.total_safes)}</div>
+                            </div>
+                            <div>
+                                <Text className="text-xs">البنوك ({stats?.financial?.banks?.length || 0})</Text>
+                                <div className="font-bold text-indigo-600">{formatCurrency(stats?.financial?.total_banks)}</div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Inventory Valuation */}
+                    <Card decoration="top" decorationColor="blue" className="bg-white">
+                        <Flex justifyContent="start" className="space-x-4 space-x-reverse">
+                            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                                <Droplets className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <Text>قيمة المخزون اللحظي</Text>
+                                <Metric>{formatCurrency(stats?.financial?.inventory_value)}</Metric>
+                            </div>
+                        </Flex>
+                        <Text className="mt-2 text-slate-400 text-xs">مجموع (حجم الخزان × السعر الحالي)</Text>
+                    </Card>
+
+                    {/* Debts Summary */}
+                    <Card decoration="top" decorationColor="amber" className="bg-white">
+                         <Flex justifyContent="start" className="space-x-4 space-x-reverse">
+                            <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
+                                <Briefcase className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <Text>الذمم والديون</Text>
+                                <div className="text-2xl font-bold text-slate-700">ملخص الأرصدة</div>
+                            </div>
+                        </Flex>
+                        <div className="mt-4 space-y-3">
+                            <Flex className="justify-between">
+                                <Text>ديون الشركات (لنا)</Text>
+                                <Text className="font-bold text-emerald-600">{formatCurrency(stats?.financial?.corporate_debts)}</Text>
+                            </Flex>
+                            <Flex className="justify-between">
+                                <Text>التزامات الموردين (علينا)</Text>
+                                <Text className="font-bold text-rose-600">{formatCurrency(stats?.financial?.supplier_debts)}</Text>
+                            </Flex>
+                        </div>
+                    </Card>
                 </div>
-            </Card>
+
+                {/* Detail Grids */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Banks & Safes Details */}
+                    <Card className="bg-white">
+                        <Title className="text-slate-800 mb-4">💰 تفاصيل الأرصدة النقدية</Title>
+                        <div className="space-y-4">
+                            {/* Safes */}
+                            <div>
+                                <Text className="font-bold text-blue-600 mb-2">الخزائن</Text>
+                                <div className="space-y-2">
+                                    {stats?.financial?.safes?.map((safe, idx) => (
+                                        <div key={idx} className="flex justify-between items-center p-2 bg-blue-50 rounded-lg">
+                                            <span className="font-medium text-slate-700">{safe.name}</span>
+                                            <span className="font-bold text-blue-700">{formatCurrency(safe.balance)}</span>
+                                        </div>
+                                    ))}
+                                    {(!stats?.financial?.safes || stats?.financial?.safes.length === 0) && (
+                                        <div className="text-slate-400 text-sm text-center py-2">لا توجد خزائن</div>
+                                    )}
+                                </div>
+                            </div>
+                            {/* Banks */}
+                            <div>
+                                <Text className="font-bold text-indigo-600 mb-2">البنوك</Text>
+                                <div className="space-y-2">
+                                    {stats?.financial?.banks?.map((bank, idx) => (
+                                        <div key={idx} className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg">
+                                            <div>
+                                                <span className="font-medium text-slate-700">{bank.name}</span>
+                                                {bank.account_number && (
+                                                    <span className="text-xs text-slate-400 mr-2">({bank.account_number})</span>
+                                                )}
+                                            </div>
+                                            <span className="font-bold text-indigo-700">{formatCurrency(bank.balance)}</span>
+                                        </div>
+                                    ))}
+                                    {(!stats?.financial?.banks || stats?.financial?.banks.length === 0) && (
+                                        <div className="text-slate-400 text-sm text-center py-2">لا توجد حسابات بنكية</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Expense Breakdown */}
+                    <Card className="bg-white">
+                        <Title className="text-slate-800 mb-4">📊 توزيع المصروفات حسب الفئة</Title>
+                        <div className="space-y-3">
+                            {stats?.financial?.expense_breakdown?.map((cat, idx) => {
+                                const percentage = stats?.financial?.expense > 0 
+                                    ? (cat.total_amount / stats.financial.expense * 100).toFixed(1) 
+                                    : 0;
+                                return (
+                                    <div key={idx} className="space-y-1">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-medium text-slate-700">{cat.category_name}</span>
+                                            <span className="font-bold text-rose-600">{formatCurrency(cat.total_amount)}</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-rose-400 to-rose-600 rounded-full transition-all duration-500"
+                                                style={{ width: `${percentage}%` }}
+                                            />
+                                        </div>
+                                        <div className="flex justify-between text-xs text-slate-400">
+                                            <span>{cat.transaction_count} عملية</span>
+                                            <span>{percentage}%</span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {(!stats?.financial?.expense_breakdown || stats?.financial?.expense_breakdown.length === 0) && (
+                                <div className="text-slate-400 text-sm text-center py-4">لا توجد مصروفات في هذه الفترة</div>
+                            )}
+                        </div>
+                    </Card>
+                </div>
+
+                {/* Top Customers & Suppliers */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Top Customers (who owe us) */}
+                    <Card className="bg-white">
+                        <Title className="text-slate-800 mb-4">👥 أكبر العملاء المدينين (لنا)</Title>
+                        <div className="space-y-2">
+                            {stats?.financial?.top_customers?.map((customer, idx) => (
+                                <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                            {idx + 1}
+                                        </div>
+                                        <span className="font-medium text-slate-700">{customer.name}</span>
+                                    </div>
+                                    <span className="font-bold text-emerald-700">{formatCurrency(customer.balance)}</span>
+                                </div>
+                            ))}
+                            {(!stats?.financial?.top_customers || stats?.financial?.top_customers.length === 0) && (
+                                <div className="text-slate-400 text-sm text-center py-4">لا توجد ديون من العملاء</div>
+                            )}
+                        </div>
+                    </Card>
+
+                    {/* Top Suppliers (we owe them) */}
+                    <Card className="bg-white">
+                        <Title className="text-slate-800 mb-4">🚛 أكبر الموردين الدائنين (علينا)</Title>
+                        <div className="space-y-2">
+                            {stats?.financial?.top_suppliers?.map((supplier, idx) => (
+                                <div key={idx} className="flex justify-between items-center p-3 bg-rose-50 rounded-lg border border-rose-100">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+                                            {idx + 1}
+                                        </div>
+                                        <span className="font-medium text-slate-700">{supplier.name}</span>
+                                    </div>
+                                    <span className="font-bold text-rose-700">{formatCurrency(supplier.balance)}</span>
+                                </div>
+                            ))}
+                            {(!stats?.financial?.top_suppliers || stats?.financial?.top_suppliers.length === 0) && (
+                                <div className="text-slate-400 text-sm text-center py-4">لا توجد التزامات للموردين</div>
+                            )}
+                        </div>
+                    </Card>
+                </div>
+                </>
+            ) : (
+                <FinancialFlowReport />
+            )}
         </div>
     );
 
@@ -367,6 +603,57 @@ export default function Reports({ user }) {
                 </Card>
             </div>
 
+            {/* NEW: Calibration Logs Table */}
+            {stats?.warehouse?.calibration_logs && stats.warehouse.calibration_logs.length > 0 && (
+                <Card className="bg-white mt-6">
+                    <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2">سجل المعايرة</Title>
+                    <div className="overflow-x-auto max-h-96 overflow-y-auto">
+                        <table className="w-full text-right text-sm">
+                            <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10">
+                                <tr>
+                                    <th className="p-3">التاريخ</th>
+                                    <th className="p-3">الخزان</th>
+                                    <th className="p-3">المستخدم</th>
+                                    <th className="p-3">الرصيد السابق</th>
+                                    <th className="p-3">الكمية الفعلية</th>
+                                    <th className="p-3">الفرق</th>
+                                    <th className="p-3">ملاحظات</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {stats.warehouse.calibration_logs.map((log, idx) => (
+                                    <tr key={idx} className={`hover:bg-slate-50 ${log.tank_updated ? 'bg-amber-50/30' : ''}`}>
+                                        <td className="p-3 whitespace-nowrap text-xs">
+                                            {new Date(log.created_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </td>
+                                        <td className="p-3 font-bold text-slate-700">{log.tank_name}</td>
+                                        <td className="p-3 text-xs text-slate-600">{log.user_name || 'غير معروف'}</td>
+                                        <td className="p-3 font-mono text-blue-600">{formatNumber(log.previous_quantity)} L</td>
+                                        <td className="p-3 font-mono text-indigo-600 font-bold">{formatNumber(log.actual_quantity)} L</td>
+                                        <td className={`p-3 font-mono font-bold ${
+                                            parseFloat(log.variance) > 0 ? 'text-green-600' : 
+                                            parseFloat(log.variance) < 0 ? 'text-red-600' : 
+                                            'text-gray-600'
+                                        }`}>
+                                            {parseFloat(log.variance) > 0 && '+'}{formatNumber(log.variance)} L
+                                            <span className="text-xs ml-2">
+                                                {parseFloat(log.variance) > 0 ? '(زيادة)' : 
+                                                 parseFloat(log.variance) < 0 ? '(عجز)' : 
+                                                 '(متطابق)'}
+                                            </span>
+                                        </td>
+                                        <td className="p-3 text-xs text-slate-500 max-w-xs truncate">{log.notes || '-'}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="mt-3 p-3 bg-slate-50 rounded-lg text-xs text-slate-600">
+                        💡 السجلات ذات الخلفية الصفراء تشير إلى تحديث رصيد الخزان مباشرة من المعايرة
+                    </div>
+                </Card>
+            )}
+
             {/* Pending Shipments Section - NEW */}
             <Card className="bg-white mt-6">
                 <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
@@ -525,107 +812,300 @@ export default function Reports({ user }) {
         </div>
     );
     
-    // Sales Cards
+    // Sales Cards - REFACTORED
+    const [salesTab, setSalesTab] = useState(0); // 0: Overview, 1: Daily Report, 2: Tank Report
+
     const renderSales = () => (
-        <div className="grid grid-cols-1 gap-6 animate-fade-in">
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Card decoration="top" decorationColor="violet" className="bg-white">
-                    <Text>إجمالي المبيعات (إيراد)</Text>
-                    <Metric className="mt-2 text-violet-700">{formatCurrency(stats?.sales?.total_revenue)}</Metric>
-                    <Flex className="mt-4 pt-4 border-t border-slate-100">
-                        <Text>عدد العمليات</Text>
-                        <Text className="font-bold">{stats?.sales?.total_transactions}</Text>
-                    </Flex>
-                </Card>
-                
-                <Card decoration="top" decorationColor="indigo" className="bg-white">
-                    <Text>الكميات المباعة</Text>
-                    <Metric className="mt-2 text-indigo-700">{formatNumber(stats?.sales?.total_liters)} <span className="text-sm">لتر</span></Metric>
-                </Card>
+        <div className="animate-fade-in space-y-6">
+            {/* Sales Sub-Navigation */}
+            <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl w-fit">
+                <button
+                    onClick={() => setSalesTab(0)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        salesTab === 0 ? 'bg-white shadow text-violet-700' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    نظرة عامة
+                </button>
+                <button
+                    onClick={() => setSalesTab(1)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        salesTab === 1 ? 'bg-white shadow text-violet-700' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    التقرير اليومي
+                </button>
+                <button
+                    onClick={() => setSalesTab(2)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                        salesTab === 2 ? 'bg-white shadow text-violet-700' : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                >
+                    مبيعات الآبار
+                </button>
             </div>
 
-            {/* Product breakdown */}
-            <Card className="bg-white">
-                <Title className="mb-4">تحليل المبيعات حسب المنتج</Title>
-                <div className="space-y-4">
-                    {stats?.sales?.by_product?.length > 0 ? (
-                        stats.sales.by_product.map((item, idx) => (
-                             <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color_hex || '#94a3b8' }}></div>
-                                    <span className="font-bold text-slate-700">{item.product_name}</span>
+            {/* Sales Content Based on Sub-Tab */}
+            {salesTab === 0 ? (
+                <div className="space-y-6">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <Card decoration="top" decorationColor="violet" className="bg-white">
+                            <Text>إجمالي المبيعات (إيراد)</Text>
+                            <Metric className="mt-2 text-violet-700">{formatCurrency(stats?.sales?.total_revenue)}</Metric>
+                            <Flex className="mt-4 pt-4 border-t border-slate-100">
+                                <Text>عدد العمليات</Text>
+                                <Text className="font-bold">{stats?.sales?.total_transactions}</Text>
+                            </Flex>
+                        </Card>
+                        
+                        <Card decoration="top" decorationColor="indigo" className="bg-white">
+                            <Text>الكميات المباعة</Text>
+                            <Metric className="mt-2 text-indigo-700">{formatNumber(stats?.sales?.total_liters)} <span className="text-sm">لتر</span></Metric>
+                        </Card>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Product breakdown */}
+                        <Card className="bg-white">
+                            <Title className="mb-4">تحليل المبيعات حسب المنتج</Title>
+                            <div className="space-y-4">
+                                {stats?.sales?.by_product?.length > 0 ? (
+                                    stats.sales.by_product.map((item, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color_hex || '#94a3b8' }}></div>
+                                                <span className="font-bold text-slate-700">{item.product_name}</span>
+                                            </div>
+                                            <div className="flex gap-6 text-sm">
+                                                <div className="text-slate-500">
+                                                    <span className="font-bold text-slate-800">{formatNumber(item.total_liters)}</span> لتر
+                                                </div>
+                                                <div className="text-slate-500 font-mono">
+                                                    <span className="font-bold text-slate-800">{formatNumber(item.total_revenue)}</span> SDG
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center text-slate-400 py-6">لا توجد بيانات مبيعات تفصيلية لهذه الفترة</div>
+                                )}
+                            </div>
+                        </Card>
+
+                        {/* Recent Sales Table (New Feature) */}
+                        <Card className="bg-white">
+                            <Title className="mb-4">المبيعات الأخيرة (مباشر)</Title>
+                            {stats?.sales?.recent_sales?.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-right text-sm">
+                                        <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
+                                            <tr>
+                                                <th className="p-2">الوقت</th>
+                                                <th className="p-2">المكنة</th>
+                                                <th className="p-2">الكمية</th>
+                                                <th className="p-2">المبلغ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-50">
+                                            {stats.sales.recent_sales.map((sale, idx) => (
+                                                <tr key={idx} className="hover:bg-slate-50">
+                                                    <td className="p-2 whitespace-nowrap text-slate-400 text-xs">
+                                                        {new Date(sale.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                                                    </td>
+                                                    <td className="p-2 font-medium">
+                                                        {sale.pump_name}
+                                                        <span className="block text-xs text-slate-400">{sale.fuel_type}</span>
+                                                    </td>
+                                                    <td className="p-2 font-mono text-blue-600">{formatNumber(sale.volume_sold)}</td>
+                                                    <td className="p-2 font-mono font-bold text-emerald-600">{formatNumber(sale.total_amount)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                                <div className="flex gap-6 text-sm">
-                                    <div className="text-slate-500">
-                                        <span className="font-bold text-slate-800">{formatNumber(item.total_liters)}</span> لتر
-                                    </div>
-                                    <div className="text-slate-500 font-mono">
-                                        <span className="font-bold text-slate-800">{formatNumber(item.total_revenue)}</span> SDG
-                                    </div>
-                                </div>
-                             </div>
-                        ))
-                    ) : (
-                        <div className="text-center text-slate-400 py-6">لا توجد بيانات مبيعات تفصيلية لهذه الفترة</div>
-                    )}
+                            ) : (
+                                <div className="text-center text-slate-400 py-6">لا توجد مبيعات حديثة</div>
+                            )}
+                        </Card>
+                    </div>
                 </div>
-            </Card>
+            ) : salesTab === 1 ? (
+                <DailySalesReconciliation stationId={filters.station_id} />
+            ) : (
+                <TankSalesReport stationId={filters.station_id} />
+            )}
         </div>
     );
     
-    // Employee Cards
-    const renderEmployees = () => (
-        <div className="grid grid-cols-1 gap-6 animate-fade-in">
-             <Card className="bg-white">
-                <Title className="mb-6 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-amber-500" />
-                    أداء الموظفين (المبيعات)
-                </Title>
-                
-                {stats?.employees?.list?.length > 0 ? (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-right text-sm">
-                             <thead className="bg-slate-50 text-slate-500 font-bold">
-                                 <tr>
-                                     <th className="p-3 rounded-r-xl">الموظف</th>
-                                     <th className="p-3">عدد الورديات</th>
-                                     <th className="p-3">حجم المبيعات (لتر)</th>
-                                     <th className="p-3 rounded-l-xl">الإجمالي (SDG)</th>
-                                 </tr>
-                             </thead>
-                             <tbody className="divide-y divide-slate-100">
-                                 {stats.employees.list.map((emp, idx) => (
-                                     <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                         <td className="p-3 font-bold text-slate-700">{emp.worker_name}</td>
-                                         <td className="p-3 text-slate-500">{emp.shifts_count}</td>
-                                         <td className="p-3 font-mono text-blue-600">{formatNumber(emp.total_volume)}</td>
-                                         <td className="p-3 font-mono font-bold text-emerald-600">{formatNumber(emp.total_sales)}</td>
-                                     </tr>
-                                 ))}
-                             </tbody>
-                        </table>
-                    </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-12 bg-slate-50 rounded-2xl border-dashed border-2 border-slate-200">
-                        <Users className="w-12 h-12 text-slate-300 mb-3" />
-                         <Text className="text-slate-400">لا توجد بيانات للأداء الوظيفي في هذه الفترة</Text>
-                    </div>
+    // Employee Cards - REFACTORED
+    const renderEmployees = () => {
+        const empList = stats?.employees?.list || [];
+        
+        // Find top performers
+        const topSales = [...empList].sort((a, b) => b.total_sales - a.total_sales)[0];
+        const topVolume = [...empList].sort((a, b) => b.total_volume - a.total_volume)[0];
+        const mostShifts = [...empList].sort((a, b) => b.shifts_count - a.shifts_count)[0];
+
+        return (
+            <div className="space-y-6 animate-fade-in">
+                {/* 1. Leaderboard Cards */}
+                {empList.length > 0 && (
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Top Sales */}
+                        <Card decoration="top" decorationColor="emerald" className="bg-white relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-3 opacity-10">
+                                 <Users className="w-24 h-24 text-emerald-600" />
+                             </div>
+                             <Text>الأعلى مبيعاً (إيراد)</Text>
+                             <div className="mt-4 flex items-center gap-3">
+                                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl border-2 border-emerald-200">
+                                     1
+                                 </div>
+                                 <div>
+                                     <div className="text-lg font-bold text-slate-800">{topSales?.worker_name}</div>
+                                     <Metric className="text-emerald-600 text-xl">{formatCurrency(topSales?.total_sales)}</Metric>
+                                 </div>
+                             </div>
+                        </Card>
+
+                        {/* Top Volume */}
+                        <Card decoration="top" decorationColor="blue" className="bg-white relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-3 opacity-10">
+                                 <Droplets className="w-24 h-24 text-blue-600" />
+                             </div>
+                             <Text>الأكثر مبيعاً (كمية)</Text>
+                             <div className="mt-4 flex items-center gap-3">
+                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl border-2 border-blue-200">
+                                     1
+                                 </div>
+                                 <div>
+                                     <div className="text-lg font-bold text-slate-800">{topVolume?.worker_name}</div>
+                                     <Metric className="text-blue-600 text-xl">{formatNumber(topVolume?.total_volume)} لتر</Metric>
+                                 </div>
+                             </div>
+                        </Card>
+
+                        {/* Most Shifts */}
+                        <Card decoration="top" decorationColor="amber" className="bg-white relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-3 opacity-10">
+                                 <Briefcase className="w-24 h-24 text-amber-600" />
+                             </div>
+                             <Text>الأكثر حضوراً (ورديات)</Text>
+                             <div className="mt-4 flex items-center gap-3">
+                                 <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-xl border-2 border-amber-200">
+                                     ★
+                                 </div>
+                                 <div>
+                                     <div className="text-lg font-bold text-slate-800">{mostShifts?.worker_name}</div>
+                                     <Metric className="text-amber-600 text-xl">{mostShifts?.shifts_count} وردية</Metric>
+                                 </div>
+                             </div>
+                        </Card>
+                     </div>
                 )}
-            </Card>
-        </div>
-    );
+
+                {/* 2. Detailed Performance Table */}
+                <Card className="bg-white">
+                    <div className="flex justify-between items-center mb-6">
+                        <Title className="flex items-center gap-2">
+                            <Users className="w-5 h-5 text-slate-500" />
+                            سجل الأداء والمستحقات
+                        </Title>
+                        <Badge className="bg-slate-100 text-slate-600">
+                            {empList.length} موظف نشط
+                        </Badge>
+                    </div>
+                    
+                    {empList.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-right text-sm border-separate border-spacing-y-2">
+                                <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase">
+                                    <tr>
+                                        <th className="p-3 rounded-r-lg">الموظف</th>
+                                        <th className="p-3">الورديات</th>
+                                        <th className="p-3">المبيعات (لتر)</th>
+                                        <th className="p-3">المبيعات (إيراد)</th>
+                                        <th className="p-3 text-emerald-600">الحوافز (+)</th>
+                                        <th className="p-3 text-red-600">الخصومات (-)</th>
+                                        <th className="p-3">مؤشر الأداء</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {empList.map((emp, idx) => {
+                                        // Calculate generic efficiency score (just for visuals)
+                                        const maxVol = topVolume?.total_volume || 1;
+                                        const efficiency = (emp.total_volume / maxVol) * 100;
+                                        
+                                        return (
+                                            <tr key={idx} className="bg-white hover:bg-slate-50 transition-shadow hover:shadow-sm group">
+                                                <td className="p-3 border-y border-r border-slate-100 rounded-r-lg font-bold text-slate-700 flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-xs">
+                                                        {emp.worker_name.charAt(0)}
+                                                    </div>
+                                                    {emp.worker_name}
+                                                    {emp === topSales && <span className="text-emerald-500 text-xs">👑</span>}
+                                                </td>
+                                                <td className="p-3 border-y border-slate-100 text-slate-500 font-mono">
+                                                    {emp.shifts_count}
+                                                </td>
+                                                <td className="p-3 border-y border-slate-100 font-mono text-blue-600 font-medium">
+                                                    {formatNumber(emp.total_volume)}
+                                                </td>
+                                                <td className="p-3 border-y border-slate-100 font-mono font-bold text-slate-700">
+                                                    {formatCurrency(emp.total_sales)}
+                                                </td>
+                                                <td className="p-3 border-y border-slate-100 font-mono text-emerald-600 bg-emerald-50/50 group-hover:bg-emerald-100/50 transition-colors">
+                                                    {emp.bonuses > 0 ? formatNumber(emp.bonuses) : '-'}
+                                                </td>
+                                                <td className="p-3 border-y border-l border-slate-100 rounded-l-lg font-mono text-red-600 bg-red-50/50 group-hover:bg-red-100/50 transition-colors">
+                                                    {emp.deductions > 0 ? formatNumber(emp.deductions) : '-'}
+                                                </td>
+                                                <td className="p-3 border-y border-l border-slate-100">
+                                                     <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                         <div 
+                                                            className="h-full bg-indigo-500 rounded-full"
+                                                            style={{ width: `${efficiency}%` }}
+                                                         ></div>
+                                                     </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                            <Users className="w-12 h-12 mb-3 text-slate-200" />
+                            <Text>لا توجد بيانات للأداء الوظيفي في هذه الفترة</Text>
+                        </div>
+                    )}
+                </Card>
+            </div>
+        );
+    };
 
     return (
         <div className="p-6 max-w-[1800px] mx-auto min-h-screen space-y-6">
             
-
+            {/* Page Header */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-6 shadow-lg">
+                <h1 className="text-3xl font-bold text-white mb-2">التقارير والإحصائيات</h1>
+                <p className="text-purple-100">تقارير محلية وعامة شاملة لجميع عمليات الشركة</p>
+            </div>
 
             {/* Sub Navigation */}
             <TabGroup index={activeTab} onIndexChange={setActiveTab}>
-                <TabList variant="solid" className="bg-white p-1 rounded-2xl shadow-sm border border-slate-100 max-w-5xl">
+                <TabList variant="solid" className="bg-white p-1 rounded-2xl shadow-sm border border-slate-100">
+                    {/* LOCAL REPORTS SECTION */}
+                    <div className="inline-flex items-center px-3 py-1 bg-slate-100 rounded-lg mr-2">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">📍 تقارير محلية</span>
+                    </div>
+                    
                      <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-emerald-600 ui-selected:text-white ui-selected:shadow-md transition-all">
                         <div className="flex items-center gap-2">
-                            <DollarSign className="w-5 h-5"/> <span>التقارير المالية</span>
+                            <DollarSign className="w-5 h-5"/> <span>المالية</span>
                         </div>
                     </Tab>
                     <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-blue-600 ui-selected:text-white ui-selected:shadow-md transition-all">
@@ -643,20 +1123,23 @@ export default function Reports({ user }) {
                              <Users className="w-5 h-5"/> <span>الموظفين</span>
                         </div>
                     </Tab>
-                    {/* Financial Flow Tab Removed */}
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-slate-700 ui-selected:text-white ui-selected:shadow-md transition-all">
-                        <div className="flex items-center gap-2">
-                             <FileText className="w-5 h-5"/> <span>التقرير اليومي</span>
-                        </div>
-                    </Tab>
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-cyan-600 ui-selected:text-white ui-selected:shadow-md transition-all">
+
+                    {/* DIVIDER */}
+                    <div className="inline-block w-px h-8 bg-slate-200 mx-3"></div>
+
+                    {/* GLOBAL REPORTS SECTION */}
+                    <div className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-lg mr-2">
+                        <span className="text-xs font-bold text-cyan-700 uppercase tracking-wider">🌍 تقارير عامة</span>
+                    </div>
+                    
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-gradient-to-r ui-selected:from-cyan-600 ui-selected:to-blue-600 ui-selected:text-white ui-selected:shadow-lg transition-all">
                         <div className="flex items-center gap-2">
                              <Truck className="w-5 h-5"/> <span>تقرير مورد</span>
                         </div>
                     </Tab>
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-indigo-600 ui-selected:text-white ui-selected:shadow-md transition-all">
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-gradient-to-r ui-selected:from-emerald-600 ui-selected:to-green-600 ui-selected:text-white ui-selected:shadow-lg transition-all">
                         <div className="flex items-center gap-2">
-                             <Droplets className="w-5 h-5"/> <span>تقرير بير</span>
+                             <Users className="w-5 h-5"/> <span>تقرير عميل</span>
                         </div>
                     </Tab>
                 </TabList>
@@ -667,10 +1150,9 @@ export default function Reports({ user }) {
                     {activeTab === 1 && renderWarehouse()}
                     {activeTab === 2 && renderSales()}
                     {activeTab === 3 && renderEmployees()}
-                    {/* Financial Flow Tab Removed */}
-                    {activeTab === 4 && <DailySalesReconciliation stationId={filters.station_id} />}
-                    {activeTab === 5 && <SupplierReport stationId={filters.station_id} />}
-                    {activeTab === 6 && <TankSalesReport stationId={filters.station_id} />}
+                    {/* GLOBAL REPORTS */}
+                    {activeTab === 4 && <SupplierReport stationId={filters.station_id} />}
+                    {activeTab === 5 && <CustomerReport stationId={filters.station_id} />}
                 </div>
             </TabGroup>
         </div>

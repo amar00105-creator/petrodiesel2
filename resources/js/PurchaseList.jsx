@@ -7,7 +7,7 @@ import GlobalTable from './components/GlobalTable';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import DischargeModal from './DischargeModal';
 
-export default function PurchaseList({ purchases = [], tanks = [] }) {
+export default function PurchaseList({ purchases = [], tanks = [], currency = 'SDG' }) {
     // Filter State
     const [filterSupplier, setFilterSupplier] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
@@ -89,7 +89,12 @@ export default function PurchaseList({ purchases = [], tanks = [] }) {
             </div>
         )},
         { header: 'الكمية (L)', accessor: 'volume_ordered', className: 'font-mono', render: (item) => Number(item.volume_received || item.volume_ordered || 0).toLocaleString() },
-        { header: 'الاجمالي (SAR)', accessor: 'total_cost', className: 'font-mono font-bold text-emerald-600', render: (item) => Number(item.total_cost || 0).toLocaleString() },
+        { header: `الاجمالي (${currency})`, accessor: 'total_cost', className: 'font-mono font-bold text-emerald-600', render: (item) => (
+            <div className="flex items-center gap-1">
+                <span>{Number(item.total_cost || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                <span className="text-xs text-emerald-400">{currency}</span>
+            </div>
+        )},
         { header: 'الحالة', accessor: 'status', render: (item) => {
             const isDelayedShipping = (item.status === 'ordered' || item.status === 'pending') && isDelayed(item.created_at);
             if (item.status === 'completed') {

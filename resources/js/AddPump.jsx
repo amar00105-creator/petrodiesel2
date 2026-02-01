@@ -1,20 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, DonutChart, Title, Text, Metric, Flex, Badge, ProgressBar } from '@tremor/react';
-import { Fuel, Users, Gauge, Save, X, Activity, Droplets, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Fuel, Users, Gauge, Save, X, Activity, Droplets, CheckCircle2, ArrowLeft, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function AddPump({ stats, tanks, workers }) {
+export default function AddPump(props) {
+    const { stats, tanks, workers } = props;
+    // State Init with Edit Support
     const [formData, setFormData] = useState({
         name: '',
         tank_id: '',
         counter_count: 1,
         readings: [''],
         workers: [''],
-        counter_names: ['']
+        counter_names: [''],
+        // Store IDs for existing counters during edit
+        counter_ids: [] 
     });
 
     const [selectedTank, setSelectedTank] = useState(null);
+    const isEditMode = props.initialData && props.initialData.pump && props.initialData.pump.id;
+
+    // Load Initial Data for Edit
+    useEffect(() => {
+        if (isEditMode) {
+            const { pump, counters } = props.initialData;
+            setFormData({
+                name: pump.name,
+                tank_id: pump.tank_id,
+                counter_count: counters.length,
+                readings: counters.map(c => c.current_reading),
+                workers: counters.map(c => c.current_worker_id || ''),
+                counter_names: counters.map(c => c.name),
+                counter_ids: counters.map(c => c.id)
+            });
+            const tank = tanks.find(t => t.id == pump.tank_id);
+            if(tank) setSelectedTank(tank);
+        }
+    }, [props.initialData]);
 
     // Handle Input Change
     const handleChange = (e) => {
@@ -37,41 +60,125 @@ export default function AddPump({ stats, tanks, workers }) {
     // Update Arrays size when counter count changes
     useEffect(() => {
         const count = parseInt(formData.counter_count);
+        
+        // GUARD CLAUSE: If the arrays are already the correct size (e.g., from initialData load),
+        // do NOT run the resize logic, which could overwrite data with defaults.
+        if (formData.counter_names.length === count && 
+            formData.readings.length === count && 
+            formData.workers.length === count) {
+            return;
+        }
+
         setFormData(prev => ({
             ...prev,
             readings: Array(count).fill('').map((_, i) => prev.readings[i] || ''),
             workers: Array(count).fill('').map((_, i) => prev.workers[i] || ''),
-            counter_names: Array(count).fill('').map((_, i) => prev.counter_names[i] || '')
+            counter_names: Array(count).fill('').map((_, i) => prev.counter_names[i] || `العداد رقم (${i + 1})`),
+            counter_ids: Array(count).fill(null).map((_, i) => prev.counter_ids[i] || null)
         }));
     }, [formData.counter_count]);
+
+    const [deletedCounters, setDeletedCounters] = useState([]);
+
+    // Handle Delete Counter (New & Existing)
+    const handleDeleteCounter = (index) => {
+        const counterId = formData.counter_ids[index];
+        
+        // If it's an existing counter, mark for deletion
+        if (counterId) {
+            setDeletedCounters(prev => [...prev, counterId]);
+        }
+
+        // Remove from local state
+        setFormData(prev => {
+            const newReadings = [...prev.readings];
+            const newWorkers = [...prev.workers];
+            const newNames = [...prev.counter_names];
+            const newIds = [...prev.counter_ids];
+
+            newReadings.splice(index, 1);
+            newWorkers.splice(index, 1);
+            newNames.splice(index, 1);
+            newIds.splice(index, 1);
+
+            return {
+                ...prev,
+                counter_count: prev.counter_count - 1,
+                readings: newReadings,
+                workers: newWorkers,
+                counter_names: newNames,
+                counter_ids: newIds
+            };
+        });
+
+        toast.success('تم حذف العداد', {
+            description: 'تمت إزالة العداد من القائمة بنجاح',
+            icon: <Trash2 className="w-4 h-4 text-red-500" />,
+            duration: 3000,
+        });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const form = new FormData();
-        form.append('name', formData.name);
-        form.append('tank_id', formData.tank_id);
-        form.append('counter_count', formData.counter_count);
-
-        formData.readings.forEach(r => form.append('readings[]', r));
-        formData.workers.forEach(w => form.append('workers[]', w));
-        formData.counter_names.forEach(n => form.append('counter_names[]', n));
-
         try {
-            const response = await fetch('/PETRODIESEL2/public/pumps/store', {
-                method: 'POST',
-                body: form
-            });
+            if (isEditMode) {
+                // Edit Flow - Send JSON to updateBulk
+                const payload = {
+                    id: props.initialData.pump.id,
+                    name: formData.name,
+                    tank_id: formData.tank_id,
+                    counters: formData.counter_names.map((name, i) => ({
+                        id: formData.counter_ids[i] || null, 
+                        name: name,
+                        current_reading: formData.readings[i],
+                        current_worker_id: formData.workers[i]
+                    })),
+                    deleted_counters: deletedCounters // Send deleted IDs
+                };
 
-            if (response.redirected || response.ok) {
-                toast.success('تمت إضافة الماكينة بنجاح!', {
-                    description: 'جاري حفظ البيانات وإعادة التوجيه...'
+                const response = await fetch('/PETRODIESEL2/public/pumps/updateBulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
-                setTimeout(() => window.location.href = '/PETRODIESEL2/public/pumps', 1500);
+                
+                const data = await response.json().catch(() => ({}));
+
+                if (response.ok && data.success) {
+                    toast.success('تم تحديث البيانات بنجاح', { description: 'جاري إعادة التوجيه...' });
+                    setTimeout(() => window.location.href = '/PETRODIESEL2/public/pumps', 1000);
+                } else {
+                    toast.error(data.message || 'فشل التحديث');
+                }
+
             } else {
-                toast.error('حدث خطأ أثناء الحفظ');
+                // Create Flow - Send FormData to store
+                const form = new FormData();
+                form.append('name', formData.name);
+                form.append('tank_id', formData.tank_id);
+                form.append('counter_count', formData.counter_count);
+
+                formData.readings.forEach(r => form.append('readings[]', r));
+                formData.workers.forEach(w => form.append('workers[]', w));
+                formData.counter_names.forEach(n => form.append('counter_names[]', n));
+
+                const response = await fetch('/PETRODIESEL2/public/pumps/store', {
+                    method: 'POST',
+                    body: form
+                });
+
+                if (response.redirected || response.ok) {
+                    toast.success('تمت إضافة الماكينة بنجاح!', {
+                        description: 'جاري حفظ البيانات وإعادة التوجيه...'
+                    });
+                    setTimeout(() => window.location.href = '/PETRODIESEL2/public/pumps', 1500);
+                } else {
+                    toast.error('حدث خطأ أثناء الحفظ');
+                }
             }
         } catch (error) {
+            console.error(error);
             toast.error('فشل الاتصال بالخادم');
         }
     };
@@ -297,12 +404,22 @@ export default function AddPump({ stats, tanks, workers }) {
                                 <AnimatePresence mode='popLayout'>
                                     {Array.from({ length: parseInt(formData.counter_count) }).map((_, i) => (
                                         <motion.div
-                                            key={i}
+                                            key={i} // Use a real ID if possible for correct animation, but index is okay if we are careful
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, scale: 0.9 }}
                                             className="group relative bg-slate-50/50 hover:bg-white rounded-2xl p-6 border-2 border-slate-100 hover:border-indigo-100 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-900/5"
                                         >
+                                            {/* Delete Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleDeleteCounter(i)}
+                                                className="absolute top-2 left-2 p-2 rounded-xl bg-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors z-20"
+                                                title="حذف العداد"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+
                                             <div className="absolute -left-3 top-6 bg-white border border-slate-200 text-slate-400 font-mono text-xs px-2 py-1 rounded-lg shadow-sm group-hover:border-indigo-200 group-hover:text-indigo-500 transition-colors">
                                                 Nozzle #{String(i + 1).padStart(2,'0')}
                                             </div>

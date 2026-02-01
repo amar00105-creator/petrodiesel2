@@ -4,7 +4,7 @@ import { X, Landmark, ArrowUpRight, ArrowDownRight, ArrowRightLeft, CreditCard, 
 import { toast } from 'sonner';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
-export default function BankDetailsModal({ isOpen, onClose, bankId }) {
+export default function BankDetailsModal({ isOpen, onClose, bankId, currency = 'SDG' }) {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState({
         bank: null,
@@ -208,7 +208,7 @@ export default function BankDetailsModal({ isOpen, onClose, bankId }) {
                                         <div className="h-12 w-64 bg-white/20 rounded animate-pulse"></div>
                                     ) : (
                                         <div className="text-5xl font-bold font-mono tracking-tight">
-                                            {parseFloat(data.bank?.balance || 0).toLocaleString('en-US')} <span className="text-2xl opacity-60">ر.س</span>
+                                            {parseFloat(data.bank?.balance || 0).toLocaleString('en-US')} <span className="text-2xl opacity-60">{currency}</span>
                                         </div>
                                     )}
                                 </div>

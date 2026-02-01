@@ -23,17 +23,23 @@ export default function ManagePump({ pump, counters, workers, tanks, user }) {
         try {
             const response = await fetch('/PETRODIESEL2/public/pumps/updateCounter', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
             });
             
-            if (response.redirected || response.ok) {
+            const data = await response.json().catch(() => ({}));
+
+            if (data.success || response.redirected) {
                 toast.success('تم حفظ التغييرات بنجاح');
-                // Optional: reload to see changes if server renders updated data
                 window.location.reload();
             } else {
-                toast.error('حدث خطأ أثناء الحفظ');
+                toast.error(data.message || 'حدث خطأ أثناء الحفظ');
             }
         } catch (error) {
+            console.error(error);
             toast.error('فشل الاتصال بالخادم');
         }
     };
@@ -65,9 +71,32 @@ export default function ManagePump({ pump, counters, workers, tanks, user }) {
         form.submit();
     };
 
-    const handleUpdatePump = (e) => {
+    const handleUpdatePump = async (e) => {
         e.preventDefault();
-        e.target.submit();
+        const formData = new FormData(e.target);
+
+        try {
+            const response = await fetch('/PETRODIESEL2/public/pumps/updatePump', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (data.success || response.redirected) {
+                toast.success('تم تحديث بيانات الماكينة بنجاح');
+                window.location.reload();
+            } else {
+                toast.error(data.message || 'حدث خطأ أثناء التحديث');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('فشل الاتصال بالخادم');
+        }
     };
 
     return (
@@ -409,15 +438,23 @@ export default function ManagePump({ pump, counters, workers, tanks, user }) {
                                 try {
                                     const response = await fetch('/PETRODIESEL2/public/pumps/addCounter', {
                                         method: 'POST',
-                                        body: formData
+                                        body: formData,
+                                        headers: {
+                                            'Accept': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        }
                                     });
-                                    if (response.ok) {
+                                    
+                                    const data = await response.json().catch(() => ({}));
+
+                                    if (data.success || response.ok) {
                                         toast.success('تمت إضافة العداد بنجاح');
                                         window.location.reload();
                                     } else {
-                                        toast.error('حدث خطأ أثناء الإضافة');
+                                        toast.error(data.message || data.error || 'حدث خطأ أثناء الإضافة');
                                     }
                                 } catch (err) {
+                                    console.error(err);
                                     toast.error('فشل الاتصال بالخادم');
                                 }
                             }}>

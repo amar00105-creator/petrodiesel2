@@ -100,7 +100,7 @@ export default function AddSupplier() {
             {formData.initial_balance
               ? Number(formData.initial_balance).toLocaleString()
               : "0.00"}
-            <span className="text-lg font-normal ml-2 opacity-80">SAR</span>
+            <span className="text-lg font-normal ml-2 opacity-80">SDG</span>
           </div>
           <Text className="text-emerald-100 text-xs mt-2">
             {Number(formData.initial_balance) < 0

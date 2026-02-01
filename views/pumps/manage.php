@@ -1,8 +1,7 @@
 <?php
-// views/pumps/manage.php
-// PETRODIESEL ERP - React Host
-$page_title = 'تعديل بيانات الماكينة';
+// Layout is handled by Controller
 ?>
+
 <!-- React Root -->
 <div id="root"
     data-page="manage-pump"
@@ -11,9 +10,7 @@ $page_title = 'تعديل بيانات الماكينة';
     data-workers='<?= json_encode($workers ?? []) ?>'
     data-tanks='<?= json_encode($tanks ?? []) ?>'
     data-user='<?= json_encode($user ?? []) ?>'
-    data-stats='<?= json_encode($stats ?? []) ?>'
-    data-all-stations='<?= json_encode($allStations ?? []) ?>'
-    class="h-full w-full"></div>
+    class="min-h-screen bg-slate-50/50"></div>
 
 <!-- React & Vite Integration -->
 <?= \App\Helpers\ViteHelper::load('resources/js/main.jsx') ?>

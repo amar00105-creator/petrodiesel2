@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Header Sync Test</title>
+    <style>
+        body { font-family: Arial; padding: 40px; background: #1a1a2e; color: white; }
+        .time-box { background: rgba(255,255,255,0.1); padding: 30px; margin: 20px 0; border-radius: 15px; }
+        .time { font-size: 48px; font-family: monospace; font-weight: bold; color: #4CAF50; }
+        .label { font-size: 18px; opacity: 0.7; margin-bottom: 10px; }
+        .info { background: rgba(255,255,255,0.05); padding: 15px; margin: 10px 0; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h1>🕐 Header Sync Test</h1>
+    
+    <div class="time-box">
+        <div class="label">Browser Time (Current):</div>
+        <div class="time" id="browser-time"></div>
+    </div>
+
+    <div class="time-box">
+        <div class="label">Server Time (from API):</div>
+        <div class="time" id="server-time">Loading...</div>
+        <div class="info" id="api-status"></div>
+    </div>
+
+    <div class="time-box">
+        <div class="label">Synced Time (What Header Should Show):</div>
+        <div class="time" id="synced-time">Waiting for API...</div>
+        <div class="info" id="offset-info"></div>
+    </div>
+
+    <script>
+        let serverTimeOffset = 0;
+        let apiWorked = false;
+
+        // Update browser time
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('browser-time').textContent = now.toLocaleTimeString('en-GB');
+        }, 1000);
+
+        // Sync with server (same logic as FuturisticHeader)
+        async function syncServerTime() {
+            try {
+                console.log('Fetching server time from API...');
+                const res = await fetch('/PETRODIESEL2/public/api/server-time');
+                console.log('API Response:', res.status);
+                
+                const data = await res.json();
+                console.log('API Data:', data);
+                
+                if (data.success) {
+                    const serverTime = data.timestamp * 1000;
+                    const clientTime = Date.now();
+                    serverTimeOffset = serverTime - clientTime;
+                    apiWorked = true;
+                    
+                    // Show API info
+                    document.getElementById('api-status').innerHTML = `
+                        ✅ API Works!<br>
+                        Server Timezone: ${data.timezone}<br>
+                        Server Timestamp: ${data.timestamp}<br>
+                        Offset: ${(serverTimeOffset/1000/60/60).toFixed(2)} hours
+                    `;
+                    
+                    document.getElementById('offset-info').innerHTML = `
+                        Server - Client = ${serverTimeOffset} ms
+                    `;
+                    
+                    // Start synced time
+                    setInterval(() => {
+                        const synced = new Date(Date.now() + serverTimeOffset);
+                        document.getElementById('synced-time').textContent = synced.toLocaleTimeString('en-GB');
+                    }, 1000);
+                } else {
+                    document.getElementById('api-status').innerHTML = '❌ API returned error';
+                    document.getElementById('server-time').textContent = 'Error';
+                }
+            } catch (err) {
+                console.error('API Error:', err);
+                document.getElementById('api-status').innerHTML = '❌ Failed: ' + err.message;
+                document.getElementById('server-time').textContent = 'Failed';
+            }
+        }
+
+        // Run sync
+        syncServerTime();
+        
+        // Also show server time directly
+        setInterval(async () => {
+            if (!apiWorked) return;
+            
+            try {
+                const res = await fetch('/PETRODIESEL2/public/api/server-time');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('server-time').textContent = data.time;
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

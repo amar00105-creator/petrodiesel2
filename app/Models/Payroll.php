@@ -76,4 +76,29 @@ class Payroll extends Model
         $stmt->execute([$month, $year]);
         return $stmt->fetchAll();
     }
+
+    public function getWorkerPayrollSummary($start, $end, $stationId = 'all')
+    {
+        // Aggregates deductions (khusumat) and bonuses (hawafiz) for workers
+        $sql = "SELECT entity_id as worker_id, type, SUM(amount) as total_amount
+                FROM payroll_entries
+                WHERE entity_type = 'worker' 
+                AND date BETWEEN ? AND ?";
+
+        $params = [$start, $end];
+
+        // Note: Payroll entries don't have station_id directly. 
+        // We rely on the fact that workers belong to a station. 
+        // Ideally we join workers table.
+        if ($stationId !== 'all') {
+            $sql .= " AND entity_id IN (SELECT id FROM workers WHERE station_id = ?)";
+            $params[] = $stationId;
+        }
+
+        $sql .= " GROUP BY entity_id, type";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

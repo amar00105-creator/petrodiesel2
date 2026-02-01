@@ -1,5 +1,32 @@
 <?php
 
+// Load timezone from database
+$timezoneSet = false;
+try {
+    require_once __DIR__ . '/../app/Config/Database.php';
+    $db = \App\Config\Database::connect();
+    $stmt = $db->prepare("SELECT value FROM settings WHERE key_name = 'timezone' AND station_id IS NULL LIMIT 1");
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($result && !empty($result['value'])) {
+        $timezone = $result['value'];
+        date_default_timezone_set($timezone);
+        $timezoneSet = true;
+
+        // Sync MySQL Timezone
+        $offset = date('P');
+        $db->exec("SET time_zone = '$offset'");
+    }
+} catch (Exception $e) {
+    // Silence errors but continue
+}
+
+// Fallback if not set
+if (!$timezoneSet) {
+    date_default_timezone_set('Africa/Khartoum');
+}
+
 // Check if this is an API request - but FOR DEBUGGING force errors ON
 if (isset($_GET['action']) && in_array($_GET['action'], ['get_stats', 'get_sources', 'financial_flow'])) {
     error_reporting(E_ALL);
@@ -51,6 +78,9 @@ $router->add('GET', '/login', 'AuthController', 'login');
 $router->add('POST', '/login', 'AuthController', 'login');
 $router->add('GET', '/logout', 'AuthController', 'logout');
 $router->add('POST', '/auth/verify_password', 'AuthController', 'verify_password');
+
+// API Routes
+$router->add('GET', '/api/server-time', 'ApiController', 'getServerTime');
 
 // Station Management Routes
 $router->add('GET', '/stations', 'StationController', 'index');
@@ -105,14 +135,26 @@ $router->add('POST', '/tanks/update', 'TankController', 'update');
 $router->add('POST', '/tanks/delete', 'TankController', 'delete');
 $router->add('GET', '/tanks/getCalibrationPoints', 'TankController', 'getCalibrationPoints');
 $router->add('POST', '/tanks/addCalibrationPoint', 'TankController', 'addCalibrationPoint');
-$router->add('POST', '/tanks/deleteCalibrationPoint', 'TankController', 'deleteCalibrationPoint');
+$router->add('DELETE', '/tanks/deleteCalibrationPoint', 'TankController', 'deleteCalibrationPoint');
 $router->add('GET', '/tanks/calculateVolume', 'TankController', 'calculateVolume');
+$router->add('GET', '/tanks/calculateHeight', 'TankController', 'calculateHeight');
+$router->add('POST', '/tanks/processSmartCalibration', 'TankController', 'processSmartCalibration');
+
+// Simplified Calibration Routes (NEW)
+$router->add('POST', '/calibrations/add', 'CalibrationController', 'add');
+$router->add('POST', '/calibrations/update', 'CalibrationController', 'update');
+$router->add('DELETE', '/calibrations/delete', 'CalibrationController', 'delete');
+$router->add('POST', '/calibrations/delete', 'CalibrationController', 'delete');
+$router->add('GET', '/calibrations/history', 'CalibrationController', 'getHistory');
+$router->add('GET', '/calibrations/all', 'CalibrationController', 'getAll');
 
 // Pumps Routes
 $router->add('GET', '/pumps', 'PumpController', 'index');
 $router->add('GET', '/pumps/create', 'PumpController', 'create');
 $router->add('POST', '/pumps/store', 'PumpController', 'store');
 $router->add('GET', '/pumps/manage', 'PumpController', 'manage');
+$router->add('GET', '/pumps/edit', 'PumpController', 'edit');
+$router->add('POST', '/pumps/updateBulk', 'PumpController', 'updateBulk');
 $router->add('POST', '/pumps/updateCounter', 'PumpController', 'updateCounter');
 
 // Expenses Routes
@@ -127,11 +169,23 @@ $router->add('GET', '/accounting/safes', 'FinanceController', 'safes');
 $router->add('GET', '/accounting/assets', 'FinanceController', 'assets');
 $router->add('POST', '/finance/createSafe', 'FinanceController', 'createSafe');
 $router->add('POST', '/finance/createBank', 'FinanceController', 'createBank');
+$router->add('POST', '/finance/updateSafe', 'FinanceController', 'updateSafe');
+$router->add('POST', '/finance/deleteSafe', 'FinanceController', 'deleteSafe');
+$router->add('POST', '/finance/updateBank', 'FinanceController', 'updateBank');
+$router->add('POST', '/finance/deleteBank', 'FinanceController', 'deleteBank');
 $router->add('POST', '/finance/transfer', 'FinanceController', 'transfer');
 $router->add('POST', '/finance/transfer', 'FinanceController', 'transfer');
 $router->add('GET', '/finance/getBankDetails', 'FinanceController', 'getBankDetails');
 $router->add('GET', '/finance/getSafeDetails', 'FinanceController', 'getSafeDetails');
 $router->add('GET', '/finance/reports', 'FinanceController', 'reports'); // AJAX endpoint for Reports page
+
+// Multi-Level Transfer System Routes
+$router->add('POST', '/finance/requestTransfer', 'FinanceController', 'requestTransfer');
+$router->add('GET', '/finance/transferRequests', 'FinanceController', 'getTransferRequests');
+$router->add('POST', '/finance/approveTransfer', 'FinanceController', 'approveTransfer');
+$router->add('POST', '/finance/rejectTransfer', 'FinanceController', 'rejectTransfer');
+$router->add('GET', '/finance/banksForTransfer', 'FinanceController', 'getBanksForTransfer');
+
 $router->add('GET', '/expenses/get_entities', 'ExpensesController', 'get_entities');
 $router->add('POST', '/expenses/store', 'ExpensesController', 'store');
 $router->add('POST', '/finance/storeTransaction', 'FinanceController', 'storeTransaction');

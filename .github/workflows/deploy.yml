@@ -1,4 +1,4 @@
-name: Shared Hosting Deploy
+name: FTP Deploy
 
 on:
   push:
@@ -6,21 +6,19 @@ on:
       - main
 
 jobs:
-  deploy:
-    name: Deploy to Stellar Plus
+  web-deploy:
+    name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script: |
-            # 1. Go to project directory (Change this path if needed)
-            # Example: cd /home/username/public_html
-            cd ~/public_html || exit 1
+      - name: Get latest code
+        uses: actions/checkout@v3
 
-            # 2. Pull latest code
-            git pull origin main
+      - name: Sync files
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: petrodiesel.net
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
+          server-dir: /home/petrnugv/app.petrodiesel.net/

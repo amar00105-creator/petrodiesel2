@@ -1,20 +1,26 @@
-name: Auto Deploy to PetroDiesel
+name: Shared Hosting Deploy
+
 on:
   push:
     branches:
-      - main # هذا هو اسم فرعك الحالي
+      - main
+
 jobs:
-  web-deploy:
-    name: Deploying Files to Server
+  deploy:
+    name: Deploy to Stellar Plus
     runs-on: ubuntu-latest
     steps:
-      - name: Get latest code
-        uses: actions/checkout@v3
-
-      - name: Sync files to Server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: ./ # الروت المباشر لليوزر
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            # 1. Go to project directory (Change this path if needed)
+            # Example: cd /home/username/public_html
+            cd ~/public_html || exit 1
+
+            # 2. Pull latest code
+            git pull origin main

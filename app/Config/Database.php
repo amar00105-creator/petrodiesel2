@@ -7,18 +7,43 @@ use PDOException;
 
 class Database
 {
-    public function __construct()
-    {
-        // Private constructor to prevent instantiation
-    }
     private static $host = 'localhost';
     private static $db_name = 'petrodiesel_db';
-    private static $username = 'root'; // Update if needed
-    private static $password = '';     // Update if needed
+    private static $username = 'root';
+    private static $password = '';
     private static $conn = null;
 
     private static function loadConfig()
     {
+        // 1. Try to load from .env file (Standard way)
+        $envFile = __DIR__ . '/../../.env';
+        if (file_exists($envFile)) {
+            $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+            foreach ($lines as $line) {
+                if (strpos(trim($line), '#') === 0) continue;
+                list($name, $value) = explode('=', $line, 2);
+                $name = trim($name);
+                $value = trim($value);
+
+                switch ($name) {
+                    case 'DB_HOST':
+                        self::$host = $value;
+                        break;
+                    case 'DB_DATABASE':
+                        self::$db_name = $value;
+                        break;
+                    case 'DB_USERNAME':
+                        self::$username = $value;
+                        break;
+                    case 'DB_PASSWORD':
+                        self::$password = $value;
+                        break;
+                }
+            }
+            return; // If .env exists, ignore legacy config
+        }
+
+        // 2. Fallback to legacy db_config.php
         $configFile = __DIR__ . '/db_config.php';
         if (file_exists($configFile)) {
             $config = require $configFile;
@@ -31,10 +56,12 @@ class Database
         }
     }
 
+    public function __construct() {}
+
     public static function connect()
     {
         if (self::$conn === null) {
-            self::loadConfig(); // Load dynamic config
+            self::loadConfig(); // Load config from .env or file
 
             try {
                 self::$conn = new PDO(
@@ -45,8 +72,7 @@ class Database
                 self::$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 self::$conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             } catch (PDOException $e) {
-                // On production, do not echo detailed errors to the screen for security
-                // error_log($e->getMessage());
+                // On production, hide detailed errors
                 // die("Database Connection Error");
                 die("Connection Error: " . $e->getMessage());
             }

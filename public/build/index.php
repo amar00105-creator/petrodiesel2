@@ -27,18 +27,7 @@ if (!$timezoneSet) {
     date_default_timezone_set('Africa/Khartoum');
 }
 
-// Check if this is an API request - but FOR DEBUGGING force errors ON
-if (isset($_GET['action']) && in_array($_GET['action'], ['get_stats', 'get_sources', 'financial_flow'])) {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-} else {
-    // Global debug mode for 500 investigation
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-}
-
 // Autoloader
-file_put_contents(__DIR__ . '/../request_log.txt', date('Y-m-d H:i:s') . ' ' . $_SERVER['REQUEST_METHOD'] . ' ' . $_SERVER['REQUEST_URI'] . "\n", FILE_APPEND);
 spl_autoload_register(function ($class) {
     // Project-specific namespace prefix
     $prefix = 'App\\';

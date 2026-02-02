@@ -1,5 +1,0 @@
-Table 'salaries' exists.
-Table 'payroll_entries' exists.
-Data Dump:
-
-JSON Encode Success. Length: 4

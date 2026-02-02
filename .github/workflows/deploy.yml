@@ -46,7 +46,11 @@ jobs:
             README.md
 
       - name: Fix Permissions via LFTP
+        env:
+          FTP_USER: ${{ secrets.FTP_USERNAME }}
+          FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+          FTP_HOST: 162.0.215.16
         run: |
           sudo apt-get update
           sudo apt-get install -y lftp
-          lftp -c "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ftp://162.0.215.16; chmod 755 public; chmod 644 public/index.php; chmod 644 public/.htaccess; bye"
+          lftp -c "set ftp:ssl-allow no; open -u '$FTP_USER','$FTP_PASS' $FTP_HOST; chmod 755 public; chmod 644 public/index.php; chmod 644 public/.htaccess; bye"

@@ -52,4 +52,4 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y lftp
-          lftp -c "set ftp:ssl-allow no; open -u '$FTP_USER','$FTP_PASS' $FTP_HOST; chmod 755 public; chmod 644 public/index.php; chmod 644 public/.htaccess; bye"
+          lftp -c "set ftp:ssl-allow no; set ssl:verify-certificate no; open -u '$FTP_USER','$FTP_PASS' $FTP_HOST; chmod 755 public; chmod 644 public/index.php; chmod 644 public/.htaccess; bye"

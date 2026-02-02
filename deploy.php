@@ -1,7 +1,7 @@
 <?php
 // deploy.php - FTP Upload Script
 
-$ftp_server = "petrodiesel.net";
+$ftp_server = "162.0.215.16";
 $ftp_user_name = "ftpetro@app.petrodiesel.net";
 $ftp_user_pass = "Petro@00105";
 $source_dir = __DIR__ . '/public/build';

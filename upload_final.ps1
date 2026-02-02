@@ -1,4 +1,4 @@
-$ftpHost = "ftp://petrodiesel.net"
+$ftpHost = "ftp://162.0.215.16"
 $ftpUser = "ftpetro@app.petrodiesel.net"
 $ftpPass = "hT&[EvaNz#Xs"
 $localDir = "c:\xampp\htdocs\PETRODIESEL2\public\build"

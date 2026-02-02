@@ -43,3 +43,58 @@ Script Dir: /PETRODIESEL2/public
 Calculated URI: /api/server-time
 Method: GET
 Routes Count: 130
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: POST
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 130
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-03&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 130

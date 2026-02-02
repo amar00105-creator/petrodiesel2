@@ -15,7 +15,7 @@ echo 2. Type: SFTP: Upload Folder
 echo 3. Select: public/build
 echo.
 echo OR use FileZilla with these credentials:
-echo Host: petrodiesel.net
+echo Host: 162.0.215.16
 echo User: ftpetro@app.petrodiesel.net
 echo Password: Petro@00105
 echo Port: 21

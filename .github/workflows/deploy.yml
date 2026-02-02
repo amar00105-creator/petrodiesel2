@@ -44,3 +44,9 @@ jobs:
             **/test_*.php
             **/check_*.php
             README.md
+
+      - name: Fix Permissions via LFTP
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+          lftp -c "open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ftp://162.0.215.16; chmod 755 public; chmod 644 public/index.php; chmod 644 public/.htaccess; bye"

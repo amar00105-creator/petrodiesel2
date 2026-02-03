@@ -41,6 +41,7 @@ jobs:
             **/.github/**
             **/tests/**
             **/test_*.php
+            **/check_*.php
             README.md
 
       - name: Fix Permissions via Python

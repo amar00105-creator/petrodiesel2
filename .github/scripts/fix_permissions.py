@@ -30,7 +30,8 @@ def fix_permissions():
         ('SITE CHMOD 755 public', 'Fix public dir'),
         ('SITE CHMOD 644 public/index.php', 'Fix index.php'),
         ('SITE CHMOD 644 public/.htaccess', 'Fix .htaccess'),
-        ('SITE CHMOD 644 app/Config/db_config.php', 'Fix db_config')
+        ('SITE CHMOD 644 app/Config/db_config.php', 'Fix db_config'),
+        ('DELE .env', 'Delete .env file to force config usage')
     ]
 
     for cmd, desc in commands:

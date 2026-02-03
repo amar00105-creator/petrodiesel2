@@ -15,6 +15,21 @@ class Database
 
     private static function loadConfig()
     {
+        // FORCE PRODUCTION CONFIGURATION ON LIVE SERVER
+        if (strpos($_SERVER['HTTP_HOST'] ?? '', 'petrodiesel.net') !== false) {
+            $configFile = __DIR__ . '/db_config.php';
+            if (file_exists($configFile)) {
+                $config = require $configFile;
+                if (is_array($config)) {
+                    self::$host = $config['host'];
+                    self::$db_name = $config['db_name'];
+                    self::$username = $config['username'];
+                    self::$password = $config['password'];
+                    return; // Stop here, do not load .env
+                }
+            }
+        }
+
         // 1. Try to load from .env file (Standard way)
         $envFile = __DIR__ . '/../../.env';
         if (file_exists($envFile)) {

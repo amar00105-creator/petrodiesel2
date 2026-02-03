@@ -15,8 +15,8 @@ export default defineConfig({
         chunkFileNames: `assets/[name]-[hash].js`,
         assetFileNames: `assets/[name]-[hash].[ext]`,
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['@headlessui/react', '@heroicons/react', 'framer-motion']
+          vendor: ['react', 'react-dom'],
+          ui: ['framer-motion', 'lucide-react', 'sonner']
         }
       }
     },

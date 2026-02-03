@@ -78,11 +78,19 @@ class Router
         }
 
         // Second Pass: Try stripping /public if present (Fix for hosting environments where base path detection fails)
-        if (strpos($uri, '/public') === 0) {
-            $altUri = substr($uri, 7);
-            foreach ($this->routes as $route) {
-                if ($route['path'] === $altUri && strtoupper($route['method']) === strtoupper($method)) {
-                    return $this->executeRoute($route);
+        if (strpos($uri, '/public') !== false) {
+            // Extract everything after /public
+            $parts = explode('/public', $uri, 2);
+            if (isset($parts[1])) {
+                $altUri = $parts[1];
+                if (empty($altUri)) $altUri = '/'; // Handle trailing /public
+
+                foreach ($this->routes as $route) {
+                    if ($route['path'] === $altUri && strtoupper($route['method']) === strtoupper($method)) {
+                        // Log this fallback success for debugging
+                        file_put_contents(__DIR__ . '/../../debug_router.txt', "Fallback Match! URI: $altUri\n", FILE_APPEND);
+                        return $this->executeRoute($route);
+                    }
                 }
             }
         }

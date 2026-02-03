@@ -55,11 +55,33 @@
 </head>
 
 <body>
+    <!-- Mobile Header (Visible only on mobile) -->
+    <div class="mobile-header">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline" onclick="toggleSidebar()" style="padding: 0.5rem; border: none; background: transparent;">
+                <i class="fas fa-bars" style="font-size: 1.5rem; color: var(--primary);"></i>
+            </button>
+            <span style="font-weight: 900; font-size: 1.2rem; color: var(--primary);">بتروديزل</span>
+        </div>
+        <!-- Mobile Profile Icon -->
+        <div class="d-flex align-items-center gap-2">
+            <button onclick="toggleTheme()" class="btn btn-outline" style="padding: 0.5rem; border-radius: 50%; width: 35px; height: 35px; border: none; background: transparent;">
+                <i class="fas fa-moon" id="theme-icon-mobile" style="font-size: 1.1rem; color: var(--text-secondary);"></i>
+            </button>
+            <i class="fas fa-user-circle" style="font-size: 1.5rem; color: var(--text-secondary);"></i>
+        </div>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+
     <!-- Collapsible Glassmorphism Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="mainSidebar">
         <div class="sidebar-header">
             <i class="fas fa-gas-pump sidebar-logo"></i>
             <span class="sidebar-title">بتروديزل</span>
+            <!-- Close Button for Mobile -->
+            <i class="fas fa-times d-md-none" onclick="closeSidebar()" style="margin-right: auto; cursor: pointer; color: var(--text-secondary);"></i>
         </div>
 
         <nav class="sidebar-nav">
@@ -248,8 +270,25 @@
             }
         }
 
+        // Sidebar Logic
+        function toggleSidebar() {
+            document.getElementById('mainSidebar').classList.toggle('mobile-active');
+            document.querySelector('.sidebar-overlay').classList.toggle('active');
+        }
+
+        function closeSidebar() {
+            document.getElementById('mainSidebar').classList.remove('mobile-active');
+            document.querySelector('.sidebar-overlay').classList.remove('active');
+        }
+
         // Init Icon on Load
-        document.addEventListener('DOMContentLoaded', updateThemeIcon);
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcon();
+            // Sync mobile theme icon
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const mobIcon = document.getElementById('theme-icon-mobile');
+            if (mobIcon) mobIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+        });
     </script>
 </body>
 

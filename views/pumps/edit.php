@@ -82,19 +82,46 @@ $countersJson = json_encode($counters ?? []);
     </style>
 </head>
 
-<body class="bg-slate-50">
-    <div id="root"
-        data-page="edit-pump"
-        data-base-url="<?= $baseUrl ?>"
-        data-pump='<?= $pumpJson ?>'
-        data-counters='<?= $countersJson ?>'
-        data-tanks='<?= $tanksJson ?>'
-        data-workers='<?= $workersJson ?>'
-        data-stats='<?= $statsJson ?>'></div>
+<?php
+// Debugging Output (Hidden in production usually, but we need it now)
+// echo "<!-- Debug: ScriptDir: $scriptDir -->";
+// echo "<!-- Debug: BaseURL: $baseUrl -->";
+// echo "<!-- Debug: Manifest Path: $manifestPath -->";
+// echo "<!-- Debug: JS File: $jsFile -->";
+?>
 
-    <?php if (!$isDev): ?>
+<div id="root"
+    data-page="edit-pump"
+    data-base-url="<?= $baseUrl ?>"
+    data-pump='<?= $pumpJson ?>'
+    data-counters='<?= $countersJson ?>'
+    data-tanks='<?= $tanksJson ?>'
+    data-workers='<?= $workersJson ?>'
+    data-stats='<?= $statsJson ?>'>
+    <div style="padding: 50px; text-align: center; color: #64748b;">
+        <p style="font-size: 1.5rem; font-weight: bold;">Loading Application...</p>
+        <p style="font-size: 0.8rem; margin-top: 10px;">If this persists, please check console.</p>
+        <!-- Debug Info:
+                 Msg: <?= htmlspecialchars($jsFile ? 'JS Found' : 'JS Not Found') ?>
+                 BaseURL: <?= htmlspecialchars($baseUrl) ?>
+                 JS: <?= htmlspecialchars($jsFile) ?>
+            -->
+    </div>
+</div>
+
+<?php if (!$isDev): ?>
+    <?php if ($jsFile): ?>
         <script type="module" src="<?= $baseUrl ?>/build/<?= $jsFile ?>"></script>
+    <?php else: ?>
+        <script>
+            console.error("Critical: Manifest file not found or JS file missing.");
+        </script>
+        <div style="background: #fee2e2; color: #991b1b; padding: 20px; text-align: center; margin: 20px;">
+            Critical Error: Build assets not found.<br>
+            Manifest Path: <?= htmlspecialchars($manifestPath) ?>
+        </div>
     <?php endif; ?>
+<?php endif; ?>
 </body>
 
 </html>

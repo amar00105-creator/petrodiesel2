@@ -10,7 +10,7 @@ class Constants
     {
         // Enforce Live URL for consistent behavior
         if ($_SERVER['HTTP_HOST'] === 'app.petrodiesel.net') {
-            return "https://app.petrodiesel.net/public";
+            return "https://app.petrodiesel.net";
         }
 
         $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";

@@ -7,7 +7,7 @@ import DischargeModal from './DischargeModal';
 import AddTankModal from './AddTankModal';
 import SimpleCalibrationModal from './SimpleCalibrationModal';
 
-export default function TankList({ tanks = [], suppliers = [], fuelSettings = [], fuelTypes = [] }) {
+export default function TankList({ tanks = [], suppliers = [], fuelSettings = [], generalSettings = {}, fuelTypes = [] }) {
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
     const [isDischargeOpen, setIsDischargeOpen] = useState(false);
@@ -77,6 +77,34 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
         t.product.toLowerCase().includes(search.toLowerCase())
     );
 
+// Helper to format volume based on settings
+    const formatVolume = (liters) => {
+        const mode = generalSettings.volume_display_mode || 'liters';
+        const gallons = liters / 4.5;
+        
+        if (mode === 'gallons') {
+            return (
+                <div className="flex flex-col items-end">
+                   <span>{gallons.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-xs text-slate-400">Gal</span></span>
+                </div>
+            );
+        }
+        
+        if (mode === 'both') {
+            return (
+                <div className="flex flex-col items-end text-right">
+                    <span className="text-sm text-emerald-600 font-bold">{gallons.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-[10px]">Gal</span></span>
+                    <span className="text-[10px] text-slate-400">{liters.toLocaleString()} L</span>
+                </div>
+            );
+        }
+
+        // Default: Liters
+        return (
+            <span>{liters.toLocaleString()} <span className="text-xs text-slate-400">L</span></span>
+        );
+    };
+
     // Visual Tank Card Component
     const TankCard = ({ tank }) => {
         // Color logic
@@ -85,6 +113,8 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
         if (tank.product.includes('91')) liquidColor = 'bg-emerald-500';
         if (tank.product.includes('95')) liquidColor = 'bg-rose-500';
 
+        const mode = generalSettings.volume_display_mode || 'liters';
+        
         return (
             <motion.div 
                 layout
@@ -140,15 +170,28 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                     </div>
 
                     <h3 className="font-bold text-lg text-slate-800 text-center">{tank.name}</h3>
-                    <div className="text-2xl font-black text-slate-900 font-mono mt-1" dir="ltr">
-                        {tank.current.toLocaleString()} <span className="text-xs text-slate-400 font-sans font-medium">L</span>
+                    <div className="text-2xl font-black text-slate-900 font-mono mt-1 flex flex-col items-center" dir="ltr">
+                        {mode === 'gallons' && (
+                             <span>{(tank.current / 4.5).toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-xs text-slate-400 font-sans font-medium">Gal</span></span>
+                        )}
+                        {mode === 'liters' && (
+                             <span>{tank.current.toLocaleString()} <span className="text-xs text-slate-400 font-sans font-medium">L</span></span>
+                        )}
+                        {mode === 'both' && (
+                            <>
+                                <span className="text-emerald-600 text-xl">{(tank.current / 4.5).toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-[10px] text-emerald-400 font-sans font-medium">Gal</span></span>
+                                <span className="text-sm text-slate-400">{tank.current.toLocaleString()} L</span>
+                            </>
+                        )}
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-2 text-xs border-t pt-4">
                     <div className="text-center p-2 bg-slate-50 rounded-lg">
                         <span className="block text-slate-400 mb-1">السعة الكلية</span>
-                        <span className="font-mono font-bold text-slate-700">{tank.total_cap.toLocaleString()}</span>
+                        <span className="font-mono font-bold text-slate-700">
+                             {mode === 'gallons' ? (tank.total_cap / 4.5).toLocaleString(undefined, { maximumFractionDigits: 0 }) : tank.total_cap.toLocaleString()}
+                        </span>
                     </div>
                     <div className="text-center p-2 bg-slate-50 rounded-lg">
                         <span className="block text-slate-400 mb-1">النسبة</span>
@@ -244,8 +287,8 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                     <th className="p-4 text-sm font-bold text-slate-600">اسم الخزان</th>
                                     <th className="p-4 text-sm font-bold text-slate-600">المنتج</th>
                                     <th className="p-4 text-sm font-bold text-slate-600 w-1/3">المستوى</th>
-                                    <th className="p-4 text-sm font-bold text-slate-600">السعة (L)</th>
-                                    <th className="p-4 text-sm font-bold text-slate-600">الحالي (L)</th>
+                                    <th className="p-4 text-sm font-bold text-slate-600">السعة</th>
+                                    <th className="p-4 text-sm font-bold text-slate-600">الحالي</th>
                                     <th className="p-4 text-sm font-bold text-slate-600 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
@@ -263,8 +306,12 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                                 <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${tank.percentage}%` }}></div>
                                             </div>
                                         </td>
-                                        <td className="p-4 font-mono">{tank.total_cap.toLocaleString()}</td>
-                                        <td className="p-4 font-mono font-bold">{tank.current.toLocaleString()}</td>
+                                        <td className="p-4 font-mono">
+                                            {generalSettings.volume_display_mode === 'gallons' ? (tank.total_cap / 4.5).toLocaleString(undefined, { maximumFractionDigits: 0 }) : tank.total_cap.toLocaleString()}
+                                        </td>
+                                        <td className="p-4 font-mono font-bold">
+                                            {formatVolume(tank.current)}
+                                        </td>
                                         <td className="p-4 text-center">
                                             <div className="flex justify-center gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button 

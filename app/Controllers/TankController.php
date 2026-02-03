@@ -39,6 +39,7 @@ class TankController extends Controller
         $tanks = $this->tankModel->getAll($stationId);
         $suppliers = $this->supplierModel->getAll($stationId);
         $fuelSettings = $this->settingModel->getAllBySection('fuel');
+        $generalSettings = $this->settingModel->getAllBySection('general');
         $fuelTypes = $this->fuelTypeModel->getAll();
 
         // Header Requirements
@@ -56,6 +57,8 @@ class TankController extends Controller
             'tanks' => $tanks,
             'suppliers' => $suppliers,
             'fuelSettings' => $fuelSettings,
+            'generalSettings' => $generalSettings,
+            'fuelTypes' => $fuelTypes,
             'fuelTypes' => $fuelTypes,
             'user' => $user,
             'allStations' => $allStations,

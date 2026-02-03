@@ -189,6 +189,7 @@ try {
                 tanks: getData('tanks'),
                 suppliers: getData('suppliers'),
                 fuelSettings: getData('fuelSettings'),
+                generalSettings: getData('generalSettings'),
                 fuelTypes: getData('fuelTypes')
             };
             break;

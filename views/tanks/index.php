@@ -6,6 +6,7 @@
     data-tanks='<?= json_encode($tanks, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>'
     data-suppliers='<?= json_encode($suppliers ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>'
     data-fuel-settings='<?= json_encode($fuelSettings ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>'
+    data-general-settings='<?= json_encode($generalSettings ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>'
     data-fuel-types='<?= json_encode($fuelTypes ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>'
     data-user='<?= json_encode($user ?? []) ?>'
     data-stats='<?= json_encode($stats ?? []) ?>'

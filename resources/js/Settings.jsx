@@ -364,9 +364,30 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                         </div>
                     </TabPanel>
 
-                    {/* Fuel Types */}
+                    {/* Fuel Types & Settings */}
                     <TabPanel>
                         <div className="mt-6 grid grid-cols-1 gap-6">
+                            {/* General Fuel Settings */}
+                            <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 p-6 space-y-6">
+                                <Title className="mb-4 font-bold flex items-center gap-2"><SettingsIcon className="w-5 h-5"/> إعدادات العرض والقياس</Title>
+                                
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block">وحدة عرض الكميات (Fuel Volume Unit)</label>
+                                    <Select 
+                                        value={generalSettings.volume_display_mode || 'liters'} 
+                                        onValueChange={(val) => handleGeneralChange('volume_display_mode', val)}
+                                        className="rounded-xl"
+                                    >
+                                        <SelectItem value="liters">لتر فقط (Liters Only)</SelectItem>
+                                        <SelectItem value="gallons">جالون فقط (Gallons Only)</SelectItem>
+                                        <SelectItem value="both">كلاهما (لتر + جالون)</SelectItem>
+                                    </Select>
+                                    <Text className="text-xs text-slate-500 mt-2">
+                                        سيتم استخدام معامل التحويل: 1 جالون = 4.5 لتر
+                                    </Text>
+                                </div>
+                            </Card>
+
                              <Card className="rounded-2xl shadow-md ring-1 ring-slate-100">
                                 <div className="flex justify-between items-center mb-6">
                                     <Title>قائمة أنواع الوقود</Title>
@@ -419,6 +440,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                              </Card>
                         </div>
                     </TabPanel>
+
 
                     {/* Roles & Security */}
                     <TabPanel>

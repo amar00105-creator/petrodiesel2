@@ -99,7 +99,7 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                     <Text className="mt-2 text-slate-400">ابدأ بإضافة أول ماكينة وقود للنظام</Text>
                 </Card>
             ) : (
-                <Grid numItems={1} numItemsMd={2} numItemsLg={3} className="gap-6">
+                <Grid numItems={2} numItemsMd={3} numItemsLg={4} className="gap-3 md:gap-6">
                     {pumps.map((pump) => (
                         <motion.div key={pump.id} variants={itemVariants}>
                             <Card className="h-full flex flex-col hover:shadow-xl transition-shadow border-t-4 border-t-blue-500 relative overflow-hidden group">
@@ -109,34 +109,34 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
 
                                 <Flex className="mb-4 items-start">
                                     <div>
-                                        <Text className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">
+                                        <Text className="text-[10px] md:text-xs font-bold text-blue-500 uppercase tracking-wider mb-1 truncate">
                                             {pump.tank_name || 'خزان غير محدد'}
                                         </Text>
-                                        <Title className="text-2xl font-black text-slate-800">{pump.name}</Title>
+                                        <Title className="text-lg md:text-2xl font-black text-slate-800 break-words leading-tight">{pump.name}</Title>
                                     </div>
                                     <div className="flex flex-col items-end gap-1">
-                                        <Badge icon={Zap} color="emerald" size="xs" className="animate-pulse-slow shadow-emerald-500/20 shadow-lg">
+                                        <Badge icon={Zap} color="emerald" size="xs" className="scale-75 origin-right md:scale-100 shadow-emerald-500/20 shadow-lg">
                                             نشط
                                         </Badge>
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 py-0.5 bg-slate-100 rounded-full">
+                                        <span className="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1.5 py-0.5 bg-slate-100 rounded-full">
                                             {pump.product_type || 'وقود'}
                                         </span>
                                     </div>
                                 </Flex>
 
-                                <div className="bg-slate-50/50 rounded-xl p-4 mb-4 flex-grow space-y-3 border border-slate-100">
-                                    <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                        <Gauge className="w-3 h-3" /> العدادات والقراءات
+                                <div className="bg-slate-50/50 rounded-xl p-2 md:p-4 mb-2 md:mb-4 flex-grow space-y-2 md:space-y-3 border border-slate-100">
+                                    <Text className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 md:mb-2 flex items-center gap-2">
+                                        <Gauge className="w-3 h-3" /> العدادات
                                     </Text>
                                     {pump.counters && pump.counters.length > 0 ? (
                                         pump.counters.map((counter, idx) => (
-                                            <div key={counter.id} className="group/counter relative flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-slate-100 hover:border-blue-200 transition-colors">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg group-hover/counter:bg-blue-600 group-hover/counter:text-white transition-colors">
+                                            <div key={counter.id} className="group/counter relative flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-2 md:p-3 rounded-lg shadow-sm border border-slate-100">
+                                                <div className="flex items-center gap-2 md:gap-4 w-full">
+                                                    <div className="hidden md:block p-2.5 bg-blue-50 text-blue-600 rounded-lg">
                                                         <Gauge className="w-5 h-5" />
                                                     </div>
-                                                    <div>
-                                                        <div className="font-mono text-lg font-black text-slate-700 leading-none mb-1">
+                                                    <div className="w-full">
+                                                        <div className="font-mono text-sm md:text-lg font-black text-slate-700 leading-none mb-1 text-right dir-ltr truncate">
                                                             {parseFloat(counter.current_reading).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                                                         </div>
                                                         {counter.worker_name ? (

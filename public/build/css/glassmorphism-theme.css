@@ -536,16 +536,68 @@ html.dark-mode .table td {
   /* Disable hover expansion on mobile */
   .sidebar:hover {
     width: 250px; 
+    width: 250px;
   }
 
   /* Main Content takes full width */
   .main-wrapper {
     margin-right: 0;
-    padding-top: 60px; /* Space for Mobile Header */
+    padding-top: 45px; /* Compact Mobile Header Space */
+  }
+
+  /* Reduce page padding on mobile to maximize space */
+  .page-container {
+    padding: 0.5rem !important;
+  }
+
+  /* Compact Cards on Mobile */
+  .glass-card {
+    padding: 0.75rem !important;
+  }
+
+  /* Bigger Touch Targets for Inputs */
+  .form-control, .form-select, .btn {
+    min-height: 48px;
+    font-size: 15px;
+    border-radius: 12px;
+  }
+
+  /* Coordinated Mobile Buttons */
+  .btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Full width for better mobile UX */
+    margin-bottom: 0.5rem; /* Stack spacing */
+    font-weight: 700;
+  }
+
+  /* Exception: Keep small buttons small (like in tables or pagination) */
+  .btn-sm,
+  .table .btn,
+  .pagination .btn,
+  .btn-icon {
+    width: auto !important;
+    min-height: 35px;
+    margin-bottom: 0;
+    padding: 0.5rem 1rem;
   }
   
-  .sidebar:hover ~ .main-wrapper {
-    margin-right: 0; 
+  /* Flex containers should wrap on mobile to allow stacking */
+  .d-flex {
+    flex-wrap: wrap;
+    gap: 0.75rem; /* Consistent gap */
+  }
+  
+  /* Align card headers nicely */
+  .glass-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .glass-card-header .btn {
+    width: 100%; /* Actions in header become full width */
   }
 
   /* Mobile Header (Hamburger + Title) */
@@ -563,6 +615,21 @@ html.dark-mode .table td {
     border-bottom: 1px solid var(--glass-border);
     padding: 0 1rem;
     z-index: 1050;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05); /* Professional shadow */
+  }
+
+  /* Reduce Headers on Mobile */
+  h1, .text-2xl, .text-3xl {
+      font-size: 1.25rem !important; /* Smaller main titles */
+  }
+  
+  h2, .text-xl {
+      font-size: 1.1rem !important;
+  }
+  
+  /* Compact Grid Gaps */
+  .gap-6 {
+      gap: 0.75rem !important;
   }
 
   /* Overlay Backdrop */
@@ -570,13 +637,15 @@ html.dark-mode .table td {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(2px);
+    background: rgba(0, 0, 0, 0.4); /* Slightly darker focus */
+    backdrop-filter: blur(3px); /* Blur content behind menu */
     z-index: 1999;
+    transition: opacity 0.3s ease;
   }
 
   .sidebar-overlay.active {
     display: block;
+    animation: fadeIn 0.3s ease-out;
   }
 }
 
@@ -598,6 +667,11 @@ html.dark-mode .table td {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .tab-pane.active {

@@ -43,6 +43,23 @@ $countersJson = json_encode($counters ?? []);
     <!-- Cairo Font -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <?php
+    // Dynamic Base Path for Assets
+    $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+    // Ensure we don't have backslashes and remove /views/pumps if present (unlikely for script_name but safe)
+    $scriptDir = str_replace('\\', '/', $scriptDir);
+    // If the script is running from public/index.php, dirname is /project/public. 
+    // If we are in a view include, context matters. But usually we want the public root.
+    // Let's assume public/index.php is the entry point.
+    // A robust way is to use the calculated base path from the router or config, 
+    // but here we can try to detect 'public' in the path.
+
+    $baseUrl = '/PETRODIESEL2/public'; // Fallback
+    if (strpos($scriptDir, '/public') !== false) {
+        $baseUrl = substr($scriptDir, 0, strpos($scriptDir, '/public') + 7);
+    }
+    ?>
+
     <?php if ($isDev): ?>
         <script type="module">
             import RefreshRuntime from 'http://localhost:5173/@react-refresh'
@@ -54,7 +71,7 @@ $countersJson = json_encode($counters ?? []);
         <script type="module" src="http://localhost:5173/@vite/client"></script>
         <script type="module" src="http://localhost:5173/resources/js/main.jsx"></script>
     <?php else: ?>
-        <link rel="stylesheet" href="/PETRODIESEL2/public/build/<?= $cssFile ?>">
+        <link rel="stylesheet" href="<?= $baseUrl ?>/build/<?= $cssFile ?>">
     <?php endif; ?>
 
     <style>
@@ -68,7 +85,7 @@ $countersJson = json_encode($counters ?? []);
 <body class="bg-slate-50">
     <div id="root"
         data-page="edit-pump"
-        data-base-url="/PETRODIESEL2/public"
+        data-base-url="<?= $baseUrl ?>"
         data-pump='<?= $pumpJson ?>'
         data-counters='<?= $countersJson ?>'
         data-tanks='<?= $tanksJson ?>'
@@ -76,7 +93,7 @@ $countersJson = json_encode($counters ?? []);
         data-stats='<?= $statsJson ?>'></div>
 
     <?php if (!$isDev): ?>
-        <script type="module" src="/PETRODIESEL2/public/build/<?= $jsFile ?>"></script>
+        <script type="module" src="<?= $baseUrl ?>/build/<?= $jsFile ?>"></script>
     <?php endif; ?>
 </body>
 

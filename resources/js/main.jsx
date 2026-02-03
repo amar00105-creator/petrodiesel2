@@ -4,6 +4,7 @@ import FuturisticHeader from './components/ui/FuturisticHeader';
 import AutoLock from './components/AutoLock';
 import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/LoadingSpinner';
 
 // DEBUG ALERT
 // console.log("Main.jsx is executing...");
@@ -365,7 +366,7 @@ try {
             {page === 'accounting-safes' ? (
                 <SafesPage {...props} />
             ) : (
-                <React.Suspense fallback={<div className="p-10 text-center">Loading...</div>}>
+                <React.Suspense fallback={<LoadingSpinner />}>
                     <Component {...props} />
                 </React.Suspense>
             )}

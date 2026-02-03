@@ -353,6 +353,9 @@ html.dark-mode .btn-outline {
   border-radius: 12px;
   overflow: hidden;
   box-shadow: var(--glass-shadow);
+  /* Added for Mobile Scroll */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -512,18 +515,74 @@ html.dark-mode .table td {
 /* ===================================
    RESPONSIVE
    =================================== */
+/* ===================================
+   RESPONSIVE (MOBILE)
+   =================================== */
 @media (max-width: 768px) {
+  /* Sidebar starts hidden (off-screen) */
   .sidebar {
-    width: 0;
+    width: 250px;
+    transform: translateX(100%); /* Right-to-Left (RTL) hidden state */
+    right: 0;
+    left: auto;
+    z-index: 2000;
   }
 
+  /* Active State (Shown) */
+  .sidebar.mobile-active {
+    transform: translateX(0);
+  }
+
+  /* Disable hover expansion on mobile */
   .sidebar:hover {
-    width: var(--sidebar-expanded);
+    width: 250px; 
   }
 
+  /* Main Content takes full width */
   .main-wrapper {
     margin-right: 0;
+    padding-top: 60px; /* Space for Mobile Header */
   }
+  
+  .sidebar:hover ~ .main-wrapper {
+    margin-right: 0; 
+  }
+
+  /* Mobile Header (Hamburger + Title) */
+  .mobile-header {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 0 1rem;
+    z-index: 1050;
+  }
+
+  /* Overlay Backdrop */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    z-index: 1999;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+}
+
+/* Hide Mobile Header on Desktop */
+.mobile-header {
+  display: none;
 }
 
 /* ===================================

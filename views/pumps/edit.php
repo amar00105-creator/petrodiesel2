@@ -98,14 +98,35 @@ $countersJson = json_encode($counters ?? []);
     data-tanks='<?= $tanksJson ?>'
     data-workers='<?= $workersJson ?>'
     data-stats='<?= $statsJson ?>'>
-    <div style="padding: 50px; text-align: center; color: #64748b;">
-        <p style="font-size: 1.5rem; font-weight: bold;">Loading Application...</p>
-        <p style="font-size: 0.8rem; margin-top: 10px;">If this persists, please check console.</p>
-        <!-- Debug Info:
-                 Msg: <?= htmlspecialchars($jsFile ? 'JS Found' : 'JS Not Found') ?>
-                 BaseURL: <?= htmlspecialchars($baseUrl) ?>
-                 JS: <?= htmlspecialchars($jsFile) ?>
-            -->
+    <div style="padding: 20px; text-align: left; color: #334155; font-family: monospace; background: #fff; margin: 20px; border: 1px solid #ccc;">
+        <p style="font-size: 1.5rem; font-weight: bold; margin-bottom: 20px;">Loading Application...</p>
+
+        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <strong>Debug Information:</strong><br>
+            Script Dir: <?= htmlspecialchars($scriptDir) ?><br>
+            Calculated Base URL: <?= htmlspecialchars($baseUrl) ?><br>
+            Manifest Path: <?= htmlspecialchars($manifestPath) ?><br>
+            Manifest Found: <?= file_exists($manifestPath) ? 'YES' : 'NO' ?><br>
+            JS File from Manifest: <?= htmlspecialchars($jsFile) ?><br>
+            Asset URL: <?= htmlspecialchars($baseUrl . '/build/' . $jsFile) ?><br>
+        </div>
+
+        <div style="background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #fdba74;">
+            <strong>Directory Check (public/build/assets):</strong><br>
+            <?php
+            $assetsDir = __DIR__ . '/../../public/build/assets';
+            if (is_dir($assetsDir)) {
+                $files = scandir($assetsDir);
+                echo "Found " . count($files) . " files:<br>";
+                foreach (array_slice($files, 0, 10) as $f) {
+                    if ($f !== '.' && $f !== '..') echo "- $f<br>";
+                }
+                if (count($files) > 10) echo "... and more";
+            } else {
+                echo "Assets directory NOT FOUND at: $assetsDir";
+            }
+            ?>
+        </div>
     </div>
 </div>
 

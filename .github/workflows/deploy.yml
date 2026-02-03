@@ -44,12 +44,10 @@ jobs:
             **/check_*.php
             README.md
 
-      - name: Fix Permissions via LFTP
+      - name: Fix Permissions via Python
         env:
           FTP_USER: ${{ secrets.FTP_USERNAME }}
           FTP_PASS: ${{ secrets.FTP_PASSWORD }}
           FTP_HOST: 162.0.215.16
         run: |
-          sudo apt-get update
-          sudo apt-get install -y lftp
-          lftp -c "set ftp:ssl-allow no; set ssl:verify-certificate no; open -u '$FTP_USER','$FTP_PASS' $FTP_HOST; chmod 755 public; chmod 644 public/index.php; chmod 644 public/.htaccess; bye"
+          python .github/scripts/fix_permissions.py

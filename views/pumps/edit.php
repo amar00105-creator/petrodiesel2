@@ -46,18 +46,9 @@ $countersJson = json_encode($counters ?? []);
     <?php
     // Dynamic Base Path for Assets
     $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
-    // Ensure we don't have backslashes and remove /views/pumps if present (unlikely for script_name but safe)
     $scriptDir = str_replace('\\', '/', $scriptDir);
-    // If the script is running from public/index.php, dirname is /project/public. 
-    // If we are in a view include, context matters. But usually we want the public root.
-    // Let's assume public/index.php is the entry point.
-    // A robust way is to use the calculated base path from the router or config, 
-    // but here we can try to detect 'public' in the path.
-
-    $baseUrl = '/PETRODIESEL2/public'; // Fallback
-    if (strpos($scriptDir, '/public') !== false) {
-        $baseUrl = substr($scriptDir, 0, strpos($scriptDir, '/public') + 7);
-    }
+    // Remove trailing slash if root
+    $baseUrl = rtrim($scriptDir, '/');
     ?>
 
     <?php if ($isDev): ?>
@@ -82,67 +73,19 @@ $countersJson = json_encode($counters ?? []);
     </style>
 </head>
 
-<?php
-// Debugging Output (Hidden in production usually, but we need it now)
-// echo "<!-- Debug: ScriptDir: $scriptDir -->";
-// echo "<!-- Debug: BaseURL: $baseUrl -->";
-// echo "<!-- Debug: Manifest Path: $manifestPath -->";
-// echo "<!-- Debug: JS File: $jsFile -->";
-?>
+<body class="bg-slate-50">
+    <div id="root"
+        data-page="edit-pump"
+        data-base-url="<?= $baseUrl ?>"
+        data-pump='<?= $pumpJson ?>'
+        data-counters='<?= $countersJson ?>'
+        data-tanks='<?= $tanksJson ?>'
+        data-workers='<?= $workersJson ?>'
+        data-stats='<?= $statsJson ?>'></div>
 
-<div id="root"
-    data-page="edit-pump"
-    data-base-url="<?= $baseUrl ?>"
-    data-pump='<?= $pumpJson ?>'
-    data-counters='<?= $countersJson ?>'
-    data-tanks='<?= $tanksJson ?>'
-    data-workers='<?= $workersJson ?>'
-    data-stats='<?= $statsJson ?>'>
-    <div style="padding: 20px; text-align: left; color: #334155; font-family: monospace; background: #fff; margin: 20px; border: 1px solid #ccc;">
-        <p style="font-size: 1.5rem; font-weight: bold; margin-bottom: 20px;">Loading Application...</p>
-
-        <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-            <strong>Debug Information:</strong><br>
-            Script Dir: <?= htmlspecialchars($scriptDir) ?><br>
-            Calculated Base URL: <?= htmlspecialchars($baseUrl) ?><br>
-            Manifest Path: <?= htmlspecialchars($manifestPath) ?><br>
-            Manifest Found: <?= file_exists($manifestPath) ? 'YES' : 'NO' ?><br>
-            JS File from Manifest: <?= htmlspecialchars($jsFile) ?><br>
-            Asset URL: <?= htmlspecialchars($baseUrl . '/build/' . $jsFile) ?><br>
-        </div>
-
-        <div style="background: #fff7ed; padding: 15px; border-radius: 8px; border: 1px solid #fdba74;">
-            <strong>Directory Check (public/build/assets):</strong><br>
-            <?php
-            $assetsDir = __DIR__ . '/../../public/build/assets';
-            if (is_dir($assetsDir)) {
-                $files = scandir($assetsDir);
-                echo "Found " . count($files) . " files:<br>";
-                foreach (array_slice($files, 0, 10) as $f) {
-                    if ($f !== '.' && $f !== '..') echo "- $f<br>";
-                }
-                if (count($files) > 10) echo "... and more";
-            } else {
-                echo "Assets directory NOT FOUND at: $assetsDir";
-            }
-            ?>
-        </div>
-    </div>
-</div>
-
-<?php if (!$isDev): ?>
-    <?php if ($jsFile): ?>
+    <?php if (!$isDev): ?>
         <script type="module" src="<?= $baseUrl ?>/build/<?= $jsFile ?>"></script>
-    <?php else: ?>
-        <script>
-            console.error("Critical: Manifest file not found or JS file missing.");
-        </script>
-        <div style="background: #fee2e2; color: #991b1b; padding: 20px; text-align: center; margin: 20px;">
-            Critical Error: Build assets not found.<br>
-            Manifest Path: <?= htmlspecialchars($manifestPath) ?>
-        </div>
     <?php endif; ?>
-<?php endif; ?>
 </body>
 
 </html>

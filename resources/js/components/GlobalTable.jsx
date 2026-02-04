@@ -14,7 +14,9 @@ export default function GlobalTable({
     searchPlaceholder = 'بحث...',
     filters,
     stats,
-    exportName = 'export'
+    exportName = 'export',
+    hideHeader = false,
+    hideFilters = false
 }) {
     const [search, setSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -67,6 +69,7 @@ export default function GlobalTable({
             className="space-y-6"
         >
             {/* Header & Actions */}
+            {!hideHeader && (
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
                 <div>
                     <Title className="text-2xl font-bold text-navy-900 font-cairo">{title}</Title>
@@ -107,6 +110,7 @@ export default function GlobalTable({
                     )}
                 </div>
             </div>
+            )}
 
             {/* Stats Bar (Optional) */}
             {stats && (
@@ -116,6 +120,7 @@ export default function GlobalTable({
             )}
 
             {/* Filters Bar */}
+            {!hideFilters && (
             <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 print:hidden">
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="relative flex-1">
@@ -130,6 +135,7 @@ export default function GlobalTable({
                     {filters}
                 </div>
             </Card>
+            )}
 
             {/* Table */}
             <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 print:shadow-none print:ring-0">

@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { Phone, MapPin, User, Edit, Trash2 } from 'lucide-react';
 import GlobalTable from './components/GlobalTable';
 
-export default function CustomerList({ customers = [], onUpdate }) {
+export default function CustomerList({ customers = [], onUpdate, hideHeader = false }) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
@@ -109,6 +109,7 @@ export default function CustomerList({ customers = [], onUpdate }) {
                 addButtonLabel="إضافة عميل"
                 searchPlaceholder="بحث عن عميل..."
                 exportName="customers"
+                hideHeader={hideHeader}
             />
 
             <AddCustomerModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSuccess={handleAddSuccess} />

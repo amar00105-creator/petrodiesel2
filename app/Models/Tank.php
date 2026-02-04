@@ -14,7 +14,7 @@ class Tank extends Model
         $sql = "SELECT t.*, ft.name as fuel_name, ft.name as product_type, ft.color_hex 
                 FROM {$this->table} t
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
-                WHERE 1=1";
+                WHERE t.deleted_at IS NULL";
 
         $params = [];
         if ($stationId && $stationId !== 'all') {
@@ -34,7 +34,7 @@ class Tank extends Model
         $sql = "SELECT t.*, ft.name as fuel_name, ft.name as product_type, ft.color_hex 
                 FROM {$this->table} t
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
-                WHERE t.id = ?";
+                WHERE t.id = ? AND t.deleted_at IS NULL";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -95,8 +95,110 @@ class Tank extends Model
 
     public function delete($id)
     {
-        $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE {$this->table} SET deleted_at = NOW() WHERE id = ?");
         return $stmt->execute([$id]);
+    }
+
+    // Transfer stock from one tank to multiple others (Standalone or part of delete)
+    public function transferMultiple($fromId, $transfers, $userId = null)
+    {
+        $totalAmount = 0;
+        // Pre-calculation to ensure valid amounts
+        foreach ($transfers as $transfer) {
+            $amount = floatval($transfer['amount']);
+            if ($amount > 0) $totalAmount += $amount;
+        }
+
+        if ($totalAmount <= 0) return true; // Nothing to do
+
+        foreach ($transfers as $transfer) {
+            $targetId = $transfer['tank_id'];
+            $amount = floatval($transfer['amount']);
+
+            if ($amount <= 0) continue;
+
+            // Increment Target
+            $stmtTarget = $this->db->prepare("UPDATE {$this->table} SET current_volume = current_volume + ? WHERE id = ?");
+            if (!$stmtTarget->execute([$amount, $targetId])) {
+                throw new \Exception("Failed to update target tank ID: $targetId");
+            }
+
+            // Log Transfer
+            $stmtLog = $this->db->prepare("INSERT INTO tank_transfers (from_tank_id, to_tank_id, quantity, notes, user_id) VALUES (?, ?, ?, ?, ?)");
+
+            // Safe User ID Logic
+            if ($userId === null) {
+                $userId = $_SESSION['user_id'] ?? null;
+            }
+
+            $stmtLog->execute([$fromId, $targetId, $amount, "Transfer", $userId]);
+        }
+
+        // Decrement Source
+        $stmtSource = $this->db->prepare("UPDATE {$this->table} SET current_volume = GREATEST(0, current_volume - ?) WHERE id = ?");
+        if (!$stmtSource->execute([$totalAmount, $fromId])) {
+            throw new \Exception("Failed to update source tank");
+        }
+
+        return true;
+    }
+
+    // Transfer stock from one tank to multiple others and then delete
+    public function transferMultipleAndDelete($fromId, $transfers)
+    {
+        $this->db->beginTransaction();
+        try {
+            $totalAmount = 0;
+            // 1. Process Transfers
+            foreach ($transfers as $transfer) {
+                $targetId = $transfer['tank_id'];
+                $amount = floatval($transfer['amount']);
+
+                if ($amount <= 0) continue;
+                $totalAmount += $amount;
+
+                // Increment Target
+                $stmtTarget = $this->db->prepare("UPDATE {$this->table} SET current_volume = current_volume + ? WHERE id = ?");
+                if (!$stmtTarget->execute([$amount, $targetId])) {
+                    throw new \Exception("Failed to update target tank ID: $targetId");
+                }
+
+                // Log Transfer
+                $stmtLog = $this->db->prepare("INSERT INTO tank_transfers (from_tank_id, to_tank_id, quantity, notes, user_id) VALUES (?, ?, ?, ?, ?)");
+
+                // Safe User ID Logic:
+                // 1. Try Session
+                // 2. Default to NULL (since column allows it) to avoid FK constraint violations
+                $userId = $_SESSION['user_id'] ?? null;
+
+                $stmtLog->execute([$fromId, $targetId, $amount, "Transfer before deletion", $userId]);
+            }
+
+            // 2. Decrement Source
+            $stmtSource = $this->db->prepare("UPDATE {$this->table} SET current_volume = GREATEST(0, current_volume - ?) WHERE id = ?");
+            if (!$stmtSource->execute([$totalAmount, $fromId])) {
+                throw new \Exception("Failed to update source tank");
+            }
+
+            // 3. Soft Delete Source
+            $stmtDelete = $this->db->prepare("UPDATE {$this->table} SET deleted_at = NOW() WHERE id = ?");
+            if (!$stmtDelete->execute([$fromId])) {
+                throw new \Exception("Failed to delete source tank");
+            }
+
+            $this->db->commit();
+            return true;
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            // Return the specific error message for debugging
+            return "Error: " . $e->getMessage();
+        }
+    }
+
+    // Transfer stock from one tank to another (Simple version, kept for compatibility if needed)
+    public function transferStock($fromId, $toId, $amount)
+    {
+        return $this->transferMultipleAndDelete($fromId, [['tank_id' => $toId, 'amount' => $amount]]);
     }
 
     // --- Specific Domain Logic ---
@@ -265,6 +367,33 @@ class Tank extends Model
             $startFull,
             $endFull
         ]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getDailyTransfers($stationId, $start, $end)
+    {
+        $startFull = $start . ' 00:00:00';
+        $endFull = $end . ' 23:59:59';
+
+        $sql = "SELECT DATE(created_at) as transfer_date, from_tank_id, to_tank_id, quantity 
+                FROM tank_transfers 
+                WHERE created_at BETWEEN ? AND ?";
+
+        // Note: station filtering is tricky if tanks are in different stations, but usually intra-station.
+        // If we strictly filter by station, we join tanks.
+        if ($stationId !== 'all') {
+            $sql .= " AND (
+                from_tank_id IN (SELECT id FROM tanks WHERE station_id = ?) 
+                OR 
+                to_tank_id IN (SELECT id FROM tanks WHERE station_id = ?)
+            )";
+            $params = [$startFull, $endFull, $stationId, $stationId];
+        } else {
+            $params = [$startFull, $endFull];
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

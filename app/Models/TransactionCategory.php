@@ -25,4 +25,16 @@ class TransactionCategory extends Model
         $stmt = $this->db->prepare("INSERT INTO transaction_categories (name, type) VALUES (?, ?)");
         return $stmt->execute([$name, $type]);
     }
+
+    public function update($id, $name, $type)
+    {
+        $stmt = $this->db->prepare("UPDATE transaction_categories SET name = ?, type = ? WHERE id = ?");
+        return $stmt->execute([$name, $type, $id]);
+    }
+
+    public function delete($id)
+    {
+        $stmt = $this->db->prepare("DELETE FROM transaction_categories WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
 }

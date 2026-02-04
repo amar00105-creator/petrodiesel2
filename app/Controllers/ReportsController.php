@@ -347,6 +347,11 @@ class ReportsController extends Controller
                 ? $this->tankModel->getDailyReadings($stationId, $startDate, $endDate)
                 : [];
 
+            // Fetch Transfers
+            $dailyTransfers = method_exists($this->tankModel, 'getDailyTransfers')
+                ? $this->tankModel->getDailyTransfers($stationId, $startDate, $endDate)
+                : [];
+
             // 2. Structure Data by Date and Tank
             $dataByDateTank = [];
             // Helper to init key
@@ -355,6 +360,8 @@ class ReportsController extends Controller
                     $dataByDateTank[$date][$tankId] = [
                         'sales' => 0,
                         'purchases' => 0,
+                        'transfers_in' => 0,
+                        'transfers_out' => 0,
                         'actual_closing' => null
                     ];
                 }
@@ -368,6 +375,20 @@ class ReportsController extends Controller
                 $initKey($p['purchase_date'], $p['tank_id']);
                 $dataByDateTank[$p['purchase_date']][$p['tank_id']]['purchases'] += $p['total_vol'];
             }
+            // Process Transfers
+            foreach ($dailyTransfers as $tr) {
+                // Out from Source
+                if ($tr['from_tank_id']) {
+                    $initKey($tr['transfer_date'], $tr['from_tank_id']);
+                    $dataByDateTank[$tr['transfer_date']][$tr['from_tank_id']]['transfers_out'] += $tr['quantity'];
+                }
+                // In to Target
+                if ($tr['to_tank_id']) {
+                    $initKey($tr['transfer_date'], $tr['to_tank_id']);
+                    $dataByDateTank[$tr['transfer_date']][$tr['to_tank_id']]['transfers_in'] += $tr['quantity'];
+                }
+            }
+
             // Readings: we want the LAST reading of the day as 'Actual Closing'
             foreach ($dailyReadings as $r) {
                 $initKey($r['reading_date'], $r['tank_id']);
@@ -397,11 +418,18 @@ class ReportsController extends Controller
                 foreach ($period as $dt) {
                     $date = $dt->format('Y-m-d');
 
-                    $in = $dataByDateTank[$date][$tank['id']]['purchases'] ?? 0;
-                    $out = $dataByDateTank[$date][$tank['id']]['sales'] ?? 0;
+                    $purchaseIn = $dataByDateTank[$date][$tank['id']]['purchases'] ?? 0;
+                    $transferIn = $dataByDateTank[$date][$tank['id']]['transfers_in'] ?? 0;
+
+                    $salesOut = $dataByDateTank[$date][$tank['id']]['sales'] ?? 0;
+                    $transferOut = $dataByDateTank[$date][$tank['id']]['transfers_out'] ?? 0;
+
+                    $totalIn = $purchaseIn + $transferIn;
+                    $totalOut = $salesOut + $transferOut;
+
                     $actual = $dataByDateTank[$date][$tank['id']]['actual_closing'] ?? null;
 
-                    $theoretical = $currentBalance + $in - $out;
+                    $theoretical = $currentBalance + $totalIn - $totalOut;
                     $variance = ($actual !== null) ? ($actual - $theoretical) : 0;
 
                     // Always add to list to show complete history (Cardex style)
@@ -409,8 +437,11 @@ class ReportsController extends Controller
                         'date' => $date,
                         'tank_name' => $tank['name'],
                         'opening' => $currentBalance,
-                        'in' => $in,
-                        'out' => $out,
+                        'in' => $totalIn, // Merged purchases & transfers IN
+                        'out' => $totalOut, // Merged sales & transfers OUT
+                        'sales_only' => $salesOut,     // For detailed UI if needed
+                        'transfers_in' => $transferIn, // ""
+                        'transfers_out' => $transferOut, // ""
                         'theoretical' => $theoretical,
                         'actual' => $actual,
                         'variance' => $variance

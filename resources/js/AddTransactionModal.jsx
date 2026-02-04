@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, DollarSign, Tag, User, Users } from 'lucide-react';
+import { X, Save, DollarSign, Tag, User, Users, Settings, Plus, Trash2, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AddTransactionModal({ isOpen, onClose, type, categories, safes, banks, suppliers = [], customers = [], baseUrl = '/PETRODIESEL2/public' }) {
+    
+    // Manage categories locally to avoid reloads
+    const [localCategories, setLocalCategories] = useState(categories);
+    
+    // Sync local state if props change (though usually props won't change without parent reload)
+    useEffect(() => {
+        setLocalCategories(categories);
+    }, [categories]);
+
+    // Reset management state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setIsManageCategoriesOpen(false);
+            setEditingId(null);
+            setEditingName('');
+        }
+    }, [isOpen]);
+
     const [formData, setFormData] = useState({
         amount: '',
         description: '',
@@ -17,6 +35,96 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
     });
 
     const isIncome = type === 'income';
+
+    const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
+
+    const handleAddCategory = async () => {
+        if (!newCategoryName.trim()) return;
+        try {
+            const formData = new FormData();
+            formData.append('name', newCategoryName);
+            formData.append('type', type);
+            // Even though we unified list, we should probably save with the current transaction type or 'general'
+            // But since user asked to unify, maybe type doesn't matter as much, but we stuck to 'type'
+            
+            const res = await fetch(`${baseUrl}/finance/categories/store`, { method: 'POST', body: formData });
+            const data = await res.json();
+            
+            if (data.success) {
+                toast.success('تمت إضافة التصنيف بنجاح');
+                setNewCategoryName('');
+                
+                // Add to local list immediately
+                const newCat = data.category || { id: data.id, name: newCategoryName, type: type };
+                setLocalCategories(prev => [...prev, newCat]);
+                
+            } else {
+                toast.error(data.message);
+            }
+        } catch (e) {
+            toast.error('حدث خطأ');
+        }
+    };
+
+    const [editingId, setEditingId] = useState(null);
+    const [editingName, setEditingName] = useState('');
+
+    const startEditing = (category) => {
+        setEditingId(category.id);
+        setEditingName(category.name);
+    };
+
+    const cancelEditing = () => {
+        setEditingId(null);
+        setEditingName('');
+    };
+
+    const handleUpdateCategory = async (id) => {
+        if (!editingName.trim()) return;
+        try {
+            const formData = new FormData();
+            formData.append('id', id);
+            formData.append('name', editingName);
+            formData.append('type', type);
+
+            const res = await fetch(`${baseUrl}/finance/categories/update`, { method: 'POST', body: formData });
+            const data = await res.json();
+
+            if (data.success) {
+                toast.success('تم تعديل التصنيف بنجاح');
+                setEditingId(null);
+                setEditingName('');
+                
+                // Update local list
+                setLocalCategories(prev => prev.map(c => c.id === id ? { ...c, name: editingName } : c));
+                
+            } else {
+                toast.error(data.message);
+            }
+        } catch (e) {
+            toast.error('حدث خطأ');
+        }
+    };
+
+    const handleDeleteCategory = async (id) => {
+        if (!confirm('حذف هذا التصنيف؟')) return;
+        try {
+            const formData = new FormData();
+            formData.append('id', id);
+            const res = await fetch(`${baseUrl}/finance/categories/delete`, { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                toast.success('تم حذف التصنيف بنجاح');
+                setLocalCategories(prev => prev.filter(c => c.id !== id));
+            } else {
+                toast.error(data.message);
+            }
+        } catch (e) {
+            console.error(e);
+            toast.error('حدث خطأ');
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -87,7 +195,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                     >
-                        <div className="bg-white pointer-events-auto rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="bg-white pointer-events-auto rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
                             
                             {/* Header */}
                             <div className={`p-6 border-b flex justify-between items-center ${isIncome ? 'bg-emerald-50' : 'bg-rose-50'}`}>
@@ -168,7 +276,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                                      'اختر العميل...'}
                                                 </option>
                                                 
-                                                {formData.related_entity_type === 'general' && categories.map(c => (
+                                                {formData.related_entity_type === 'general' && localCategories.map(c => (
                                                     <option key={c.id} value={c.id}>{c.name}</option>
                                                 ))}
 
@@ -255,25 +363,96 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
 
                                     {/* Category - Only show if Type is General */}
                                     {/* If Supplier/Customer, we assume the 'Related Entity ID' is effectively the category/payee logic */}
+                                    {/* Category - Only show if Type is General */}
                                     {formData.related_entity_type === 'general' && (
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">التصنيف</label>
-                                        <div className="relative">
-                                            <select
-                                                name="category_id"
-                                                value={formData.category_id} onChange={handleChange}
-                                                className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                required
+                                        <div className="flex justify-between items-center mb-2">
+                                            <label className="block text-sm font-medium text-slate-700">التصنيف</label>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => setIsManageCategoriesOpen(!isManageCategoriesOpen)}
+                                                className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1"
                                             >
-                                                <option value="">اختر تصنيف العملية...</option>
-                                                {categories.map(cat => (
-                                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                ))}
-                                            </select>
-                                            <div className="absolute right-3 top-3.5 text-slate-400">
-                                                <Tag className="w-5 h-5" />
-                                            </div>
+                                                <Settings className="w-3 h-3" /> إدارة التصنيفات
+                                            </button>
                                         </div>
+
+                                        {isManageCategoriesOpen ? (
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
+                                                <div className="flex gap-2">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="اسم التصنيف الجديد..."
+                                                        className="flex-1 p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                        value={newCategoryName}
+                                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                                    />
+                                                    <button 
+                                                        type="button"
+                                                        onClick={handleAddCategory}
+                                                        className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                                <div className="max-h-96 overflow-y-auto space-y-2">
+                                                    {localCategories.map(cat => (
+                                                        <div key={cat.id} className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100">
+                                                            {editingId === cat.id ? (
+                                                                <div className="flex flex-1 gap-2 items-center">
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={editingName}
+                                                                        onChange={(e) => setEditingName(e.target.value)}
+                                                                        className="flex-1 p-1 text-sm border rounded outline-none focus:ring-1 focus:ring-blue-500"
+                                                                        autoFocus
+                                                                    />
+                                                                    <button onClick={() => handleUpdateCategory(cat.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Save className="w-3 h-3" /></button>
+                                                                    <button onClick={cancelEditing} className="text-slate-400 hover:bg-slate-50 p-1 rounded"><X className="w-3 h-3" /></button>
+                                                                </div>
+                                                            ) : (
+                                                                <>
+                                                                    <span className="text-sm text-slate-700 font-medium">{cat.name}</span>
+                                                                    <div className="flex gap-1">
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => startEditing(cat)}
+                                                                            className="p-1 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                                        >
+                                                                            <Edit2 className="w-3 h-3" />
+                                                                        </button>
+                                                                        <button 
+                                                                            type="button"
+                                                                            onClick={() => handleDeleteCategory(cat.id)}
+                                                                            className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                                                        >
+                                                                            <Trash2 className="w-3 h-3" />
+                                                                        </button>
+                                                                    </div>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="relative">
+                                                <select
+                                                    name="category_id"
+                                                    value={formData.category_id} onChange={handleChange}
+                                                    className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                    required
+                                                >
+                                                    <option value="">اختر تصنيف العملية...</option>
+                                                    {localCategories.map(cat => (
+                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                                    ))}
+                                                </select>
+                                                <div className="absolute right-3 top-3.5 text-slate-400">
+                                                    <Tag className="w-5 h-5" />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                     )}
 

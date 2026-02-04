@@ -9,7 +9,7 @@ import { Phone, MapPin, Building2, Truck, Edit, Trash2, Plus } from 'lucide-reac
 import AddCustomerModal from './AddCustomerModal';
 import GlobalTable from './components/GlobalTable';
 
-export default function SupplierList({ suppliers = [] }) {
+export default function SupplierList({ suppliers = [], hideHeader = false }) {
     // Local state for immediate UI updates
     const [supplierList, setSupplierList] = useState(Array.isArray(suppliers) ? suppliers : []);
     
@@ -123,8 +123,9 @@ export default function SupplierList({ suppliers = [] }) {
                 onAdd={() => setIsAddModalOpen(true)}
                 addButtonLabel="إضافة مورد"
                 searchPlaceholder="بحث عن مورد..."
-                filters={extraActions}
                 exportName="suppliers"
+                hideHeader={hideHeader}
+                hideFilters={true}
             />
 
             <AddSupplierModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSuccess={() => window.location.reload()} />

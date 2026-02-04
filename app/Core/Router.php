@@ -50,6 +50,9 @@ class Router
             $uri = substr($uri, 10); // Remove /index.php
         }
 
+        // Clean URI: Remove trailing slashes and dots (e.g. from copy-paste errors)
+        $uri = rtrim($uri, '/.');
+
         if ($uri === false || $uri === '') {
             $uri = '/';
         }

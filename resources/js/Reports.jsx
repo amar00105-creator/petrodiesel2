@@ -1089,11 +1089,7 @@ export default function Reports({ user }) {
     return (
         <div className="p-6 max-w-[1800px] mx-auto min-h-screen space-y-6">
             
-            {/* Page Header */}
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-3xl p-6 shadow-lg">
-                <h1 className="text-3xl font-bold text-white mb-2">التقارير والإحصائيات</h1>
-                <p className="text-purple-100">تقارير محلية وعامة شاملة لجميع عمليات الشركة</p>
-            </div>
+
 
             {/* Sub Navigation */}
             <TabGroup index={activeTab} onIndexChange={setActiveTab}>

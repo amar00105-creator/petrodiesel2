@@ -128,6 +128,8 @@ $router->add('DELETE', '/tanks/deleteCalibrationPoint', 'TankController', 'delet
 $router->add('GET', '/tanks/calculateVolume', 'TankController', 'calculateVolume');
 $router->add('GET', '/tanks/calculateHeight', 'TankController', 'calculateHeight');
 $router->add('POST', '/tanks/processSmartCalibration', 'TankController', 'processSmartCalibration');
+$router->add('POST', '/tanks/transfer_and_delete', 'TankController', 'transfer_and_delete');
+$router->add('POST', '/tanks/transfer', 'TankController', 'transfer');
 
 // Simplified Calibration Routes (NEW)
 $router->add('POST', '/calibrations/add', 'CalibrationController', 'add');
@@ -167,6 +169,11 @@ $router->add('POST', '/finance/transfer', 'FinanceController', 'transfer');
 $router->add('GET', '/finance/getBankDetails', 'FinanceController', 'getBankDetails');
 $router->add('GET', '/finance/getSafeDetails', 'FinanceController', 'getSafeDetails');
 $router->add('GET', '/finance/reports', 'FinanceController', 'reports'); // AJAX endpoint for Reports page
+
+// Finance Categories Routes
+$router->add('POST', '/finance/categories/store', 'CategoryController', 'store');
+$router->add('POST', '/finance/categories/update', 'CategoryController', 'update');
+$router->add('POST', '/finance/categories/delete', 'CategoryController', 'delete');
 
 // Multi-Level Transfer System Routes
 $router->add('POST', '/finance/requestTransfer', 'FinanceController', 'requestTransfer');

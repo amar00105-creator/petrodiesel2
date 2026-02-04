@@ -21,7 +21,7 @@ class Pump
                 FROM pumps p 
                 LEFT JOIN tanks t ON p.tank_id = t.id 
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
-                WHERE 1=1";
+                WHERE p.deleted_at IS NULL";
 
         $params = [];
         if ($stationId && $stationId !== 'all') {
@@ -89,8 +89,22 @@ class Pump
 
     public function delete($id)
     {
-        $stmt = $this->db->prepare("DELETE FROM pumps WHERE id = ?");
-        return $stmt->execute([$id]);
+        $this->db->beginTransaction();
+        try {
+            // Soft delete associated counters first
+            $stmtCounters = $this->db->prepare("UPDATE counters SET deleted_at = NOW() WHERE pump_id = ?");
+            $stmtCounters->execute([$id]);
+
+            // Soft delete the pump
+            $stmt = $this->db->prepare("UPDATE pumps SET deleted_at = NOW() WHERE id = ?");
+            $stmt->execute([$id]);
+
+            $this->db->commit();
+            return true;
+        } catch (\Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     public function update($id, $data)
@@ -101,12 +115,12 @@ class Pump
 
     public function getPumpsWithCounters($stationId)
     {
-        // 1. Get Pumps
+        // 1. Get Pumps (Active Only)
         $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type 
                 FROM pumps p 
                 LEFT JOIN tanks t ON p.tank_id = t.id 
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
-                WHERE p.station_id = ?
+                WHERE p.station_id = ? AND p.deleted_at IS NULL
                 ORDER BY p.name";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$stationId]);
@@ -116,14 +130,14 @@ class Pump
             return [];
         }
 
-        // 2. Get Counters with Worker Names
+        // 2. Get Counters with Worker Names (Active Only)
         $pumpIds = array_column($pumps, 'id');
         $placeholders = implode(',', array_fill(0, count($pumpIds), '?'));
 
         $sqlCounters = "SELECT c.*, w.name as worker_name 
                         FROM counters c 
                         LEFT JOIN workers w ON c.current_worker_id = w.id 
-                        WHERE c.pump_id IN ($placeholders) 
+                        WHERE c.pump_id IN ($placeholders) AND c.deleted_at IS NULL
                         ORDER BY c.id";
         $stmtCounters = $this->db->prepare($sqlCounters);
         $stmtCounters->execute($pumpIds);

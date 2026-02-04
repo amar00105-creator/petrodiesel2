@@ -145,6 +145,24 @@ class TankController extends Controller
                 exit;
             }
 
+            // Check if tank has volume
+            $tank = $this->tankModel->find($id);
+            if (!$tank) {
+                echo json_encode(['success' => false, 'message' => 'الخزان غير موجود']);
+                exit;
+            }
+
+            if ($tank['current_volume'] > 1) { // Threshold 1 liter
+                echo json_encode([
+                    'success' => false,
+                    'requires_transfer' => true,
+                    'current_volume' => $tank['current_volume'],
+                    'fuel_type_id' => $tank['fuel_type_id'],
+                    'message' => 'لا يمكن حذف الخزان لوجود وقود بداخله. يرجى نقل الوقود أولاً.'
+                ]);
+                exit;
+            }
+
             if ($this->tankModel->delete($id)) {
                 echo json_encode(['success' => true, 'message' => 'تم حذف الخزان بنجاح']);
             } else {
@@ -152,6 +170,97 @@ class TankController extends Controller
                 echo json_encode(['success' => false, 'message' => 'فشل في حذف الخزان']);
             }
             exit;
+        }
+    }
+
+    public function transfer()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        header('Content-Type: application/json');
+
+        $rawInput = file_get_contents('php://input');
+        // DEBUG:
+        file_put_contents(__DIR__ . '/../../public/debug_transfer_standalone.txt', date('Y-m-d H:i:s') . " Input: " . $rawInput . "\n", FILE_APPEND);
+
+        $input = json_decode($rawInput, true);
+        $id = $input['id'] ?? null; // Source Tank
+        $transfers = $input['transfers'] ?? [];
+
+        if (!$id || empty($transfers)) {
+            echo json_encode(['success' => false, 'message' => 'بيانات غير مكتملة']);
+            return;
+        }
+
+        $tank = $this->tankModel->find($id);
+        if (!$tank) {
+            echo json_encode(['success' => false, 'message' => 'الخزان غير موجود']);
+            return;
+        }
+
+        // Start Transaction
+        $db = \App\Config\Database::connect();
+        $db->beginTransaction();
+        try {
+            // Note: transferMultiple now handles user_id logic safely
+            $this->tankModel->transferMultiple($id, $transfers);
+            $db->commit();
+            echo json_encode(['success' => true, 'message' => 'تم نقل الوقود بنجاح']);
+        } catch (\PDOException $e) {
+            $db->rollBack();
+            file_put_contents(__DIR__ . '/../../public/debug_transfer_error.txt', date('Y-m-d H:i:s') . " DB Error: " . $e->getMessage() . "\n", FILE_APPEND);
+            echo json_encode(['success' => false, 'message' => 'خطأ قاعدة بيانات: ' . $e->getMessage()]);
+        } catch (\Exception $e) {
+            $db->rollBack();
+            file_put_contents(__DIR__ . '/../../public/debug_transfer_error.txt', date('Y-m-d H:i:s') . " Error: " . $e->getMessage() . "\n", FILE_APPEND);
+            echo json_encode(['success' => false, 'message' => 'فشل في عملية النقل: ' . $e->getMessage()]);
+        }
+    }
+
+    public function transfer_and_delete()
+    {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        header('Content-Type: application/json');
+
+        $rawInput = file_get_contents('php://input');
+        // DEBUG: Log input to file
+        file_put_contents(__DIR__ . '/../../public/debug_transfer.txt', date('Y-m-d H:i:s') . " Input: " . $rawInput . "\n", FILE_APPEND);
+
+        $input = json_decode($rawInput, true);
+        $id = $input['id'] ?? null;
+
+        // Support both single target (legacy) and multiple (new)
+        $transfers = $input['transfers'] ?? [];
+        if (isset($input['target_tank_id'])) {
+            $transfers[] = ['tank_id' => $input['target_tank_id'], 'amount' => 0]; // Amount will be filled below if 0/auto
+        }
+
+        if (!$id || empty($transfers)) {
+            echo json_encode(['success' => false, 'message' => 'Missing parameters']);
+            return;
+        }
+
+        $tank = $this->tankModel->find($id);
+        if (!$tank) {
+            echo json_encode(['success' => false, 'message' => 'الخزان غير موجود']);
+            return;
+        }
+
+        $volumeToTransfer = floatval($tank['current_volume']);
+
+        // If simple single transfer without amount specified, assume full amount
+        if (count($transfers) === 1 && (empty($transfers[0]['amount']) || $transfers[0]['amount'] == 0)) {
+            $transfers[0]['amount'] = $volumeToTransfer;
+        }
+
+        // Use the new multiple transfer method
+        $result = $this->tankModel->transferMultipleAndDelete($id, $transfers);
+
+        if ($result === true) {
+            echo json_encode(['success' => true, 'message' => 'تم نقل الوقود وحذف الخزان بنجاح']);
+        } else {
+            // Handle both boolean false and string error messages
+            $msg = is_string($result) ? $result : 'فشل في العملية';
+            echo json_encode(['success' => false, 'message' => $msg]);
         }
     }
 

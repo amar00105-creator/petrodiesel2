@@ -49,7 +49,7 @@ class Counter
         $sql = "SELECT c.*, w.name as worker_name 
                 FROM counters c 
                 LEFT JOIN workers w ON c.current_worker_id = w.id 
-                WHERE c.pump_id = ?";
+                WHERE c.pump_id = ? AND c.deleted_at IS NULL";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([$pumpId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -97,7 +97,7 @@ class Counter
     }
     public function delete($id)
     {
-        $stmt = $this->db->prepare("DELETE FROM counters WHERE id = ?");
+        $stmt = $this->db->prepare("UPDATE counters SET deleted_at = NOW() WHERE id = ?");
         return $stmt->execute([$id]);
     }
 }

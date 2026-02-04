@@ -156,14 +156,19 @@ class PumpController extends \App\Core\Controller
             return;
         }
 
-        $id = $_POST['id'] ?? null;
-        if (!$id) {
-            echo json_encode(['success' => false, 'message' => 'Missing ID']);
-            return;
-        }
-        $this->pumpModel->delete($id);
+        try {
+            $id = $_POST['id'] ?? null;
+            if (!$id) {
+                echo json_encode(['success' => false, 'message' => 'Missing ID']);
+                return;
+            }
+            $this->pumpModel->delete($id);
 
-        echo json_encode(['success' => true]);
+            echo json_encode(['success' => true]);
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     public function delete()

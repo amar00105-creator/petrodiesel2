@@ -7,6 +7,10 @@ import DischargeModal from './DischargeModal';
 import AddTankModal from './AddTankModal';
 import SimpleCalibrationModal from './SimpleCalibrationModal';
 
+import DeleteConfirmationModal from './DeleteConfirmationModal';
+import TransferAndDeleteModal from './TransferAndDeleteModal';
+import SuccessAnimation from './SuccessAnimation';
+
 export default function TankList({ tanks = [], suppliers = [], fuelSettings = [], generalSettings = {}, fuelTypes = [] }) {
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
@@ -15,6 +19,14 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
     const [calibrationModalOpen, setCalibrationModalOpen] = useState(false);
     const [selectedTank, setSelectedTank] = useState(null);
     const [editingTank, setEditingTank] = useState(null);
+
+    // Delete Flow State
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [transferModalOpen, setTransferModalOpen] = useState(false);
+    const [tankToDelete, setTankToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleSuccess = () => {
         setIsAddTankOpen(false);
@@ -27,27 +39,74 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
         setIsAddTankOpen(true);
     };
 
-    const handleDelete = async (tankId) => {
-        if (!window.confirm('هل أنت متأكد من حذف هذا الخزان؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    const initiateDelete = async (tank) => {
+        setTankToDelete(tank);
+        // Optimistically check if we know it's empty to skip server check if obviously full?
+        // Actually, safer to ask server anyway or trust local data for initial UI
+        // Let's use local data for speed, server will double check.
+        if (tank.current > 1) {
+             setTransferModalOpen(true);
+        } else {
+             setDeleteModalOpen(true);
+        }
+    };
 
+    const confirmSimpleDelete = async () => {
+        if (!tankToDelete) return;
+        setIsDeleting(true);
         const baseUrl = window.BASE_URL || '/PETRODIESEL2/public';
 
         try {
             const response = await fetch(`${baseUrl}/tanks/delete`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: tankId })
+                body: JSON.stringify({ id: tankToDelete.id })
             });
             const result = await response.json();
+            
             if (result.success) {
-                toast.success(result.message);
-                window.location.reload();
+                setDeleteModalOpen(false);
+                setSuccessMessage('تم حذف الخزان بنجاح');
+                setShowSuccess(true);
+            } else if (result.requires_transfer) {
+                // Server says it's not empty (maybe data sync issue), open transfer modal
+                setDeleteModalOpen(false);
+                setTransferModalOpen(true);
+                toast.warning(result.message);
             } else {
                 toast.error(result.message);
             }
         } catch (error) {
             console.error(error);
             toast.error('فشل في حذف الخزان');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const confirmTransferAndDelete = async (tankId, transfersData) => {
+        const baseUrl = window.BASE_URL || '/PETRODIESEL2/public';
+        try {
+            const response = await fetch(`${baseUrl}/tanks/transfer_and_delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    id: tankId, 
+                    transfers: transfersData // Use the structured data array
+                })
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                setTransferModalOpen(false);
+                setSuccessMessage(result.message);
+                setShowSuccess(true);
+            } else {
+                toast.error(result.message);
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('فشل في العملية');
         }
     };
 
@@ -141,7 +200,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                             <Edit className="w-4 h-4"/>
                         </button>
                         <button 
-                            onClick={() => handleDelete(tank.id)}
+                            onClick={() => initiateDelete(tank)}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                         >
                             <Trash2 className="w-4 h-4"/>
@@ -209,57 +268,65 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="p-6 max-w-[1800px] mx-auto space-y-8"
         >
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <Title className="text-3xl font-bold text-navy-900 font-cairo">المخزون والخزانات</Title>
-                    <Text className="text-slate-500">مراقبة مستويات الوقود وحالة الخزانات في الوقت الفعلي</Text>
+            {/* Consolidated Header & Toolbar */}
+            <div className="flex flex-col xl:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+                
+                {/* Search & View Toggles */}
+                 <div className="flex w-full xl:w-auto gap-4">
+                    <div className="relative flex-1 xl:w-96">
+                        <Search className="absolute right-3 top-3 text-slate-400 w-5 h-5"/>
+                        <TextInput 
+                            placeholder="بحث عن خزان أو منتج..." 
+                            className="pl-4 pr-10 py-2 rounded-xl border-slate-200"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                        />
+                    </div>
+                     <div className="flex gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="شبكة"
+                        >
+                            <LayoutGrid className="w-5 h-5" />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            title="قائمة"
+                        >
+                            <ListIcon className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
-                <div className="flex gap-2">
+
+                {/* Actions Toolbar */}
+                <div className="flex gap-2 w-full xl:w-auto justify-end overflow-x-auto pb-1 xl:pb-0">
+                    <Button 
+                        variant="secondary" 
+                        className="rounded-xl font-bold border-slate-200 hover:border-emerald-500 hover:text-emerald-600 whitespace-nowrap"
+                        onClick={() => { setTankToDelete(null); setTransferModalOpen(true); }} // Open transfer modal without specific tank (Source select mode)
+                    >
+                        <span className="flex items-center gap-2">
+                             <span className="text-xl">⇄</span> التحويلات
+                        </span>
+                    </Button>
+
                     <Button 
                         variant="secondary" 
                         icon={Plus} 
-                        className="rounded-xl font-bold bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-lg shadow-emerald-200"
+                        className="rounded-xl font-bold bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-lg shadow-emerald-100 whitespace-nowrap"
                         onClick={() => { setEditingTank(null); setIsAddTankOpen(true); }}
                     >
                         إضافة خزان
                     </Button>
-                    <Button 
-                        variant="primary" 
-                        icon={Truck} 
-                        className="rounded-xl font-bold bg-blue-600 hover:bg-blue-700 border-none text-white shadow-lg shadow-blue-200"
+                    <button 
+                        className="custom-btn btn"
                         onClick={() => setIsDischargeOpen(true)}
                     >
-                        تفريغ شحنة
-                    </Button>
-                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold">تقرير</Button>
-                </div>
-            </div>
-
-            {/* Filters & View Toggle */}
-            <div className="flex flex-col md:flex-row justify-between gap-4">
-                <div className="relative w-full md:max-w-md">
-                    <Search className="absolute right-3 top-3 text-slate-400 w-5 h-5"/>
-                    <TextInput 
-                        placeholder="بحث عن خزان..." 
-                        className="pl-4 pr-10 py-2 rounded-xl border-slate-200"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-                <div className="flex gap-2 bg-slate-100 p-1 rounded-xl">
-                    <button 
-                        onClick={() => setViewMode('grid')}
-                        className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        <LayoutGrid className="w-5 h-5" />
+                        <span>تفريغ شحنة</span>
                     </button>
-                    <button 
-                        onClick={() => setViewMode('list')}
-                        className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        <ListIcon className="w-5 h-5" />
-                    </button>
+                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold border-slate-200 whitespace-nowrap">تقرير</Button>
                 </div>
             </div>
 
@@ -328,7 +395,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                                     <Edit className="w-4 h-4"/>
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleDelete(tank.id)}
+                                                    onClick={() => initiateDelete(tank)}
                                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
                                                 >
                                                     <Trash2 className="w-4 h-4"/>
@@ -342,6 +409,29 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                     </div>
                 </Card>
             )}
+
+            <SuccessAnimation 
+                isVisible={showSuccess} 
+                message={successMessage}
+                onComplete={() => window.location.reload()}
+            />
+
+            <DeleteConfirmationModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={confirmSimpleDelete}
+                title="حذف الخزان"
+                message={`هل أنت متأكد من حذف الخزان "${tankToDelete?.name}"؟`}
+                isDeleting={isDeleting}
+            />
+
+            <TransferAndDeleteModal
+                isOpen={transferModalOpen}
+                onClose={() => setTransferModalOpen(false)}
+                tank={tankToDelete}
+                tanks={normalizedTanks} // Pass normalized for consistency or props.tanks if needed, but normalized has clean data
+                onConfirm={confirmTransferAndDelete}
+            />
 
             {/* Discharge Modal */}
             <DischargeModal 

@@ -12,7 +12,8 @@
 
     # Send Requests To Front Controller...
     # Correct Base for Live Server (app.petrodiesel.net/public)
-    RewriteBase /public/
+    # RewriteBase /public/
+    RewriteBase /
 
     RewriteRule ^index\.php$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-d

@@ -7353,3 +7353,18 @@ Script Dir: /PETRODIESEL2/public
 Calculated URI: /api/server-time
 Method: GET
 Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135

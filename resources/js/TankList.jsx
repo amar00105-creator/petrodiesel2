@@ -10,6 +10,7 @@ import SimpleCalibrationModal from './SimpleCalibrationModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import TransferAndDeleteModal from './TransferAndDeleteModal';
 import SuccessAnimation from './SuccessAnimation';
+import FuelTankCard from './FuelTankCard';
 
 export default function TankList({ tanks = [], suppliers = [], fuelSettings = [], generalSettings = {}, fuelTypes = [] }) {
     const [search, setSearch] = useState('');
@@ -332,9 +333,15 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
 
             {/* Grid View */}
             {viewMode === 'grid' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                     {filteredTanks.map(tank => (
-                        <TankCard key={tank.id} tank={tank} />
+                        <FuelTankCard 
+                            key={tank.id} 
+                            tank={tank} 
+                            onEdit={() => handleEdit(tank)}
+                            onDelete={() => initiateDelete(tank)}
+                            onCalibrate={() => { setSelectedTank(tank); setCalibrationModalOpen(true); }}
+                        />
                     ))}
                     {filteredTanks.length === 0 && (
                         <div className="col-span-full text-center py-20 text-slate-400">

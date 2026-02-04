@@ -33,6 +33,7 @@ jobs:
           protocol: ftp
           port: 21
           server-dir: ./
+          delete: true
           exclude: |
             **/.git*
             **/.git*/**
@@ -42,6 +43,9 @@ jobs:
             **/tests/**
             **/test_*.php
             **/check_*.php
+            app/Config/db_config.php
+            .env
+            .htaccess
             README.md
 
       - name: Fix Permissions via Python

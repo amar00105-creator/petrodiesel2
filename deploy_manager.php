@@ -182,15 +182,6 @@ if ($mode === 'backend' || $mode === 'all') {
         if ($file == '.' || $file == '..') continue;
         $local_path = $LOCAL_ROOT . '/public/' . $file;
 
-        if (is_dir($local_path)) {
-            // Include CSS and IMG and ASSETS directories
-            if (in_array($file, ['css', 'img', 'assets'])) {
-                echo "\n📂 Uploading Public Directory: $file ...\n";
-                uploadRecursive($local_path, $remote_path . '/' . $file);
-            }
-            continue;
-        }
-
         // .htaccess handling
         if ($file === 'htaccess_live') {
             $remote_path = $REMOTE_ROOT . 'public/.htaccess';
@@ -201,8 +192,27 @@ if ($mode === 'backend' || $mode === 'all') {
             continue;
         } else {
             $remote_path = $REMOTE_ROOT . 'public/' . $file;
+
+            if (is_dir($local_path)) {
+                // Include CSS and IMG and ASSETS directories
+                if (in_array($file, ['css', 'img', 'assets'])) {
+                    echo "\n📂 Uploading Public Directory: $file ...\n";
+                    uploadRecursive($local_path, $remote_path);
+                }
+                continue;
+            }
+
             uploadFile($local_path, $remote_path);
         }
+    }
+
+    // 3. DATABASE BACKUP
+    echo "\n💾 Uploading Database Backup...\n";
+    $db_backup = 'petrodiesel_db_backup_latest.sql';
+    if (file_exists($LOCAL_ROOT . '/' . $db_backup)) {
+        uploadFile($LOCAL_ROOT . '/' . $db_backup, $REMOTE_ROOT . $db_backup);
+    } else {
+        echo "⚠️ Database backup file not found.\n";
     }
 }
 

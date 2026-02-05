@@ -314,6 +314,22 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     </Text>
                                 </div>
 
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block">تصحيح التاريخ (Server Time Offset)</label>
+                                    <div className="flex items-center gap-2">
+                                        <TextInput 
+                                            type="number"
+                                            value={generalSettings.server_date_offset || '0'} 
+                                            onChange={(e) => handleGeneralChange('server_date_offset', e.target.value)}
+                                            className="rounded-xl w-32 font-mono text-center"
+                                        />
+                                        <Text className="text-slate-500">يوم</Text>
+                                    </div>
+                                    <Text className="text-xs text-slate-500 mt-2">
+                                        استخدم هذا الخيار إذا كان وقت السيرفر متأخر أو متقدم. (مثال: 2 لإضافة يومين، -1 لإنقاص يوم)
+                                    </Text>
+                                </div>
+
                                 {generalSettings.currency !== 'SAR' && (
                                     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
                                         <Text className="text-xs text-slate-400 mt-1">سيتم استخدام هذه العملة كعملة أساسية للنظام بالكامل</Text>

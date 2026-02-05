@@ -8,7 +8,7 @@ export default function AddPurchase({ suppliers, tanks }) {
     const [formData, setFormData] = useState({
         supplier_id: '',
         tank_id: '',
-        purchase_date: new Date().toISOString().split('T')[0],
+        purchase_date: '', // Will be set from server
         invoice_number: '',
         quantity: '',
         unit_price: '',
@@ -18,6 +18,14 @@ export default function AddPurchase({ suppliers, tanks }) {
         total_cost: 0,
         notes: ''
     });
+
+    useEffect(() => {
+        import('./utils/serverTime').then(({ getServerDate }) => {
+            getServerDate().then(date => {
+                setFormData(prev => ({ ...prev, purchase_date: date }));
+            });
+        });
+    }, []);
 
     const [selectedTank, setSelectedTank] = useState(null);
 

@@ -42,15 +42,23 @@ class Purchase extends Model
                     station_id, supplier_id, tank_id, driver_id, truck_number, driver_name,
                     invoice_number, volume_ordered, volume_received, price_per_liter,
                     total_cost, paid_amount, payment_source_type, payment_source_id,
-                    status, invoice_image, delivery_note_image, fuel_type_id
+                    status, invoice_image, delivery_note_image, fuel_type_id, created_at
                 ) VALUES (
                     :station_id, :supplier_id, :tank_id, :driver_id, :truck_number, :driver_name,
                     :invoice_number, :volume_ordered, :volume_received, :price_per_liter,
                     :total_cost, :paid_amount, :payment_source_type, :payment_source_id,
-                    :status, :invoice_image, :delivery_note_image, :fuel_type_id
+                    :status, :invoice_image, :delivery_note_image, :fuel_type_id, :created_at
                 )";
 
         $stmt = $this->db->prepare($sql);
+
+        // Handle Date Logic
+        $createdAt = $data['purchase_date'] ?? date('Y-m-d H:i:s');
+        // If it's just a date (YYYY-MM-DD), append time
+        if (strlen($createdAt) === 10) {
+            $createdAt .= ' ' . date('H:i:s');
+        }
+
         $stmt->execute([
             ':station_id' => $data['station_id'],
             ':supplier_id' => $data['supplier_id'],
@@ -69,7 +77,8 @@ class Purchase extends Model
             ':status' => $data['status'] ?? 'ordered',
             ':invoice_image' => $data['invoice_image'] ?? null,
             ':delivery_note_image' => $data['delivery_note_image'] ?? null,
-            ':fuel_type_id' => $data['fuel_type_id'] ?? null
+            ':fuel_type_id' => $data['fuel_type_id'] ?? null,
+            ':created_at' => $createdAt
         ]);
 
         return $this->db->lastInsertId();

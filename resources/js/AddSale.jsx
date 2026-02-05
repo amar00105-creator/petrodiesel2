@@ -33,11 +33,13 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
     // --- Init ---
     useEffect(() => {
         // Set today's date from server timezone
-        const today = new Date();
-        const serverDate = today.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-        if (!initialSale) {
-            setFormData(prev => ({ ...prev, sale_date: serverDate }));
-        }
+        import('./utils/serverTime').then(({ getServerDate }) => {
+            if (!initialSale) {
+                getServerDate().then(date => {
+                    setFormData(prev => ({ ...prev, sale_date: date }));
+                });
+            }
+        });
 
         // If edit mode, use existing invoice number
         if (initialSale && initialSale.invoice_number) {

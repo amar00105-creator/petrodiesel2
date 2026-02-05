@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, Title, Text, Button } from '@tremor/react';
-import { ChevronLeft, Save, Building2, Truck, Droplet, Fuel, Calculator, User, Hash, CheckCircle } from 'lucide-react';
+import { ChevronLeft, Save, Building2, Truck, Droplet, Fuel, Calculator, User, Hash, CheckCircle, Calendar } from 'lucide-react';
 
 export default function EditPurchase({ purchase, suppliers = [], drivers = [], tanks = [], fuelTypes = [] }) {
     const [loading, setLoading] = useState(false);
@@ -14,6 +14,12 @@ export default function EditPurchase({ purchase, suppliers = [], drivers = [], t
     // Driver State
     const [driverName, setDriverName] = useState(purchase?.driver_name || '');
     const [truckNumber, setTruckNumber] = useState(purchase?.truck_number || '');
+    
+    // Date State
+    const [purchaseDate, setPurchaseDate] = useState(() => {
+        const d = purchase?.purchase_date || purchase?.created_at;
+        return d ? d.split(' ')[0] : '';
+    });
 
     // Calculations
     useEffect(() => {
@@ -91,6 +97,21 @@ export default function EditPurchase({ purchase, suppliers = [], drivers = [], t
                                 <option value="">اختر المورد...</option>
                                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
+
+                            {/* Date Field */}
+                            <div className="mt-4 pt-4 border-t border-amber-100">
+                                <label className="flex items-center gap-2 font-bold text-slate-700 mb-2">
+                                    <Calendar className="w-5 h-5 text-amber-500"/> تاريخ الفاتورة
+                                </label>
+                                <input 
+                                    type="date" 
+                                    name="purchase_date"
+                                    value={purchaseDate}
+                                    onChange={(e) => setPurchaseDate(e.target.value)}
+                                    className="w-full p-3.5 rounded-xl border border-amber-200 focus:ring-2 focus:ring-amber-500 outline-none bg-white font-bold text-slate-700"
+                                    required
+                                />
+                            </div>
                          </Card>
 
                          {/* Tank Selection (If needed, legacy logic included tank_id, creating logic removed it in favor of offloading later. 

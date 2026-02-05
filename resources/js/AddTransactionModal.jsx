@@ -137,8 +137,38 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
         try {
             const form = new FormData();
             form.append('type', type);
-            // If general, we might want to ensure standard handling
-            Object.keys(formData).forEach(key => form.append(key, formData[key]));
+            // If general, the 'related_entity_id' IS the category_id
+            if (formData.related_entity_type === 'general') {
+                form.append('category_id', formData.related_entity_id);
+                form.delete('related_entity_id'); // It's not a relation, it's a category
+                form.append('related_entity_type', ''); // Clear it or keep as null
+            } else {
+                form.append('category_id', formData.category_id); // If supplier/customer, maybe we still want a category?
+                // The user said "Remove redundant category field". 
+                // Currently if Supplier/Customer is selected, the Category field was HIDDEN anyway in my previous understanding? 
+                // Let's re-read the code. 
+                // Line 367: {formData.related_entity_type === 'general' && ( <Category Block> )}
+                // So Category Block was ONLY shown for General.
+                // If Type is Supplier/Customer, we typically don't categorize? 
+                // Or do we? The prompt says "delete category selection, keep select item (add manage button)".
+                // For General: Select Item IS the category.
+                // For Supplier: Select Item is Supplier. Do we categorize?
+                // The current code only showed Category dropdown if Type == General.
+                // So for Supplier, category_id was empty? 
+                // Let's assume for now we only care about General mapping.
+            }
+
+            Object.keys(formData).forEach(key => {
+                if(key !== 'category_id' && key !== 'related_entity_type' && key !== 'related_entity_id') {
+                     form.append(key, formData[key]);
+                }
+            });
+            
+            // Re-append keys we might have skipped if not handled above logic
+            if (formData.related_entity_type !== 'general') {
+                 form.append('related_entity_type', formData.related_entity_type);
+                 form.append('related_entity_id', formData.related_entity_id);
+            }
 
             const response = await fetch(`${baseUrl}/finance/storeTransaction`, {
                 method: 'POST',
@@ -232,9 +262,23 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                         </div>
                                     </div>
 
-                                    {/* Relation Selection */}
+                                    {/* Related Entity / Category Selection */}
                                     <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
-                                        <label className="block text-sm font-bold text-slate-700">الجهة المرتبطة <span className="text-red-500">*</span></label>
+                                        <div className="flex justify-between items-center">
+                                            <label className="block text-sm font-bold text-slate-700">الجهة / البند <span className="text-red-500">*</span></label>
+                                            
+                                            {/* Show Manage Categories ONLY if General */}
+                                            {formData.related_entity_type === 'general' && (
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => setIsManageCategoriesOpen(!isManageCategoriesOpen)}
+                                                    className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-blue-100 shadow-sm"
+                                                >
+                                                    <Settings className="w-3 h-3" /> إدارة التصنيفات
+                                                </button>
+                                            )}
+                                        </div>
+
                                         <div className="flex gap-4">
                                             <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white transition-colors">
                                                 <input 
@@ -242,7 +286,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                                     checked={formData.related_entity_type === 'general'} onChange={handleChange}
                                                     className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                                                 />
-                                                <span className="text-sm font-bold text-slate-700">عام</span>
+                                                <span className="text-sm font-bold text-slate-700">عام (بند)</span>
                                             </label>
                                             <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white transition-colors">
                                                 <input 
@@ -262,16 +306,86 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                             </label>
                                         </div>
 
+                                        {/* Manage Categories Panel */}
+                                        <AnimatePresence>
+                                            {isManageCategoriesOpen && formData.related_entity_type === 'general' && (
+                                                <motion.div 
+                                                    initial={{ height: 0, opacity: 0 }} 
+                                                    animate={{ height: 'auto', opacity: 1 }} 
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 mb-4">
+                                                        <div className="flex gap-2">
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="اسم التصنيف الجديد..."
+                                                                className="flex-1 p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                                value={newCategoryName}
+                                                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                                            />
+                                                            <button 
+                                                                type="button"
+                                                                onClick={handleAddCategory}
+                                                                className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                                            >
+                                                                <Plus className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                        <div className="max-h-48 overflow-y-auto space-y-2">
+                                                            {localCategories.map(cat => (
+                                                                <div key={cat.id} className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                                                    {editingId === cat.id ? (
+                                                                        <div className="flex flex-1 gap-2 items-center">
+                                                                            <input 
+                                                                                type="text" 
+                                                                                value={editingName}
+                                                                                onChange={(e) => setEditingName(e.target.value)}
+                                                                                className="flex-1 p-1 text-sm border rounded outline-none focus:ring-1 focus:ring-blue-500"
+                                                                                autoFocus
+                                                                            />
+                                                                            <button onClick={() => handleUpdateCategory(cat.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Save className="w-3 h-3" /></button>
+                                                                            <button onClick={cancelEditing} className="text-slate-400 hover:bg-slate-50 p-1 rounded"><X className="w-3 h-3" /></button>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <>
+                                                                            <span className="text-sm text-slate-700 font-medium">{cat.name}</span>
+                                                                            <div className="flex gap-1">
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => startEditing(cat)}
+                                                                                    className="p-1 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                                                >
+                                                                                    <Edit2 className="w-3 h-3" />
+                                                                                </button>
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    onClick={() => handleDeleteCategory(cat.id)}
+                                                                                    className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                                                                >
+                                                                                    <Trash2 className="w-3 h-3" />
+                                                                                </button>
+                                                                            </div>
+                                                                        </>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+
                                         <div className="relative animate-in fade-in slide-in-from-top-2">
                                             <select
                                                 name="related_entity_id"
                                                 value={formData.related_entity_id} 
                                                 onChange={handleChange}
-                                                className="w-full pl-4 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                                                className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
                                                 required
                                             >
                                                 <option value="">
-                                                    {formData.related_entity_type === 'general' ? 'اختر بند المصروف...' : 
+                                                    {formData.related_entity_type === 'general' ? 'اختر البند / التصنيف...' : 
                                                      formData.related_entity_type === 'supplier' ? 'اختر المورد...' : 
                                                      'اختر العميل...'}
                                                 </option>
@@ -300,10 +414,10 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                                     )
                                                 )}
                                             </select>
-                                            <div className="absolute right-3 top-3 text-slate-400">
-                                                {formData.related_entity_type === 'general' ? <Tag className="w-4 h-4"/> : 
-                                                 formData.related_entity_type === 'supplier' ? <Users className="w-4 h-4"/> : 
-                                                 <User className="w-4 h-4"/>}
+                                            <div className="absolute right-3 top-3.5 text-slate-400">
+                                                {formData.related_entity_type === 'general' ? <Tag className="w-5 h-5"/> : 
+                                                 formData.related_entity_type === 'supplier' ? <Users className="w-5 h-5"/> : 
+                                                 <User className="w-5 h-5"/>}
                                             </div>
                                         </div>
                                     </div>
@@ -364,97 +478,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                     {/* Category - Only show if Type is General */}
                                     {/* If Supplier/Customer, we assume the 'Related Entity ID' is effectively the category/payee logic */}
                                     {/* Category - Only show if Type is General */}
-                                    {formData.related_entity_type === 'general' && (
-                                    <div>
-                                        <div className="flex justify-between items-center mb-2">
-                                            <label className="block text-sm font-medium text-slate-700">التصنيف</label>
-                                            <button 
-                                                type="button" 
-                                                onClick={() => setIsManageCategoriesOpen(!isManageCategoriesOpen)}
-                                                className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1"
-                                            >
-                                                <Settings className="w-3 h-3" /> إدارة التصنيفات
-                                            </button>
-                                        </div>
 
-                                        {isManageCategoriesOpen ? (
-                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3 animate-in fade-in slide-in-from-top-2">
-                                                <div className="flex gap-2">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="اسم التصنيف الجديد..."
-                                                        className="flex-1 p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                        value={newCategoryName}
-                                                        onChange={(e) => setNewCategoryName(e.target.value)}
-                                                    />
-                                                    <button 
-                                                        type="button"
-                                                        onClick={handleAddCategory}
-                                                        className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                                <div className="max-h-96 overflow-y-auto space-y-2">
-                                                    {localCategories.map(cat => (
-                                                        <div key={cat.id} className="flex justify-between items-center bg-white p-2 rounded-lg border border-slate-100">
-                                                            {editingId === cat.id ? (
-                                                                <div className="flex flex-1 gap-2 items-center">
-                                                                    <input 
-                                                                        type="text" 
-                                                                        value={editingName}
-                                                                        onChange={(e) => setEditingName(e.target.value)}
-                                                                        className="flex-1 p-1 text-sm border rounded outline-none focus:ring-1 focus:ring-blue-500"
-                                                                        autoFocus
-                                                                    />
-                                                                    <button onClick={() => handleUpdateCategory(cat.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Save className="w-3 h-3" /></button>
-                                                                    <button onClick={cancelEditing} className="text-slate-400 hover:bg-slate-50 p-1 rounded"><X className="w-3 h-3" /></button>
-                                                                </div>
-                                                            ) : (
-                                                                <>
-                                                                    <span className="text-sm text-slate-700 font-medium">{cat.name}</span>
-                                                                    <div className="flex gap-1">
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => startEditing(cat)}
-                                                                            className="p-1 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded"
-                                                                        >
-                                                                            <Edit2 className="w-3 h-3" />
-                                                                        </button>
-                                                                        <button 
-                                                                            type="button"
-                                                                            onClick={() => handleDeleteCategory(cat.id)}
-                                                                            className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
-                                                                        >
-                                                                            <Trash2 className="w-3 h-3" />
-                                                                        </button>
-                                                                    </div>
-                                                                </>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="relative">
-                                                <select
-                                                    name="category_id"
-                                                    value={formData.category_id} onChange={handleChange}
-                                                    className="w-full pl-4 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                    required
-                                                >
-                                                    <option value="">اختر تصنيف العملية...</option>
-                                                    {localCategories.map(cat => (
-                                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                                    ))}
-                                                </select>
-                                                <div className="absolute right-3 top-3.5 text-slate-400">
-                                                    <Tag className="w-5 h-5" />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                    )}
 
                                     {/* Description */}
                                     <div>

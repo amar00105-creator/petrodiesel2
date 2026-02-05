@@ -145,9 +145,9 @@ class Transaction extends Model
 
         $params = [$type, $id, $type, $id];
 
-        // Add date filtering if provided - use created_at for accuracy
+        // Add date filtering if provided - use date column for business logic accuracy
         if ($startDate && $endDate) {
-            $sql .= " AND DATE(t.created_at) BETWEEN ? AND ?";
+            $sql .= " AND t.date BETWEEN ? AND ?";
             $params[] = $startDate;
             $params[] = $endDate;
         }

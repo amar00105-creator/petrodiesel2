@@ -5,7 +5,8 @@ $timezoneSet = false;
 try {
     require_once __DIR__ . '/../app/Config/Database.php';
     $db = \App\Config\Database::connect();
-    $stmt = $db->prepare("SELECT value FROM settings WHERE key_name = 'timezone' AND station_id IS NULL LIMIT 1");
+    // Check for global timezone (station_id IS NULL or 0)
+    $stmt = $db->prepare("SELECT value FROM settings WHERE key_name = 'timezone' AND (station_id IS NULL OR station_id = 0) ORDER BY station_id DESC LIMIT 1");
     $stmt->execute();
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -210,6 +211,7 @@ $router->add('GET', '/settings/backup', 'SettingsController', 'backup');
 $router->add('POST', '/settings/create_user', 'SettingsController', 'createUser');
 $router->add('POST', '/settings/save_user', 'SettingsController', 'saveUser');
 $router->add('POST', '/settings/delete_role', 'SettingsController', 'deleteRole');
+$router->add('POST', '/settings/factory_reset', 'SettingsController', 'factoryReset');
 
 // Roles Routes
 $router->add('GET', '/roles', 'RolesController', 'index');

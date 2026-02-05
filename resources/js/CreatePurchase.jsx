@@ -1,11 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Title, Text, Button } from '@tremor/react';
-import { ChevronLeft, Save, Building2, Truck, Droplet, Fuel, Calculator, User, Plus, CheckCircle, Hash, X } from 'lucide-react';
+import { ChevronLeft, Save, Building2, Truck, Droplet, Fuel, Calculator, User, Plus, CheckCircle, Hash, X, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import AddSupplierModal from './AddSupplierModal';
 
 export default function CreatePurchase({ suppliers = [], tanks = [], drivers = [], fuelTypes = [], invoiceNumber, canAddSupplier = false, canAddDriver = false }) {
+    // State for controlled date
+    const [purchaseDate, setPurchaseDate] = useState('');
+
+    useEffect(() => {
+        import('./utils/serverTime').then(({ getServerDate }) => {
+            getServerDate().then(date => {
+                setPurchaseDate(date);
+            });
+        });
+    }, []);
+
     const [loading, setLoading] = useState(false);
     const [isAddSupplierOpen, setIsAddSupplierOpen] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
@@ -197,6 +208,21 @@ export default function CreatePurchase({ suppliers = [], tanks = [], drivers = [
                                 <option value="new_supplier_trigger" className="font-bold text-amber-600 bg-amber-50">+ إضافة مورد جديد</option>
                                 {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </select>
+                            
+                            {/* Date Field */}
+                            <div className="mt-4 pt-4 border-t border-amber-100">
+                                <label className="flex items-center gap-2 font-bold text-slate-700 mb-2">
+                                    <Calendar className="w-5 h-5 text-amber-500"/> تاريخ الفاتورة
+                                </label>
+                                <input 
+                                    type="date" 
+                                    name="purchase_date"
+                                    value={purchaseDate}
+                                    onChange={(e) => setPurchaseDate(e.target.value)}
+                                    className="w-full p-3.5 rounded-xl border border-amber-200 focus:ring-2 focus:ring-amber-500 outline-none bg-white font-bold text-slate-700"
+                                    required
+                                />
+                            </div>
                          </Card>
 
                          {/* Fuel Type Only - Tank Selection Removed */}

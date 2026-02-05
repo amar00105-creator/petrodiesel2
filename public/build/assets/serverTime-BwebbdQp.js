@@ -1,0 +1,1 @@
+async function r(){try{const e=await(await fetch(`${window.BASE_URL||""}/api/server-time`)).json();if(e.success)return e.date}catch{console.warn("Failed to get server date, using client date")}return new Date().toISOString().split("T")[0]}export{r as getServerDate};

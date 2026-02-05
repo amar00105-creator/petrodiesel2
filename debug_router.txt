@@ -7608,3 +7608,2628 @@ Script Dir: /PETRODIESEL2/public
 Calculated URI: /finance/getSafeDetails
 Method: GET
 Routes Count: 135
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: POST
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: POST
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: POST
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/switchStation
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /switchStation
+Method: POST
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=2&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=2&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=2&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=2&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=employee&e_id=6
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=7
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=5
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=9
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=employee&e_id=7
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=8
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=4
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=6
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=3
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=12
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=11
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=10
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=1
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=driver&e_id=5
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=driver&e_id=6
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=worker&e_id=2
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=driver&e_id=7
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=driver&e_id=9
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=driver&e_id=4
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/hr/api?entity=payroll&action=get_salary&e_type=driver&e_id=8
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr/api
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 135
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-04&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/login
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /login
+Method: POST
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings/factory_reset
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings/factory_reset
+Method: POST
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-05&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-05&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-05&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-05&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=2&start_date=2026-02-01&end_date=2026-02-05&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=2&start_date=2026-02-01&end_date=2026-02-05&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/settings
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /settings
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/reports?action=get_stats&station_id=1&start_date=2026-02-01&end_date=2026-02-05&period=month
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /reports
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/suppliers
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /suppliers
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/hr
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /hr
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/accounting
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /accounting
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/sales
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /sales
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/pumps
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /pumps
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/tanks
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /tanks
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases/getPending
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases/getPending
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/purchases
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /purchases
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136
+Original URI: /PETRODIESEL2/public/api/server-time
+Script Dir: /PETRODIESEL2/public
+Calculated URI: /api/server-time
+Method: GET
+Routes Count: 136

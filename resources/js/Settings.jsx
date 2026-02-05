@@ -477,6 +477,31 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     تحميل نسخة احتياطية (SQL)
                                 </a>
                             </Card>
+
+                            <Card className="rounded-2xl shadow-md ring-1 ring-red-100 py-6 flex flex-col items-center justify-center space-y-4 bg-red-50/50">
+                                <Title className="text-red-700">منطقة الخطر</Title>
+                                <Text className="text-red-600">إعادة ضبط المصنع (حذف جميع البيانات)</Text>
+                                <button 
+                                    onClick={() => {
+                                        if (confirm('تحذير هام: سيتم حذف جميع البيانات بما في ذلك المبيعات، المشتريات، الخزانات، الطلمبات، أنواع الوقود، والعملاء! سيعود البرنامج لحالته الأصلية. هل أنت متأكد تماماً؟')) {
+                                            fetch('/PETRODIESEL2/public/settings/factory_reset', { method: 'POST' })
+                                                .then(res => res.json())
+                                                .then(data => {
+                                                    if (data.success) {
+                                                        toast.success(data.message);
+                                                        setTimeout(() => window.location.reload(), 2000);
+                                                    } else {
+                                                        toast.error(data.message);
+                                                    }
+                                                });
+                                        }
+                                    }}
+                                    className="px-6 py-3 bg-red-600 text-white font-bold rounded-xl shadow-lg hover:bg-red-700 transition-all flex items-center gap-2"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                    إعادة ضبط المصنع
+                                </button>
+                            </Card>
                         </div>
                     </TabPanel>
                 </TabPanels>

@@ -532,11 +532,16 @@ class PurchasesController extends Controller
                     volume_received = ?,
                     price_per_liter = ?,
                     total_cost = ?,
-                    status = ?
+                    status = ?,
+                    created_at = ?
                     WHERE id = ?";
 
             $tankId = !empty($_POST['tank_id']) ? $_POST['tank_id'] : null;
             $fuelTypeId = !empty($_POST['fuel_type_id']) ? $_POST['fuel_type_id'] : null;
+
+            // Handle Date
+            $createdAt = $_POST['purchase_date'] ?? date('Y-m-d');
+            if (strlen($createdAt) === 10) $createdAt .= ' ' . date('H:i:s');
 
             $stmt = $db->prepare($sql);
             $stmt->execute([
@@ -550,6 +555,7 @@ class PurchasesController extends Controller
                 $_POST['price_per_liter'],
                 $_POST['total_cost'],
                 $_POST['status'] ?? 'in_transit',
+                $createdAt,
                 $id
             ]);
 

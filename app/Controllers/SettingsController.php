@@ -473,4 +473,76 @@ class SettingsController extends Controller
             exit;
         }
     }
+
+    public function factoryReset()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            try {
+                $db = \App\Config\Database::connect();
+                $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+                // 1. Truncate ALL Data Tables (Transactional & Master)
+                $tables = [
+                    'transactions',
+                    'sales',
+                    'purchases',
+                    'expenses',
+                    'transfer_requests',
+                    'calibration_logs',
+                    'tank_readings',
+                    'incoming_stock_log',
+                    'notifications',
+                    'suppliers',
+                    'customers',
+                    'employees',
+                    'attendance',
+                    'payrolls',
+                    'advances',
+                    'workers',
+                    'activity_logs',
+                    'counters',      // Truncate instead of update
+                    'pumps',         // Truncate instead of update
+                    'tanks',         // Truncate instead of update
+                    'fuel_types',    // Truncate fuel types
+                    'user_stations', // Clear assignments
+                    // 'users'       // DO NOT TRUNCATE USERS (Administrator needs to login)
+                    // 'roles'       // DO NOT TRUNCATE ROLES
+                    // 'settings'    // Optional: Reset settings? For now keep them.
+                ];
+
+                foreach ($tables as $table) {
+                    try {
+                        $db->exec("TRUNCATE TABLE `$table`");
+                    } catch (\Exception $e) {
+                        // Ignore if table missing
+                    }
+                }
+
+                // 2. Reset Assets (Keep definitions if not tables, otherwise truncate)
+                // Safes and Banks are usually master data too. 
+                // If user wants "ALL Data" gone, maybe truncate safes/banks too?
+                // The prompt says "erase all data in the program". 
+                // Usually this implies starting fresh. 
+                // I will TRUNCATE Safes and Banks as well to be safe, 
+                // but if they are considered "Settings", maybe keep?
+                // Given the context of "tanks/pumps", safes/banks are likely similar.
+                try {
+                    $db->exec("TRUNCATE TABLE `safes`");
+                    $db->exec("TRUNCATE TABLE `banks`");
+                } catch (\Exception $e) {
+                    // In case they don't exist or error
+                }
+
+                $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+                echo json_encode(['success' => true, 'message' => 'تمت إعادة ضبط المصنع بنجاح. تم مسح جميع البيانات.']);
+            } catch (\Exception $e) {
+                $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+                echo json_encode(['success' => false, 'message' => 'فشلت العملية: ' . $e->getMessage()]);
+            }
+            exit;
+        }
+    }
 }

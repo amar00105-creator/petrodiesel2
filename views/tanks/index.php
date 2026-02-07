@@ -1,7 +1,7 @@
 <?php
 // Expects $tanks array
 ?>
-<div id="root"
+<div id="root" class="h-full w-full bg-slate-50 dark:bg-[#0F172A]"
     data-page="tank-list"
     data-tanks='<?= json_encode($tanks, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>'
     data-suppliers='<?= json_encode($suppliers ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE) ?>'

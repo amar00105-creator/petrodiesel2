@@ -5,7 +5,7 @@
 
 <div id="root"
     data-page="partners"
-    class="h-full w-full">
+    class="h-full w-full dark:bg-[#0F172A]">
     <!-- React loads here -->
     <div class="flex items-center justify-center min-h-screen">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

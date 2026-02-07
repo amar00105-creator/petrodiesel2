@@ -293,12 +293,13 @@ class PurchasesController extends Controller
             $tankModel = new Tank();
             foreach ($tanks as $dist) {
                 if ($dist['quantity'] > 0) {
-                    // Update Tank Stock
-                    $tankModel->updateVolume($dist['id'], $dist['quantity']);
+                    // Validate and Update Tank Stock
+                    $result = $tankModel->updateVolume($dist['id'], $dist['quantity'], true);
+                    if (is_array($result) && !$result['success']) {
+                        throw new \Exception($result['message']);
+                    }
 
                     // Log Offload
-                    // Check if purchase_offloads exists, create if not or ignore?
-                    // Assuming it exists or we skip.
                     try {
                         $stmt = $db->prepare("INSERT INTO purchase_offloads (purchase_id, tank_id, quantity) VALUES (?, ?, ?)");
                         $stmt->execute([$purchaseId, $dist['id'], $dist['quantity']]);
@@ -353,7 +354,21 @@ class PurchasesController extends Controller
             $purchaseModel = new Purchase();
             $tankModel = new Tank();
 
-            // 1. Update Tank
+            // 1. Validate first
+            $tank = $tankModel->find($tankId);
+            if ($tank) {
+                $newVolume = (float)$tank['current_volume'] + (float)$actualQty;
+                if ($newVolume < 0) {
+                    $this->redirect('/purchases?error=' . urlencode('الكمية أكبر من المخزون المتاح'));
+                    return;
+                }
+                if ($newVolume > (float)$tank['capacity_liters']) {
+                    $this->redirect('/purchases?error=' . urlencode('الكمية ستتجاوز سعة الخزان'));
+                    return;
+                }
+            }
+
+            // 2. Update Tank
             $tankModel->updateVolume($tankId, $actualQty);
 
             // 2. Update Purchase Status
@@ -642,8 +657,11 @@ class PurchasesController extends Controller
             $tankModel = new Tank();
             foreach ($data['tanks'] as $distribution) {
                 if ($distribution['quantity'] > 0) {
-                    // Update Tank Stock
-                    $tankModel->updateVolume($distribution['id'], $distribution['quantity']);
+                    // Validate and Update Tank Stock
+                    $result = $tankModel->updateVolume($distribution['id'], $distribution['quantity'], true);
+                    if (is_array($result) && !$result['success']) {
+                        throw new \Exception($result['message']);
+                    }
 
                     // Insert into purchase_offloads
                     $stmt = $db->prepare("INSERT INTO purchase_offloads (purchase_id, tank_id, quantity) VALUES (?, ?, ?)");

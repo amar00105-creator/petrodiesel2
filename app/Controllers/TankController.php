@@ -91,7 +91,18 @@ class TankController extends Controller
                 'current_price' => $input['current_price'] ?? $_POST['current_price'] ?? 0,
             ];
 
-            if ($this->tankModel->create($data)) {
+            $result = $this->tankModel->create($data);
+
+            // Handle new validation response format
+            if (is_array($result)) {
+                if ($result['success']) {
+                    echo json_encode(['success' => true, 'message' => 'تم إضافة الخزان بنجاح', 'id' => $result['id'] ?? null]);
+                } else {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'message' => $result['message']]);
+                }
+            } else if ($result) {
+                // Legacy boolean response
                 echo json_encode(['success' => true, 'message' => 'تم إضافة الخزان بنجاح']);
             } else {
                 http_response_code(500);

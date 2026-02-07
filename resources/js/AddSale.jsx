@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Calculator, User, Droplets, CreditCard, Save, RefreshCw, 
-    Wallet, Building2, AlertCircle, CheckCircle, Search, Truck, Database 
+    Wallet, Building2, AlertCircle, CheckCircle, Search, Truck, Database, AlertTriangle, X 
 } from 'lucide-react';
 import { Card, Title, Text, Metric } from '@tremor/react';
 import { toast } from 'sonner';
@@ -29,6 +29,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [invoiceNumber, setInvoiceNumber] = useState('Loading...');
+    const [stockWarning, setStockWarning] = useState({ show: false, available: 0 });
+    const [successModal, setSuccessModal] = useState({ show: false, invoice: '', amount: 0 });
 
     // --- Init ---
     useEffect(() => {
@@ -108,7 +110,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                     worker_id: result.worker_id,
                     price: parseFloat(result.price),
                     current_reading: parseFloat(result.current_reading),
-                    tank_name: result.tank_name
+                    tank_name: result.tank_name,
+                    tank_volume: parseFloat(result.tank_volume || 0)
                 });
 
                 setFormData(prev => ({
@@ -165,6 +168,12 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
             return;
         }
 
+        // Validate against tank volume
+        if (selectedCounter && formData.volume_sold > selectedCounter.tank_volume) {
+            setStockWarning({ show: true, available: selectedCounter.tank_volume });
+            return;
+        }
+
         setSubmitting(true);
         try {
             const data = new FormData();
@@ -185,9 +194,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
             const result = await response.json();
 
             if (result.success) {
-                toast.success('تم حفظ عملية البيع بنجاح! 🎉');
-                // Optional: Redirect or Reset
-                setTimeout(() => window.location.href = `${window.BASE_URL || ''}/sales`, 1000);
+                setSuccessModal({ show: true, invoice: invoiceNumber, amount: formData.total_amount });
             } else {
                 toast.error(result.message || 'فشل حفظ العملية');
             }
@@ -213,8 +220,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 p-4" style={{ direction: 'rtl' }}>
-             <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="min-h-screen bg-slate-50/50 dark:bg-[#0F172A] p-4" style={{ direction: 'rtl' }}>
+             <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                 
                 {/* Main Form Area */}
                 <motion.div 
@@ -222,336 +229,499 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                     animate={{ opacity: 1, y: 0 }}
                     className="lg:col-span-9"
                 >
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                        {/* Header - Clean & Light */}
-                        <div className="px-6 pt-6 pb-2 flex justify-between items-start">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-400">رقم الفاتورة:</span>
-                                <span className="text-lg font-black text-slate-700 tracking-tight font-mono bg-slate-100 px-3 py-1 rounded-lg border border-slate-200 dashed">
-                                    {invoiceNumber}
-                                </span>
-                            </div>
-                            
-                            <input 
-                                type="date" 
-                                value={formData.sale_date}
-                                onChange={(e) => setFormData(prev => ({...prev, sale_date: e.target.value}))}
-                                className="bg-transparent border border-slate-200 text-slate-500 text-xs font-bold rounded-lg focus:ring-0 focus:border-blue-400 p-2 cursor-pointer hover:bg-slate-50 hover:border-slate-300 transition-colors"
-                            />
-                        </div>
+                    {/* DUAL MODE CONTAINER: 
+                        Dark Mode: Chat Bot Gradient Border + Dark Semi-Opaque Background 
+                        Light Mode: Glassmorphism Card
+                    */}
+                    <div className="relative rounded-[20px] p-[1.5px] dark:bg-gradient-to-br dark:from-[#7e7e7e] dark:via-[#363636] dark:to-[#363636] bg-white/60 backdrop-blur-xl border border-white/40 shadow-2xl transition-all">
+                        
+                        {/* Inner Content Wrapper */}
+                        <div className="dark:bg-black/50 bg-transparent rounded-[18px] w-full p-6 overflow-hidden relative">
+                             {/* Decorative Top Light Effect for Dark Mode */}
+                             <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-xl hidden dark:block pointer-events-none"></div>
 
-                        {/* Form Body */}
-                        <div className="p-6 space-y-6">
-                            
-                            {/* 1. Selection Row (Compact) */}
-                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200">
-                                <div className="flex flex-wrap lg:flex-nowrap items-end gap-3">
-                                    <div className="flex-1 min-w-[200px]">
-                                        <label className="text-xs font-bold text-slate-500 mb-1 block">الماكينة (Pump)</label>
-                                        <div className="relative">
-                                            <select 
-                                                value={formData.pump_id} 
-                                                onChange={handlePumpChange}
-                                                className="w-full text-sm font-bold text-black bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none"
-                                            >
-                                                <option value="">اختر الماكينة...</option>
-                                                {pumps.map(pump => (
-                                                    <option key={pump.id} value={pump.id}>{pump.name} - {pump.product_name || 'وقود'}</option>
-                                                ))}
-                                            </select>
+                            {/* Header Row */}
+                            <div className="flex justify-between items-center mb-8 relative z-10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                                        <Calculator className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-xl font-bold text-slate-800 dark:text-white leading-none">تسجيل مبيعات</h1>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">#{invoiceNumber}</span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                         </div>
                                     </div>
-
-                                    <div className="flex-1 min-w-[200px]">
-                                        <label className="text-xs font-bold text-indigo-900 mb-1 block">العداد (Counter)</label>
-                                        <div className="relative">
-                                            <select 
-                                                value={formData.counter_id} 
-                                                onChange={handleCounterChange}
-                                                disabled={!formData.pump_id}
-                                                className="w-full text-sm font-bold text-black bg-white border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 outline-none disabled:bg-slate-100 disabled:text-slate-400"
-                                            >
-                                                <option value="">اختر العداد...</option>
-                                                {/* Use loose comparison (==) to catch both string and number IDs */}
-                                                {pumps.find(p => p.id == formData.pump_id)?.counters?.map(c => (
-                                                    <option key={c.id} value={c.id}>
-                                                        {c.name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            
-                                            {loading && <RefreshCw className="w-4 h-4 absolute left-3 top-3 animate-spin text-blue-500" />}
-                                        </div>
-                                    </div>
-
-                                    {/* Auto-shown Fuel & Worker Badges */}
-                                    <AnimatePresence>
-                                        {selectedCounter && (
-                                            <>
-                                                <motion.div 
-                                                    initial={{ opacity: 0, scale: 0.8 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${getFuelStyle(selectedCounter.fuel_type)} h-[42px] min-w-[120px]`}
-                                                >
-                                                    <Droplets className="w-4 h-4" />
-                                                    <div>
-                                                        <div className="text-[10px] opacity-75 leading-none">الوقود</div>
-                                                        <div className="text-xs font-bold leading-none mt-1">{selectedCounter.fuel_type}</div>
-                                                    </div>
-                                                </motion.div>
-
-                                                <motion.div 
-                                                    initial={{ opacity: 0, scale: 0.8 }}
-                                                    animate={{ opacity: 1, scale: 1 }}
-                                                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-sm h-[42px] min-w-[140px]"
-                                                >
-                                                    <div className="p-1 bg-slate-100 rounded-full">
-                                                        <User className="w-3 h-3 text-slate-500" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-[10px] text-slate-400 leading-none">العامل المسؤول</div>
-                                                        <div className="text-xs font-bold leading-none mt-1">{selectedCounter.worker_name}</div>
-                                                    </div>
-                                                </motion.div>
-                                            </>
-                                        )}
-                                    </AnimatePresence>
                                 </div>
+                                
+                                <input 
+                                    type="date" 
+                                    value={formData.sale_date}
+                                    onChange={(e) => setFormData(prev => ({...prev, sale_date: e.target.value}))}
+                                    className="bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer hover:bg-white dark:hover:bg-white/10"
+                                />
                             </div>
 
-                            {/* 2. Readings Row (Compact) */}
-                            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            {/* Form Grid */}
+                            <div className="space-y-6 relative z-10">
                                 
-                                {/* Opening Reading with Tank Name Badge */}
-                                <div className="md:col-span-4 flex flex-col gap-2">
-                                    {/* Tank Name Badge - Shows when counter is selected */}
-                                    <AnimatePresence>
-                                        {selectedCounter && selectedCounter.tank_name && (
-                                            <motion.div 
-                                                initial={{ opacity: 0, y: -10 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                exit={{ opacity: 0, y: -10 }}
-                                                className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-lg px-3 py-1.5 shadow-md"
-                                            >
-                                                <Database className="w-4 h-4" />
-                                                <div className="flex flex-col">
-                                                    <span className="text-[9px] opacity-80">البئر/الخزان</span>
-                                                    <span className="text-sm font-bold leading-none">{selectedCounter.tank_name}</span>
+                                {/* 1. Pump & Counter Section */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                    {/* Pump Select */}
+                                    <div className="relative group">
+                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">الماكينة (Pump)</label>
+                                        <select 
+                                            value={formData.pump_id} 
+                                            onChange={handlePumpChange}
+                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-3 text-slate-700 dark:text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-0 dark:focus:border-white/30 transition-all appearance-none"
+                                        >
+                                            <option value="" className="text-slate-500 bg-white dark:bg-slate-800">اختر الماكينة...</option>
+                                            {pumps.map(pump => (
+                                                <option key={pump.id} value={pump.id} className="text-slate-800 bg-white dark:bg-slate-800">{pump.name} - {pump.product_name || 'وقود'}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute left-3 top-[38px] pointer-events-none opacity-50"><Truck className="w-4 h-4 text-slate-500 dark:text-white" /></div>
+                                    </div>
+
+                                    {/* Counter Select */}
+                                    <div className="relative group">
+                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">العداد (Counter)</label>
+                                        <select 
+                                            value={formData.counter_id} 
+                                            onChange={handleCounterChange}
+                                            disabled={!formData.pump_id}
+                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-3 text-slate-700 dark:text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-0 dark:focus:border-white/30 transition-all appearance-none disabled:opacity-50"
+                                        >
+                                            <option value="" className="bg-white dark:bg-slate-800 py-2">اختر العداد...</option>
+                                            {pumps.find(p => p.id == formData.pump_id)?.counters?.map(c => (
+                                                <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800">{c.name}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute left-3 top-[38px] pointer-events-none opacity-50">
+                                            {loading ? <RefreshCw className="w-4 h-4 animate-spin text-blue-500"/> : <Calculator className="w-4 h-4 text-slate-500 dark:text-white" />}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Active Counter Info (Badges) */}
+                                <AnimatePresence>
+                                    {selectedCounter && (
+                                        <motion.div 
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="flex flex-wrap items-center gap-3 p-2">
+                                                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getFuelStyle(selectedCounter.fuel_type)}`}>
+                                                    <Droplets className="w-3.5 h-3.5" />
+                                                    <span className="text-xs font-bold">{selectedCounter.fuel_type}</span>
                                                 </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
-                                    
-                                    {/* Previous Reading */}
-                                    <div className="flex items-center gap-3 bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 w-full">
-                                        <div className="p-2 bg-white rounded-lg shadow-sm">
-                                            <RefreshCw className="w-4 h-4 text-slate-400" />
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] uppercase font-bold text-slate-500 block">قراءة العداد السابقة</span>
-                                            <div className="text-lg font-mono font-black text-slate-700 tracking-tight">
-                                                {formatNumber(formData.opening_reading) || '---'}
+                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/5">
+                                                    <User className="w-3.5 h-3.5" />
+                                                    <span className="text-xs font-bold">{selectedCounter.worker_name}</span>
+                                                </div>
+                                                {selectedCounter.tank_name && (
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-500/30">
+                                                        <Database className="w-3.5 h-3.5" />
+                                                        <span className="text-xs font-bold">{selectedCounter.tank_name}</span>
+                                                        <span className="text-[10px] font-mono bg-blue-100 dark:bg-blue-400/30 px-1.5 py-0.5 rounded">
+                                                            {parseFloat(selectedCounter.tank_volume).toLocaleString()} L
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="mr-auto flex items-center gap-2">
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400">السعر:</span>
+                                                    <span className="text-sm font-bold font-mono text-slate-800 dark:text-white">{formatCurrency(formData.unit_price)}</span>
+                                                </div>
                                             </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
+                                {/* 2. Readings Inputs - "Chat Textarea" Style */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    {/* Opening Reading (Read Only) */}
+                                    <div className="relative">
+                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">القراءة السابقة</label>
+                                        <div className="w-full bg-slate-50 dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-4 text-slate-500 dark:text-slate-400 font-mono text-lg font-bold">
+                                            {formatNumber(formData.opening_reading) || '---'}
                                         </div>
                                     </div>
-                                </div>
-                                
-                                {/* Closing Reading - Smaller Size */}
-                                <div className="md:col-span-4">
-                                    <label className="text-xs font-bold text-slate-500 mb-1 block">القراءة الحالية</label>
+
+                                    {/* Closing Reading (Input) */}
                                     <div className="relative">
+                                        <label className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2 block">القراءة الحالية</label>
                                         <input 
                                             type="number" 
                                             value={formData.closing_reading} 
                                             onChange={handleReadingChange}
                                             disabled={!selectedCounter}
-                                            autoFocus
-                                            className={`w-full font-mono text-base font-bold border rounded-xl p-2.5 focus:ring-4 outline-none transition-all shadow-sm ${
-                                                parseFloat(formData.closing_reading) < parseFloat(formData.opening_reading) 
-                                                ? 'border-red-300 focus:ring-red-500/10 bg-red-50 text-red-600' 
-                                                : 'border-slate-200 focus:ring-blue-500/10 focus:border-blue-400 bg-white text-slate-800'
-                                            }`}
-                                            placeholder={selectedCounter ? formatNumber(selectedCounter.current_reading) : '000000'}
+                                            className={`
+                                                w-full bg-white dark:bg-transparent text-slate-800 dark:text-white font-mono text-xl font-black 
+                                                border border-slate-200 dark:border-none dark:border-b dark:border-white/10 
+                                                rounded-xl dark:rounded-none px-4 py-3 outline-none 
+                                                focus:ring-2 focus:ring-emerald-500/20 dark:focus:ring-0 dark:focus:border-emerald-500/50 
+                                                transition-all placeholder:text-slate-300 dark:placeholder:text-white/20
+                                            `}
+                                            placeholder="000000"
                                         />
-                                        <div className="absolute left-3 top-2.5 text-[10px] text-slate-300 font-bold">لتر</div>
-                                    </div>
-                                    {parseFloat(formData.closing_reading) < parseFloat(formData.opening_reading) && (
-                                        <p className="text-[10px] text-red-500 mt-1 font-bold flex items-center gap-1 animate-pulse">
-                                            <AlertCircle className="w-3 h-3" />
-                                            خطأ: القراءة أقل من السابقة
-                                        </p>
-                                    )}
-                                </div>
-
-                                {/* Volume Sold */}
-                                <div className="md:col-span-4">
-                                    <label className="text-xs font-bold text-slate-500 mb-1 block">الكمية المباعة</label>
-                                    <div className="relative">
-                                        <input 
-                                            type="text" 
-                                            value={formatNumber(formData.volume_sold)} 
-                                            readOnly 
-                                            className="w-full bg-indigo-50/50 text-indigo-600 font-mono text-base font-bold border border-indigo-100 rounded-xl p-2.5"
-                                        />
-                                        <div className="absolute left-3 top-2.5 text-[10px] text-indigo-300 font-bold">لتر</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Divider with Price Info */}
-                            <div className="relative py-2">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-slate-200"></div>
-                                </div>
-                                <div className="relative flex justify-center">
-                                    <span className="bg-white px-4 text-xs text-slate-400 font-mono">
-                                        سعر الوحدة: <span className="text-slate-700 font-bold">{formatCurrency(formData.unit_price)}</span>
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* 3. Payment Details (Compact) */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/50 p-4 rounded-xl border border-slate-200">
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 mb-1 block">طريقة الدفع</label>
-                                    <div className="flex rounded-lg overflow-hidden border border-slate-300">
-                                        <button 
-                                            type="button"
-                                            onClick={() => setFormData(p => ({...p, payment_method: 'cash'}))}
-                                            className={`flex-1 py-2 text-xs font-bold transition-all ${formData.payment_method === 'cash' ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
-                                        >
-                                            💵 نقدي
-                                        </button>
-                                        <button 
-                                            type="button"
-                                            onClick={() => setFormData(p => ({...p, payment_method: 'credit'}))}
-                                            className={`flex-1 py-2 text-xs font-bold transition-all ${formData.payment_method === 'credit' ? 'bg-amber-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'}`}
-                                        >
-                                            📄 آجل
-                                        </button>
+                                        <div className="absolute left-0 bottom-4 text-xs text-slate-400 dark:text-slate-500 font-bold px-3 pointer-events-none">لتر</div>
                                     </div>
                                 </div>
 
-                                {formData.payment_method === 'cash' ? (
-                                    <>
+                                {/* 3. Payment Section */}
+                                <div className="pt-4 border-t border-slate-100 dark:border-white/10">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        {/* Method Toggle */}
                                         <div>
-                                            <label className="text-xs font-bold text-slate-500 mb-1 block">نوع الحساب</label>
-                                            <select 
-                                                value={formData.account_type}
-                                                onChange={(e) => setFormData(p => ({...p, account_type: e.target.value, account_id: ''}))}
-                                                className="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 outline-none focus:ring-1 focus:ring-blue-500"
-                                            >
-                                                <option value="safe">خزنة (Safe)</option>
-                                                <option value="bank">بنك (Bank)</option>
-                                            </select>
+                                            <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">طريقة الدفع</label>
+                                            <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+                                                <button 
+                                                    onClick={() => setFormData(p => ({...p, payment_method: 'cash'}))}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'cash' ? 'bg-white dark:bg-white/10 text-emerald-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                                                >
+                                                    نقدي
+                                                </button>
+                                                <button 
+                                                    onClick={() => setFormData(p => ({...p, payment_method: 'credit'}))}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'credit' ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                                                >
+                                                    آجل
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-slate-500 mb-1 block">الايداع في</label>
-                                            <select 
-                                                value={formData.account_id}
-                                                onChange={(e) => setFormData(p => ({...p, account_id: e.target.value}))}
-                                                className="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 outline-none focus:ring-1 focus:ring-blue-500"
-                                            >
-                                                <option value="">اختر الحساب...</option>
-                                                {formData.account_type === 'safe' 
-                                                    ? safes.map(s => <option key={s.id} value={s.id}>{s.name}</option>)
-                                                    : banks.map(b => <option key={b.id} value={b.id}>{b.bank_name} - {b.account_number}</option>)
-                                                }
-                                            </select>
+
+                                        {/* Dynamic Account Select */}
+                                        <div className="md:col-span-2">
+                                            {formData.payment_method === 'cash' ? (
+                                                <div className="flex gap-4">
+                                                    <div className="w-1/3">
+                                                         <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">الحساب</label>
+                                                         <select 
+                                                            value={formData.account_type}
+                                                            onChange={(e) => setFormData(p => ({...p, account_type: e.target.value, account_id: ''}))}
+                                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-white outline-none"
+                                                        >
+                                                            <option value="safe" className="bg-white dark:bg-slate-800">خزنة</option>
+                                                            <option value="bank" className="bg-white dark:bg-slate-800">بنك</option>
+                                                        </select>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">وجهة الايداع</label>
+                                                         <select 
+                                                            value={formData.account_id}
+                                                            onChange={(e) => setFormData(p => ({...p, account_id: e.target.value}))}
+                                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-white outline-none"
+                                                        >
+                                                            <option value="" className="bg-white dark:bg-slate-800">اختر...</option>
+                                                            {formData.account_type === 'safe' 
+                                                                ? safes.map(s => <option key={s.id} value={s.id} className="bg-white dark:bg-slate-800">{s.name}</option>)
+                                                                : banks.map(b => <option key={b.id} value={b.id} className="bg-white dark:bg-slate-800">{b.bank_name} - {b.account_number}</option>)
+                                                            }
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">العميل</label>
+                                                    <select 
+                                                        value={formData.customer_id}
+                                                        onChange={(e) => setFormData(p => ({...p, customer_id: e.target.value}))}
+                                                        className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-3 text-sm font-bold text-slate-700 dark:text-white outline-none"
+                                                    >
+                                                        <option value="" className="bg-white dark:bg-slate-800">اختر العميل...</option>
+                                                        {customers.map(c => (
+                                                            <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800">{c.name} - رصيد: {formatCurrency(c.balance)}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            )}
                                         </div>
-                                    </>
-                                ) : (
-                                    <div className="md:col-span-2">
-                                        <label className="text-xs font-bold text-slate-500 mb-1 block">العميل (Customer)</label>
-                                        <select 
-                                            value={formData.customer_id}
-                                            onChange={(e) => setFormData(p => ({...p, customer_id: e.target.value}))}
-                                            className="w-full text-sm bg-white border border-slate-300 rounded-lg p-2 outline-none focus:ring-1 focus:ring-amber-500"
-                                        >
-                                            <option value="">اختر العميل...</option>
-                                            {customers.map(c => (
-                                                <option key={c.id} value={c.id}>{c.name} - رصيد: {formatCurrency(c.balance)}</option>
-                                            ))}
-                                        </select>
                                     </div>
-                                )}
-                            </div>
+                                </div>
 
-                            {/* Submit Button */}
-                            <div className="flex justify-end pt-2">
-                                <motion.button
-                                    whileHover={{ scale: 1.02 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={handleSubmit}
-                                    disabled={submitting || !formData.closing_reading}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
-                                >
-                                    {submitting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                    حفظ العملية
-                                </motion.button>
-                            </div>
+                                {/* Submit Button */}
+                                <div className="pt-6 flex justify-end">
+                                    <motion.button
+                                        whileHover={{ scale: 1.02 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={handleSubmit}
+                                        disabled={submitting || !formData.closing_reading}
+                                        className={`
+                                            px-8 py-3 rounded-xl font-bold text-white shadow-lg flex items-center gap-2 transition-all
+                                            disabled:opacity-50 disabled:cursor-not-allowed
+                                            bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600
+                                            dark:from-[#292929] dark:via-[#555555] dark:to-[#292929] dark:shadow-inner dark:border-none
+                                        `}
+                                        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)' }}
+                                    >
+                                        {submitting ? <RefreshCw className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
+                                        حفظ العملية
+                                    </motion.button>
+                                </div>
 
+                            </div>
                         </div>
                     </div>
                 </motion.div>
 
-                {/* Left Sidebar - Fixed Summary */}
+                {/* Left Sidebar - Summary */}
                 <motion.div 
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="lg:col-span-3 lg:sticky lg:top-6 lg:bottom-6"
+                    className="lg:col-span-3 lg:sticky lg:top-6"
                 >
-                    <div className="bg-gradient-to-br from-indigo-600/90 to-purple-700/90 backdrop-blur-xl rounded-2xl shadow-2xl p-6 text-white border border-white/10 h-full min-h-[400px] flex flex-col relative overflow-hidden">
-                        {/* Decorative Background */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-                        <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/20 rounded-full -ml-10 -mb-10 blur-2xl"></div>
+                    <div className="bg-white/60 dark:bg-gradient-to-br dark:from-indigo-900/40 dark:to-purple-900/40 backdrop-blur-xl rounded-2xl shadow-xl border border-white/40 dark:border-white/10 p-6 relative overflow-hidden min-h-[400px] flex flex-col">
+                         {/* Decorative Background */}
+                         <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-                        <div className="relative z-10 flex flex-col h-full">
-                            <div className="flex items-center gap-2 mb-6 text-indigo-100">
-                                <Wallet className="w-6 h-6" />
-                                <h3 className="font-bold text-lg">ملخص العملية</h3>
-                            </div>
-
-                            <div className="flex-1 space-y-4">
-                                <div className="bg-white/10 rounded-xl p-4 backdrop-blur-md">
-                                    <div className="text-xs text-indigo-200 mb-1">الكمية المباعة</div>
-                                    <div className="text-2xl font-black font-mono tracking-tight flex items-baseline gap-1">
+                         <div className="relative z-10 flex flex-col h-full">
+                            <h3 className="text-sm font-bold text-slate-500 dark:text-indigo-200 uppercase tracking-widest mb-6 border-b border-slate-200 dark:border-white/10 pb-4">ملخص الفاتورة</h3>
+                            
+                            <div className="flex-1 space-y-6">
+                                <div>
+                                    <span className="text-xs text-slate-400 dark:text-indigo-300 block mb-1">الكمية المباعة</span>
+                                    <div className="text-3xl font-black font-mono text-slate-800 dark:text-white flex items-baseline gap-1">
                                         {formatNumber(formData.volume_sold)}
-                                        <span className="text-sm font-bold opacity-75">لتر</span>
+                                        <span className="text-sm text-slate-400 font-bold">L</span>
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 py-4">
-                                    <div className="flex justify-between text-sm opacity-80">
-                                        <span>سعر الوحدة:</span>
-                                        <span className="font-mono">{formatCurrency(formData.unit_price)}</span>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between text-sm text-slate-600 dark:text-indigo-100">
+                                        <span>سعر الوحدة</span>
+                                        <span className="font-mono font-bold">{formatNumber(formData.unit_price)}</span>
                                     </div>
-                                    <div className="flex justify-between text-sm opacity-80">
-                                        <span>عدد الوحدات:</span>
-                                        <span className="font-mono">{formData.volume_sold}</span>
+                                    <div className="flex justify-between text-sm text-slate-600 dark:text-indigo-100">
+                                        <span>عدد الوحدات</span>
+                                        <span className="font-mono font-bold">{formData.volume_sold}</span>
                                     </div>
-                                    {formData.payment_method === 'credit' && (
-                                        <div className="flex justify-between text-xs text-amber-300 font-bold bg-amber-500/10 p-2 rounded">
-                                            <span>الدفع:</span>
-                                            <span>آجل (ذمم)</span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
-                            <div className="mt-auto pt-6 border-t border-white/20">
-                                <div className="text-sm text-indigo-200 mb-1">الإجمالي النهائي</div>
-                                <div className="text-4xl font-black font-mono tracking-tight flex items-baseline gap-2">
+                            <div className="mt-auto pt-6 border-t border-slate-200 dark:border-white/10">
+                                <span className="text-xs text-slate-400 dark:text-indigo-300 block mb-1">الإجمالي النهائي</span>
+                                <div className="text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-white dark:to-indigo-100">
                                     {formatNumber(formData.total_amount)}
-                                    <span className="text-base font-bold text-indigo-200">SDG</span>
                                 </div>
+                                <div className="text-xs font-bold text-slate-400 mt-2 text-right">SDG</div>
                             </div>
-                        </div>
+                         </div>
                     </div>
                 </motion.div>
 
             </div>
+
+            {/* Stock Warning Modal */}
+            <AnimatePresence>
+                {stockWarning.show && (
+                    <>
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setStockWarning({ show: false, available: 0 })}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+                        >
+                            <div className="bg-gradient-to-br from-amber-500/20 to-orange-600/20 backdrop-blur-xl rounded-3xl p-[2px] shadow-2xl shadow-amber-500/20 pointer-events-auto max-w-md w-full">
+                                <div className="bg-slate-900/90 rounded-3xl p-8 text-center relative overflow-hidden">
+                                    {/* Animated Background Glow */}
+                                    <motion.div 
+                                        animate={{ 
+                                            scale: [1, 1.2, 1],
+                                            opacity: [0.3, 0.5, 0.3]
+                                        }}
+                                        transition={{ repeat: Infinity, duration: 2 }}
+                                        className="absolute inset-0 bg-gradient-radial from-amber-500/20 to-transparent pointer-events-none"
+                                    />
+                                    
+                                    {/* Warning Icon with Animation */}
+                                    <motion.div 
+                                        initial={{ scale: 0, rotate: -180 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{ type: "spring", delay: 0.1, damping: 10 }}
+                                        className="relative z-10 mx-auto w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-amber-500/50"
+                                    >
+                                        <motion.div
+                                            animate={{ scale: [1, 1.1, 1] }}
+                                            transition={{ repeat: Infinity, duration: 1.5 }}
+                                        >
+                                            <AlertTriangle className="w-10 h-10 text-white" />
+                                        </motion.div>
+                                    </motion.div>
+
+                                    {/* Title */}
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                        className="relative z-10 text-2xl font-black text-white mb-3"
+                                    >
+                                        الكمية غير كافية!
+                                    </motion.h2>
+
+                                    {/* Message */}
+                                    <motion.p
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="relative z-10 text-slate-300 mb-6 text-lg"
+                                    >
+                                        المخزون المتاح في الخزان غير كافٍ لإتمام هذه العملية
+                                    </motion.p>
+
+                                    {/* Available Quantity Display */}
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="relative z-10 bg-gradient-to-r from-amber-500/20 to-orange-500/20 rounded-2xl p-4 mb-6 border border-amber-500/30"
+                                    >
+                                        <div className="text-sm text-amber-300 mb-1">الكمية المتاحة</div>
+                                        <div className="text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">
+                                            {stockWarning.available.toLocaleString()}
+                                        </div>
+                                        <div className="text-amber-400 text-sm font-bold mt-1">لتر فقط</div>
+                                    </motion.div>
+
+                                    {/* Close Button */}
+                                    <motion.button
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                        onClick={() => setStockWarning({ show: false, available: 0 })}
+                                        className="relative z-10 px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold rounded-xl shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 transition-all"
+                                    >
+                                        حسناً، فهمت
+                                    </motion.button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Success Modal */}
+            <AnimatePresence>
+                {successModal.show && (
+                    <>
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                        />
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+                        >
+                            <div className="bg-gradient-to-br from-emerald-500/20 to-green-600/20 backdrop-blur-xl rounded-3xl p-[2px] shadow-2xl shadow-emerald-500/20 pointer-events-auto max-w-md w-full">
+                                <div className="bg-slate-900/90 rounded-3xl p-8 text-center relative overflow-hidden">
+                                    {/* Animated Background Glow */}
+                                    <motion.div 
+                                        animate={{ 
+                                            scale: [1, 1.2, 1],
+                                            opacity: [0.3, 0.5, 0.3]
+                                        }}
+                                        transition={{ repeat: Infinity, duration: 2 }}
+                                        className="absolute inset-0 bg-gradient-radial from-emerald-500/20 to-transparent pointer-events-none"
+                                    />
+                                    
+                                    {/* Success Icon with Animation */}
+                                    <motion.div 
+                                        initial={{ scale: 0, rotate: -180 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{ type: "spring", delay: 0.1, damping: 10 }}
+                                        className="relative z-10 mx-auto w-20 h-20 bg-gradient-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/50"
+                                    >
+                                        <motion.div
+                                            initial={{ pathLength: 0 }}
+                                            animate={{ pathLength: 1 }}
+                                            transition={{ delay: 0.3, duration: 0.5 }}
+                                        >
+                                            <CheckCircle className="w-10 h-10 text-white" />
+                                        </motion.div>
+                                    </motion.div>
+
+                                    {/* Title */}
+                                    <motion.h2
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                        className="relative z-10 text-2xl font-black text-white mb-3"
+                                    >
+                                        تم الحفظ بنجاح! 🎉
+                                    </motion.h2>
+
+                                    {/* Invoice Number */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                        className="relative z-10 text-slate-400 mb-4"
+                                    >
+                                        رقم الفاتورة: <span className="font-mono font-bold text-white">#{successModal.invoice}</span>
+                                    </motion.div>
+
+                                    {/* Amount Display */}
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="relative z-10 bg-gradient-to-r from-emerald-500/20 to-green-500/20 rounded-2xl p-4 mb-6 border border-emerald-500/30"
+                                    >
+                                        <div className="text-sm text-emerald-300 mb-1">إجمالي المبلغ</div>
+                                        <div className="text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400">
+                                            {parseFloat(successModal.amount).toLocaleString()}
+                                        </div>
+                                        <div className="text-emerald-400 text-sm font-bold mt-1">SDG</div>
+                                    </motion.div>
+
+                                    {/* Buttons */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.5 }}
+                                        className="relative z-10 flex gap-3 justify-center"
+                                    >
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => window.location.href = `${window.BASE_URL || ''}/sales`}
+                                            className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all"
+                                        >
+                                            قائمة المبيعات
+                                        </motion.button>
+                                        <motion.button
+                                            whileHover={{ scale: 1.05 }}
+                                            whileTap={{ scale: 0.95 }}
+                                            onClick={() => window.location.reload()}
+                                            className="px-6 py-3 bg-white/10 text-white font-bold rounded-xl border border-white/20 hover:bg-white/20 transition-all"
+                                        >
+                                            عملية جديدة
+                                        </motion.button>
+                                    </motion.div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

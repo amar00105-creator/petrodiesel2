@@ -4,7 +4,7 @@ import { Calendar, Search, Filter, ArrowUp, ArrowDown, RefreshCw, Layers, Drople
 import { Card, Title, Text, Metric, Select, SelectItem, DateRangePicker } from '@tremor/react';
 import { toast } from 'sonner';
 
-export default function FinancialFlowReport() {
+export default function FinancialFlowReport({ initialGroup }) {
     const today = new Date();
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toLocaleDateString('en-CA');
     const todayStr = today.toLocaleDateString('en-CA');
@@ -14,7 +14,7 @@ export default function FinancialFlowReport() {
         source_id: '',
         start_date: null,
         end_date: null,
-        group_sales: 'none'
+        group_sales: initialGroup || 'none'
     });
 
     const [period, setPeriod] = useState('month'); // Default to month
@@ -330,17 +330,17 @@ export default function FinancialFlowReport() {
     return (
         <div className="space-y-6 w-full">
             {/* Header */}
-            <motion.div className="bg-white p-6 rounded-2xl border border-slate-100" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <h2 className="text-2xl font-bold text-slate-800 mb-6">كشف حساب</h2>
+            <motion.div className="bg-white p-6 rounded-2xl border border-slate-100 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
+                <h2 className="text-2xl font-bold text-slate-800 mb-6 dark:text-white">كشف حساب</h2>
                 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                     {/* Account Type */}
                     <div className="md:col-span-2 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">نوع الحساب</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">نوع الحساب</label>
                         <select 
                             value={filters.source_type}
                             onChange={(e) => handleFilterChange('source_type', e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                         >
                             <option value="safe">خزنة</option>
                             <option value="bank">بنك</option>
@@ -349,11 +349,11 @@ export default function FinancialFlowReport() {
 
                     {/* Account Selection */}
                     <div className="md:col-span-3 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">الحساب</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">الحساب</label>
                         <select 
                             value={filters.source_id}
                             onChange={(e) => handleFilterChange('source_id', e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                         >
                             <option value="">-- اختر --</option>
                             {getCurrentAccounts().map(acc => (
@@ -364,11 +364,11 @@ export default function FinancialFlowReport() {
 
                     {/* Grouping Filter */}
                     <div className="md:col-span-2 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">تجميع المبيعات</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">تجميع المبيعات</label>
                         <select 
                             value={filters.group_sales}
                             onChange={(e) => handleFilterChange('group_sales', e.target.value)}
-                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                         >
                             <option value="none">تفصيلي (بدون تجميع)</option>
                             <option value="fuel_type">حسب نوع الوقود</option>
@@ -377,14 +377,14 @@ export default function FinancialFlowReport() {
 
                     {/* Period Selection Buttons */}
                     <div className="md:col-span-5 space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">الفترة</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">الفترة</label>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => handlePeriodChange('today')}
                                 className={`flex-1 h-10 px-2 rounded-lg text-xs font-bold transition-all ${
                                     period === 'today' 
-                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
-                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-none' 
+                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                                 }`}
                             >
                                 اليوم
@@ -393,8 +393,8 @@ export default function FinancialFlowReport() {
                                 onClick={() => handlePeriodChange('week')}
                                 className={`flex-1 h-10 px-2 rounded-lg text-xs font-bold transition-all ${
                                     period === 'week' 
-                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
-                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-none' 
+                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                                 }`}
                             >
                                 الأسبوع
@@ -403,8 +403,8 @@ export default function FinancialFlowReport() {
                                 onClick={() => handlePeriodChange('month')}
                                 className={`flex-1 h-10 px-2 rounded-lg text-xs font-bold transition-all ${
                                     period === 'month' 
-                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
-                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-none' 
+                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                                 }`}
                             >
                                 الشهر
@@ -413,8 +413,8 @@ export default function FinancialFlowReport() {
                                 onClick={() => handlePeriodChange('custom')}
                                 className={`flex-1 h-10 px-2 rounded-lg text-xs font-bold transition-all ${
                                     period === 'custom' 
-                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
-                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200 dark:shadow-none' 
+                                        : 'bg-slate-50 text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700'
                                 }`}
                             >
                                 مخصص
@@ -425,20 +425,20 @@ export default function FinancialFlowReport() {
                     {/* Date Range - Only show when custom */}
                     {period === 'custom' && (
                         <div className="md:col-span-12 space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">الفترة الزمنية المخصصة</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">الفترة الزمنية المخصصة</label>
                             <div className="flex items-center gap-2">
                                 <input 
                                     type="date"
                                     value={filters.start_date}
                                     onChange={(e) => handleFilterChange('start_date', e.target.value)}
-                                    className="w-full h-[46px] px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                                    className="w-full h-[46px] px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                 />
-                                <span className="text-slate-400 font-bold">إلى</span>
+                                <span className="text-slate-400 font-bold dark:text-slate-500">إلى</span>
                                 <input 
                                     type="date"
                                     value={filters.end_date}
                                     onChange={(e) => handleFilterChange('end_date', e.target.value)}
-                                    className="w-full h-[46px] px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none"
+                                    className="w-full h-[46px] px-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                 />
                             </div>
                         </div>
@@ -448,9 +448,9 @@ export default function FinancialFlowReport() {
 
             {/* Transaction Table */}
             {loading && (
-                <div className="bg-white rounded-2xl p-12 text-center">
-                    <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
-                    <p className="text-slate-500 mt-4">جاري التحميل...</p>
+                <div className="bg-white rounded-2xl p-12 text-center dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10">
+                    <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto dark:border-white/10 dark:border-t-blue-400"></div>
+                    <p className="text-slate-500 mt-4 dark:text-slate-400">جاري التحميل...</p>
                 </div>
             )}
 
@@ -458,16 +458,16 @@ export default function FinancialFlowReport() {
                 <motion.div 
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden"
+                    className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10"
                 >
-                    <div className="p-5 border-b border-slate-50">
-                        <h3 className="font-bold text-base text-slate-800">كشف الحساب</h3>
-                        <p className="text-sm text-slate-500 mt-1">عدد العمليات: {data.movements.length}</p>
+                    <div className="p-5 border-b border-slate-50 dark:border-white/10">
+                        <h3 className="font-bold text-base text-slate-800 dark:text-white">كشف الحساب</h3>
+                        <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">عدد العمليات: {data.movements.length}</p>
                     </div>
                     
                     <div className="overflow-x-auto">
-                        <table className="w-full text-right">
-                            <thead className="bg-slate-50 text-slate-500 text-xs font-medium">
+                        <table className="w-full text-right text-sm">
+                            <thead className="bg-slate-50 text-slate-500 text-xs font-medium dark:bg-white/5 dark:text-slate-400">
                                 <tr>
                                     <th className="p-4 text-right">التاريخ</th>
                                     <th className="p-4 text-right">الوصف</th>
@@ -488,34 +488,34 @@ export default function FinancialFlowReport() {
                                     </tr>
                                 ) : (
                                     data.movements.map((row, index) => (
-                                        <tr key={index} className={`border-b border-slate-50 transition-colors ${
+                                        <tr key={index} className={`border-b border-slate-50 transition-colors dark:border-white/10 ${
                                             row.id.toString().startsWith('group_') 
-                                                ? 'bg-blue-50/80 hover:bg-blue-100/80' 
-                                                : 'hover:bg-slate-50/50'
+                                                ? 'bg-blue-50/80 hover:bg-blue-100/80 dark:bg-blue-900/20 dark:hover:bg-blue-900/30' 
+                                                : 'hover:bg-slate-50/50 dark:hover:bg-white/5'
                                         }`}>
-                                            <td className="p-4 text-slate-500 font-mono text-sm">{row.date}</td>
-                                            <td className="p-4 font-medium text-slate-700">
+                                            <td className="p-4 text-slate-500 font-mono text-sm dark:text-slate-300">{row.date}</td>
+                                            <td className="p-4 font-medium text-slate-700 dark:text-white">
                                                 <div>{row.description}</div>
                                                 {row.user_name && (
                                                     <div className="text-xs text-slate-400 mt-1">بواسطة: {row.user_name}</div>
                                                 )}
                                             </td>
-                                            <td className="p-4 text-slate-600 text-sm">
+                                            <td className="p-4 text-slate-600 text-sm dark:text-slate-300">
                                                 {row.fuel_name ? (
-                                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold">
+                                                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-xs font-bold dark:bg-blue-500/20 dark:text-blue-300">
                                                         {row.fuel_name}
                                                     </span>
                                                 ) : '-'}
                                             </td>
-                                            <td className="p-4 text-slate-600 text-sm">{row.user_name || '-'}</td>
-                                            <td className="p-4 text-slate-600 text-sm">{row.beneficiary || '-'}</td>
-                                            <td className="p-4 text-left font-mono font-bold text-emerald-600" dir="ltr">
+                                            <td className="p-4 text-slate-600 text-sm dark:text-slate-300">{row.user_name || '-'}</td>
+                                            <td className="p-4 text-slate-600 text-sm dark:text-slate-300">{row.beneficiary || '-'}</td>
+                                            <td className="p-4 text-left font-mono font-bold text-emerald-600 dark:text-emerald-400" dir="ltr">
                                                 {row.amount_in > 0 ? formatNumber(row.amount_in) : '-'}
                                             </td>
-                                            <td className="p-4 text-left font-mono font-bold text-rose-600" dir="ltr">
+                                            <td className="p-4 text-left font-mono font-bold text-rose-600 dark:text-rose-400" dir="ltr">
                                                 {row.amount_out > 0 ? formatNumber(row.amount_out) : '-'}
                                             </td>
-                                            <td className="p-4 text-left font-mono font-bold text-slate-700" dir="ltr">
+                                            <td className="p-4 text-left font-mono font-bold text-slate-700 dark:text-slate-300" dir="ltr">
                                                 {formatNumber(row.balance)}
                                             </td>
                                         </tr>
@@ -523,18 +523,18 @@ export default function FinancialFlowReport() {
                                 )}
                             </tbody>
                             {data.movements.length > 0 && (
-                                <tfoot className="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-200">
+                            <tfoot className="bg-slate-100 font-bold text-slate-800 border-t-2 border-slate-200 dark:bg-white/5 dark:text-white dark:border-white/10">
                                     <tr>
                                         <td colSpan="5" className="p-4 text-center text-sm uppercase tracking-wider">
                                             المجموع الكلي
                                         </td>
-                                        <td className="p-4 text-left font-mono text-emerald-700" dir="ltr">
+                                        <td className="p-4 text-left font-mono text-emerald-700 dark:text-emerald-400" dir="ltr">
                                             {formatNumber(data.movements.reduce((acc, curr) => acc + (parseFloat(curr.amount_in) || 0), 0))}
                                         </td>
-                                        <td className="p-4 text-left font-mono text-rose-700" dir="ltr">
+                                        <td className="p-4 text-left font-mono text-rose-700 dark:text-rose-400" dir="ltr">
                                             {formatNumber(data.movements.reduce((acc, curr) => acc + (parseFloat(curr.amount_out) || 0), 0))}
                                         </td>
-                                        <td className="p-4 text-left font-mono text-blue-700" dir="ltr">
+                                        <td className="p-4 text-left font-mono text-blue-700 dark:text-blue-400" dir="ltr">
                                             {formatNumber(data.movements[data.movements.length - 1].balance)}
                                         </td>
                                     </tr>
@@ -546,8 +546,8 @@ export default function FinancialFlowReport() {
             )}
 
             {!data && !loading && (
-                <div className="bg-white rounded-2xl p-12 text-center border border-slate-100">
-                    <Activity className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <div className="bg-white rounded-2xl p-12 text-center border border-slate-100 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10">
+                    <Activity className="w-12 h-12 text-slate-300 mx-auto mb-4 dark:text-slate-600" />
                     <p className="text-slate-400 font-medium">اختر حساباً لعرض التقرير</p>
                 </div>
             )}

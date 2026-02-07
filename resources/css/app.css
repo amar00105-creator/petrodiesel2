@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 font-cairo;
+    @apply bg-slate-50 text-slate-900 font-cairo dark:bg-[#0F172A] dark:text-white transition-colors duration-300;
   }
 }
 

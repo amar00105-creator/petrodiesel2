@@ -69,23 +69,23 @@ export default function CustomerList({ customers = [], onUpdate, hideHeader = fa
     const columns = [
         { header: 'اسم العميل', accessor: 'name', render: (item) => (
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+                <div className="p-2 bg-indigo-100 rounded-lg text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
                     <User className="w-5 h-5" />
                 </div>
-                <span className="font-bold text-navy-900">{item.name}</span>
+                <span className="font-bold text-navy-900 dark:text-white">{item.name}</span>
             </div>
         )},
-        { header: 'رقم الهاتف', accessor: 'phone', className: 'font-mono text-slate-600', render: (item) => (
+        { header: 'رقم الهاتف', accessor: 'phone', className: 'font-mono text-slate-600 dark:text-slate-300', render: (item) => (
             <div className="flex items-center gap-2">
                 <Phone className="w-3 h-3 text-slate-400"/> {item.phone || '-'}
             </div>
         )},
-        { header: 'العنوان', accessor: 'address', className: 'text-sm text-slate-500', render: (item) => (
+        { header: 'العنوان', accessor: 'address', className: 'text-sm text-slate-500 dark:text-slate-400', render: (item) => (
             <div className="flex items-center gap-2">
                 <MapPin className="w-3 h-3 text-slate-400"/> {item.address || '-'}
             </div>
         )},
-        { header: 'الملاحظات', accessor: 'notes', className: 'max-w-xs truncate text-slate-500', render: (item) => item.notes || '-' }
+        { header: 'الملاحظات', accessor: 'notes', className: 'max-w-xs truncate text-slate-500 dark:text-slate-400', render: (item) => item.notes || '-' }
     ];
 
     const actions = (item) => (

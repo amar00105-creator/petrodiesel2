@@ -210,10 +210,10 @@ class SalesController extends Controller
             $counterModel = new Counter();
             $counter = $counterModel->find($_GET['counter_id']);
 
-            // Fetch Pump and Assigned Worker
+            // Fetch Pump, Tank, and Assigned Worker
             $db = \App\Config\Database::connect();
             $stmt = $db->prepare("
-                SELECT t.current_price, t.name as tank_name, ft.name as product_type, w.name as worker_name, w.id as worker_id 
+                SELECT t.id as tank_id, t.current_price, t.current_volume, t.name as tank_name, ft.name as product_type, w.name as worker_name, w.id as worker_id 
                 FROM tanks t 
                 JOIN pumps p ON p.tank_id = t.id 
                 JOIN counters c ON c.pump_id = p.id 
@@ -230,6 +230,8 @@ class SalesController extends Controller
                 'price' => $info['current_price'],
                 'product_type' => $info['product_type'],
                 'tank_name' => $info['tank_name'] ?? 'غير معروف',
+                'tank_id' => $info['tank_id'],
+                'tank_volume' => $info['current_volume'] ?? 0,
                 'worker_name' => $info['worker_name'] ?? 'غير معرف',
                 'worker_id' => $info['worker_id']
             ]);
@@ -401,13 +403,66 @@ class SalesController extends Controller
         $db = \App\Config\Database::connect();
 
         try {
-            $stmt = $db->prepare("DELETE FROM sales WHERE id = ?"); // or sale_id depending on schema, SalesList uses id.
-            if ($stmt->execute([$id])) {
-                echo json_encode(['success' => true]);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Delete failed']);
+            $db->beginTransaction();
+
+            // 1. Get sale details before deleting
+            $stmt = $db->prepare("SELECT * FROM sales WHERE id = ?");
+            $stmt->execute([$id]);
+            $sale = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$sale) {
+                echo json_encode(['success' => false, 'message' => 'Sale not found']);
+                return;
             }
+
+            // 2. Get related transaction to reverse balances
+            $stmt = $db->prepare("SELECT * FROM transactions WHERE related_entity_type = 'sales' AND related_entity_id = ?");
+            $stmt->execute([$id]);
+            $transaction = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($transaction) {
+                // Reverse balance from safe or bank
+                if ($transaction['to_type'] === 'safe' && $transaction['to_id']) {
+                    $stmt = $db->prepare("UPDATE safes SET balance = balance - ? WHERE id = ?");
+                    $stmt->execute([$transaction['amount'], $transaction['to_id']]);
+                } elseif ($transaction['to_type'] === 'bank' && $transaction['to_id']) {
+                    $stmt = $db->prepare("UPDATE banks SET balance = balance - ? WHERE id = ?");
+                    $stmt->execute([$transaction['amount'], $transaction['to_id']]);
+                }
+
+                // Delete the transaction
+                $stmt = $db->prepare("DELETE FROM transactions WHERE id = ?");
+                $stmt->execute([$transaction['id']]);
+            }
+
+            // 3. Reverse customer balance if credit sale
+            if (!empty($sale['customer_id']) && $sale['payment_method'] === 'credit') {
+                $stmt = $db->prepare("UPDATE customers SET balance = balance - ? WHERE id = ?");
+                $stmt->execute([$sale['total_amount'], $sale['customer_id']]);
+            }
+
+            // 4. Restore tank volume
+            if (!empty($sale['counter_id'])) {
+                $stmt = $db->prepare("SELECT t.id FROM tanks t JOIN pumps p ON p.tank_id = t.id JOIN counters c ON c.pump_id = p.id WHERE c.id = ?");
+                $stmt->execute([$sale['counter_id']]);
+                $tank = $stmt->fetch();
+
+                if ($tank) {
+                    $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume + ? WHERE id = ?");
+                    $stmt->execute([$sale['volume_sold'], $tank['id']]);
+                }
+            }
+
+            // 5. Delete the sale record
+            $stmt = $db->prepare("DELETE FROM sales WHERE id = ?");
+            $stmt->execute([$id]);
+
+            $db->commit();
+            echo json_encode(['success' => true, 'message' => 'تم حذف الفاتورة وعكس جميع الحركات المالية']);
         } catch (\Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
             echo json_encode(['success' => false, 'message' => 'Exception: ' . $e->getMessage()]);
         }
         exit;

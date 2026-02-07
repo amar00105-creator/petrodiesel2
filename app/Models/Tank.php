@@ -42,6 +42,18 @@ class Tank extends Model
 
     public function create($data)
     {
+        // Validate volume bounds
+        $currentVolume = (float)($data['current_volume'] ?? 0);
+        $capacity = (float)($data['capacity_liters'] ?? 0);
+
+        if ($currentVolume < 0) {
+            return ['success' => false, 'message' => 'الكمية الحالية لا يمكن أن تكون أقل من صفر'];
+        }
+
+        if ($currentVolume > $capacity) {
+            return ['success' => false, 'message' => 'الكمية الحالية لا يمكن أن تتجاوز سعة الخزان'];
+        }
+
         $sql = "INSERT INTO {$this->table} (station_id, name, fuel_type_id, capacity_liters, current_volume, current_price) 
                 VALUES (:station_id, :name, :fuel_type_id, :capacity_liters, :current_volume, :current_price)";
 
@@ -69,7 +81,12 @@ class Tank extends Model
         ];
 
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute($params);
+        $result = $stmt->execute($params);
+
+        if ($result) {
+            return ['success' => true, 'id' => $this->db->lastInsertId()];
+        }
+        return ['success' => false, 'message' => 'فشل في إنشاء الخزان'];
     }
 
     public function update($id, $data)
@@ -206,11 +223,53 @@ class Tank extends Model
     /**
      * Update the current volume of the tank.
      * Use negative amount for sales, positive for offloading.
+     * Returns ['success' => bool, 'message' => string] or true for backward compatibility
      */
-    public function updateVolume($id, $amount)
+    public function updateVolume($id, $amount, $returnDetails = false)
     {
+        // Get current tank data
+        $tank = $this->find($id);
+        if (!$tank) {
+            if ($returnDetails) {
+                return ['success' => false, 'message' => 'الخزان غير موجود'];
+            }
+            return false;
+        }
+
+        $currentVolume = (float)$tank['current_volume'];
+        $capacity = (float)$tank['capacity_liters'];
+        $newVolume = $currentVolume + $amount;
+
+        // Validate: Volume cannot be negative
+        if ($newVolume < 0) {
+            if ($returnDetails) {
+                return [
+                    'success' => false,
+                    'message' => 'الكمية المطلوبة أكبر من المخزون المتاح. المخزون الحالي: ' . number_format($currentVolume, 0) . ' لتر'
+                ];
+            }
+            return false;
+        }
+
+        // Validate: Volume cannot exceed capacity
+        if ($newVolume > $capacity) {
+            if ($returnDetails) {
+                $available = $capacity - $currentVolume;
+                return [
+                    'success' => false,
+                    'message' => 'الكمية ستتجاوز سعة الخزان. السعة المتاحة: ' . number_format($available, 0) . ' لتر'
+                ];
+            }
+            return false;
+        }
+
         $stmt = $this->db->prepare("UPDATE {$this->table} SET current_volume = current_volume + ? WHERE id = ?");
-        return $stmt->execute([$amount, $id]);
+        $result = $stmt->execute([$amount, $id]);
+
+        if ($returnDetails) {
+            return ['success' => $result, 'message' => $result ? 'تم تحديث الكمية بنجاح' : 'فشل في تحديث الكمية'];
+        }
+        return $result;
     }
 
     /**
@@ -297,6 +356,8 @@ class Tank extends Model
                         tc.tank_id,
                         tc.actual_quantity as reading_cm,
                         tc.actual_quantity as volume_liters,
+                        tc.variance,
+                        tc.previous_quantity,
                         'calibration' as reading_type,
                         tc.created_at,
                         t.name as tank_name,
@@ -313,6 +374,8 @@ class Tank extends Model
                         tr.tank_id,
                         tr.volume_liters as reading_cm,
                         tr.volume_liters,
+                        0 as variance,
+                        tr.volume_liters as previous_quantity,
                         tr.reading_type,
                         tr.created_at,
                         t.name as tank_name,

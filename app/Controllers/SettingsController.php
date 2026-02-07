@@ -254,9 +254,18 @@ class SettingsController extends Controller
             ];
 
             $success = false;
+            $fuelId = null;
+            $oldPrice = null;
+            $newPrice = $data['price_per_liter'];
 
             if (isset($input['id']) && $input['id']) {
+                // Get old price before update
+                $existingFuel = $fuelModel->find($input['id']);
+                if ($existingFuel) {
+                    $oldPrice = $existingFuel['price_per_liter'];
+                }
                 $success = $fuelModel->update($input['id'], $data);
+                $fuelId = $input['id'];
             } else {
                 // Generate a unique code
                 $baseCode = strtolower(preg_replace('/[^a-z0-9_]/', '_', $input['name']));
@@ -268,6 +277,12 @@ class SettingsController extends Controller
                 }
 
                 $success = $fuelModel->create($data);
+                $fuelId = $fuelModel->getLastInsertId();
+            }
+
+            // Log price change if price was modified or it's a new fuel type
+            if ($success && $fuelId && ($oldPrice === null || floatval($oldPrice) != floatval($newPrice))) {
+                $this->logPriceChange($fuelId, $input['name'], $oldPrice, $newPrice);
             }
 
             if ($success) {
@@ -276,6 +291,34 @@ class SettingsController extends Controller
                 echo json_encode(['success' => false, 'message' => 'Failed to save fuel type (Duplicate or Error)']);
             }
             exit;
+        }
+    }
+
+    /**
+     * Log fuel price change to history table
+     */
+    private function logPriceChange($fuelTypeId, $fuelName, $oldPrice, $newPrice)
+    {
+        try {
+            $db = Database::connect();
+            $userId = $_SESSION['user_id'] ?? null;
+            $userName = $_SESSION['user_name'] ?? 'System';
+
+            $stmt = $db->prepare("
+                INSERT INTO fuel_price_history (fuel_type_id, fuel_name, old_price, new_price, changed_by, changed_by_name)
+                VALUES (:fuel_type_id, :fuel_name, :old_price, :new_price, :changed_by, :changed_by_name)
+            ");
+            $stmt->execute([
+                ':fuel_type_id' => $fuelTypeId,
+                ':fuel_name' => $fuelName,
+                ':old_price' => $oldPrice,
+                ':new_price' => $newPrice,
+                ':changed_by' => $userId,
+                ':changed_by_name' => $userName
+            ]);
+        } catch (\Exception $e) {
+            // Silently fail - price logging shouldn't break save operation
+            error_log("Price history log failed: " . $e->getMessage());
         }
     }
 
@@ -480,69 +523,112 @@ class SettingsController extends Controller
             header('Content-Type: application/json');
 
             try {
+                // Parse JSON input
+                $input = json_decode(file_get_contents('php://input'), true);
+
+                // 1. Verify credentials
+                $email = $input['email'] ?? '';
+                $password = $input['password'] ?? '';
+                $sections = $input['sections'] ?? [];
+
+                if (empty($email) || empty($password)) {
+                    echo json_encode(['success' => false, 'message' => 'يرجى إدخال البريد الإلكتروني وكلمة المرور']);
+                    exit;
+                }
+
+                // Authenticate user
+                $userModel = new \App\Models\User();
+                $user = $userModel->findByEmail($email);
+
+                if (!$user || !password_verify($password, $user['password_hash'])) {
+                    echo json_encode(['success' => false, 'message' => 'بيانات الدخول غير صحيحة']);
+                    exit;
+                }
+
+                // Check if any section is selected
+                $selectedSections = array_filter($sections, fn($v) => $v === true);
+                if (empty($selectedSections)) {
+                    echo json_encode(['success' => false, 'message' => 'يرجى تحديد قسم واحد على الأقل']);
+                    exit;
+                }
+
                 $db = \App\Config\Database::connect();
                 $db->exec("SET FOREIGN_KEY_CHECKS = 0");
 
-                // 1. Truncate ALL Data Tables (Transactional & Master)
-                $tables = [
-                    'transactions',
-                    'sales',
-                    'purchases',
-                    'expenses',
-                    'transfer_requests',
-                    'calibration_logs',
-                    'tank_readings',
-                    'incoming_stock_log',
-                    'notifications',
-                    'suppliers',
-                    'customers',
-                    'employees',
-                    'attendance',
-                    'payrolls',
-                    'advances',
-                    'workers',
-                    'activity_logs',
-                    'counters',      // Truncate instead of update
-                    'pumps',         // Truncate instead of update
-                    'tanks',         // Truncate instead of update
-                    'fuel_types',    // Truncate fuel types
-                    'user_stations', // Clear assignments
-                    // 'users'       // DO NOT TRUNCATE USERS (Administrator needs to login)
-                    // 'roles'       // DO NOT TRUNCATE ROLES
-                    // 'settings'    // Optional: Reset settings? For now keep them.
+                // Define table mappings for each section
+                $sectionTables = [
+                    'sales' => ['sales'],
+                    'purchases' => ['purchases', 'incoming_stock_log'],
+                    'tanks_pumps' => ['tanks', 'pumps', 'counters', 'tank_readings', 'tank_calibrations', 'calibration_logs'],
+                    'accounts' => ['transactions', 'safes', 'banks', 'expenses', 'transfer_requests'],
+                    'hr' => ['employees', 'attendance', 'payrolls', 'advances', 'workers', 'drivers'],
+                    'customers_suppliers' => ['customers', 'suppliers'],
+                    'fuel_types' => ['fuel_types']
                 ];
 
-                foreach ($tables as $table) {
-                    try {
-                        $db->exec("TRUNCATE TABLE `$table`");
-                    } catch (\Exception $e) {
-                        // Ignore if table missing
+                $truncatedTables = [];
+
+                foreach ($sections as $sectionKey => $isSelected) {
+                    if ($isSelected && isset($sectionTables[$sectionKey])) {
+                        foreach ($sectionTables[$sectionKey] as $table) {
+                            try {
+                                $db->exec("TRUNCATE TABLE `$table`");
+                                $truncatedTables[] = $table;
+                            } catch (\Exception $e) {
+                                // Ignore if table doesn't exist
+                            }
+                        }
                     }
                 }
 
-                // 2. Reset Assets (Keep definitions if not tables, otherwise truncate)
-                // Safes and Banks are usually master data too. 
-                // If user wants "ALL Data" gone, maybe truncate safes/banks too?
-                // The prompt says "erase all data in the program". 
-                // Usually this implies starting fresh. 
-                // I will TRUNCATE Safes and Banks as well to be safe, 
-                // but if they are considered "Settings", maybe keep?
-                // Given the context of "tanks/pumps", safes/banks are likely similar.
-                try {
-                    $db->exec("TRUNCATE TABLE `safes`");
-                    $db->exec("TRUNCATE TABLE `banks`");
-                } catch (\Exception $e) {
-                    // In case they don't exist or error
+                // Always clear activity logs and notifications if any section is selected
+                if (!empty($truncatedTables)) {
+                    try {
+                        $db->exec("TRUNCATE TABLE `activity_logs`");
+                        $db->exec("TRUNCATE TABLE `notifications`");
+                    } catch (\Exception $e) {
+                        // Ignore
+                    }
                 }
 
                 $db->exec("SET FOREIGN_KEY_CHECKS = 1");
 
-                echo json_encode(['success' => true, 'message' => 'تمت إعادة ضبط المصنع بنجاح. تم مسح جميع البيانات.']);
+                $count = count($truncatedTables);
+                echo json_encode([
+                    'success' => true,
+                    'message' => "تمت إعادة ضبط المصنع بنجاح. تم مسح {$count} جدول من البيانات."
+                ]);
             } catch (\Exception $e) {
-                $db->exec("SET FOREIGN_KEY_CHECKS = 1");
                 echo json_encode(['success' => false, 'message' => 'فشلت العملية: ' . $e->getMessage()]);
             }
             exit;
         }
+    }
+
+    /**
+     * Get activity logs for the API
+     */
+    public function getActivityLogs()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $logModel = new \App\Models\ActivityLog();
+            $stationId = $_SESSION['station_id'] ?? null;
+            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
+
+            $logs = $logModel->getRecent($limit, $stationId);
+
+            echo json_encode([
+                'success' => true,
+                'logs' => $logs
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ في جلب السجلات: ' . $e->getMessage()
+            ]);
+        }
+        exit;
     }
 }

@@ -61,6 +61,21 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        
+        // Frontend validation for volume bounds
+        const currentVol = parseFloat(formData.current_volume) || 0;
+        const capacity = parseFloat(formData.capacity_liters) || 0;
+        
+        if (currentVol < 0) {
+            toast.error('الكمية الحالية لا يمكن أن تكون أقل من صفر');
+            return;
+        }
+        
+        if (currentVol > capacity) {
+            toast.error('الكمية الحالية لا يمكن أن تتجاوز سعة الخزان');
+            return;
+        }
+        
         setIsLoading(true);
 
         // Use dynamic base URL defined in main.jsx
@@ -102,20 +117,20 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100"
+                        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:bg-slate-900 dark:border-slate-800"
                     >
                         {/* Header */}
-                        <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50">
+                        <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50/50 dark:bg-white/5 dark:border-white/10">
                             <div>
-                                <h2 className="text-xl font-bold text-navy-900 flex items-center gap-2">
-                                    <Database className="w-6 h-6 text-blue-600" />
+                                <h2 className="text-xl font-bold text-navy-900 flex items-center gap-2 dark:text-white">
+                                    <Database className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                                     {tank ? 'تعديل بيانات الخزان' : 'إضافة خزان جديد'}
                                 </h2>
-                                <p className="text-sm text-slate-500 mt-1">
+                                <p className="text-sm text-slate-500 mt-1 dark:text-slate-400">
                                     {tank ? 'تعديل البيانات الأساسية وسعة الخزان' : 'أدخل بيانات الخزان الجديد والسعة'}
                                 </p>
                             </div>
-                            <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors">
+                            <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors dark:text-slate-400 dark:hover:bg-white/10">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -125,13 +140,13 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
                             
                             {/* Name */}
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">اسم الخزان</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 dark:text-slate-300">اسم الخزان</label>
                                 <input 
                                     type="text" 
                                     name="name"
                                     required
                                     placeholder="مثال: خزان الديزل الرئيسي"
-                                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                                    className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:ring-blue-500/20"
                                     value={formData.name}
                                     onChange={handleChange}
                                 />
@@ -139,12 +154,12 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
 
                             {/* Product Type */}
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">نوع الوقود</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 dark:text-slate-300">نوع الوقود</label>
                                 <div className="relative">
                                     <Fuel className="absolute right-3 top-3.5 text-slate-400 w-5 h-5 pointer-events-none" />
                                     <select 
                                         name="fuel_type_id"
-                                        className="w-full p-3 pr-10 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none appearance-none bg-white"
+                                        className="w-full p-3 pr-10 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none appearance-none bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:ring-blue-500/20"
                                         value={formData.fuel_type_id}
                                         onChange={handleChange}
                                         required
@@ -155,7 +170,7 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
                                                 <option key={type.id} value={type.id}>{type.name}</option>
                                             ))
                                         ) : (
-                                            <option value="" disabled>لا توجد أنواع وقود معرفة في الإعدادات</option>
+                                            <option value="" disabled className="dark:bg-slate-700">لا توجد أنواع وقود معرفة في الإعدادات</option>
                                         )}
                                     </select>
                                 </div>
@@ -164,14 +179,14 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Capacity */}
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">السعة الكلية (لتر)</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2 dark:text-slate-300">السعة الكلية (لتر)</label>
                                     <input 
                                         type="number" 
                                         name="capacity_liters"
                                         required
                                         min="0"
                                         placeholder="0"
-                                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none font-mono"
+                                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none font-mono dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:ring-blue-500/20"
                                         value={formData.capacity_liters}
                                         onChange={handleChange}
                                     />
@@ -179,14 +194,14 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
 
                                 {/* Current Volume */}
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-2">الكمية الحالية (لتر)</label>
+                                    <label className="block text-sm font-bold text-slate-700 mb-2 dark:text-slate-300">الكمية الحالية (لتر)</label>
                                     <input 
                                         type="number" 
                                         name="current_volume"
                                         required
                                         min="0"
                                         placeholder="0"
-                                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none font-mono"
+                                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none font-mono dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:ring-blue-500/20"
                                         value={formData.current_volume}
                                         onChange={handleChange}
                                     />
@@ -195,14 +210,14 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
 
                             {/* Current Price */}
                             <div>
-                                <label className="block text-sm font-bold text-slate-700 mb-2">السعر الحالي للتر (من الإعدادات)</label>
+                                <label className="block text-sm font-bold text-slate-700 mb-2 dark:text-slate-300">السعر الحالي للتر (من الإعدادات)</label>
                                 <input 
                                     type="number" 
                                     name="current_price"
                                     step="0.01"
                                     readOnly
                                     placeholder="0.00"
-                                    className="w-full p-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed outline-none font-mono"
+                                    className="w-full p-3 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed outline-none font-mono dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400"
                                     value={formData.current_price}
                                     onChange={handleChange}
                                 />
@@ -213,7 +228,7 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
                                 <button 
                                     type="button" 
                                     onClick={onClose}
-                                    className="flex-1 p-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors"
+                                    className="flex-1 p-3 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition-colors dark:text-slate-300 dark:hover:bg-white/5"
                                 >
                                     إلغاء
                                 </button>

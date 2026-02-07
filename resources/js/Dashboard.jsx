@@ -1,260 +1,212 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Card, Title, Text, Metric, BarChart, DonutChart } from '@tremor/react';
 import { 
     TrendingUp, 
-    Droplet, 
+    Wallet, 
+    DollarSign,
+    Fuel,
+    Activity,
+    Plus, 
     Truck, 
-    Activity, 
-    ArrowUpRight,
-    Clock,
-    AlertTriangle,
-    CheckCircle2
+    Banknote, 
+    Clock, 
+    ArrowRight,
+    FileText
 } from 'lucide-react';
+import { useTheme } from './components/ThemeProvider';
+import InventoryWidget from './components/dashboard/InventoryWidget';
+import FinancialCard from './components/dashboard/FinancialCard';
+import AddTransactionModal from './AddTransactionModal'; // Check path if needed, assuming same dir or one level up? 
+// Wait, AddTransactionModal is likely in components or root resources/js. 
+// Based on AccountingDashboard.jsx: import AddTransactionModal from './AddTransactionModal'; 
+// So it is in resources/js/AddTransactionModal.jsx
 
-export default function Dashboard({ data }) {
-    // Helper to safely access data
+export default function Dashboard({ data, categories, safes, banks, suppliers, customers }) {
+    const [activeModal, setActiveModal] = useState(null);
     const safeData = data || {};
-    const stock = {
-        petrol: safeData.petrolStock || { current: 0, capacity: 0 },
-        diesel: safeData.dieselStock || { current: 0, capacity: 0 },
-        gas: safeData.gasStock || { current: 0, capacity: 0 }
-    };
     
-    // Animation Variants
-    const containerVariants = {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-    };
-
-    const itemVariants = {
-        hidden: { y: 20, opacity: 0 },
-        visible: { y: 0, opacity: 1 }
-    };
-
-    const fuelColors = {
-        Petrol: 'emerald',
-        Diesel: 'blue',
-        Gas: 'amber'
+    const stock = {
+        petrol: safeData.petrolStock || { current: 0, capacity: 10000 },
+        diesel: safeData.dieselStock || { current: 0, capacity: 10000 },
+        gas: safeData.gasStock || { current: 0, capacity: 0 }
     };
 
     return (
-        <motion.div 
-            initial="hidden" 
-            animate="visible" 
-            variants={containerVariants}
-            className="p-6 max-w-[1600px] mx-auto space-y-8 pb-20"
-        >
-            {/* 1. Quick Stats Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        // Ultra-compact: h-screen, p-3 padding, overflow-hidden on body
+        // pb-10 to leave that "small space at the bottom" the user asked for
+        <div className="h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-500 p-3 pb-8 overflow-hidden flex flex-col">
+            
+            <div className="max-w-[1920px] mx-auto w-full h-full flex flex-col">
                 
-                {/* Today's Sales */}
-                <motion.div variants={itemVariants}>
-                    <Card className="relative overflow-hidden border-0 ring-1 ring-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white group">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <Text className="text-slate-500 mb-1">مبيعات اليوم</Text>
-                                <Metric className="text-slate-900 font-mono">
-                                    {parseFloat(safeData.todaySales || 0).toLocaleString('en-US')}
-                                </Metric>
+                {/* Main Grid: Reduced gap from 6 to 4 for compactness */}
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 items-start h-full">
+                    
+                    {/* 1. RIGHT SIDEBAR (Operations & Inventory) */}
+                    <div className="xl:col-span-3 space-y-3 h-full flex flex-col">
+                        
+                        {/* A. Quick Actions (Grid 2x2) - Compact padding */}
+                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 shrink-0">
+                            <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+                                <Activity className="w-4 h-4 text-blue-500" />
+                                عمليات سريعة
+                            </h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                <QuickActionItem label="بيع جديد" icon={Plus} color="bg-emerald-500" link="/sales/create" />
+                                <QuickActionItem label="استلام" icon={Truck} color="bg-blue-500" link="/purchases/create" />
+                                <QuickActionItem 
+                                    label="مصروف" 
+                                    icon={Banknote} 
+                                    color="bg-red-500" 
+                                    onClick={() => setActiveModal('expense')} 
+                                />
+                                <QuickActionItem label="إغلاق" icon={Clock} color="bg-navy-900" link="/shift/close" />
+                                <QuickActionItem label="مبيعات الآبار" icon={Fuel} color="bg-orange-500" link="/reports?tab=sales&subtab=tank_sales" />
+                                <QuickActionItem label="كشف حساب" icon={FileText} color="bg-indigo-500" link="/reports?tab=financial&subtab=statement&group=fuel_type" />
+                             </div>
+                        </div>
+
+                        {/* B. Inventory Widgets - Reduced Height (approx 25% of view or fixed compact) */}
+                         <div className="grid grid-cols-2 xl:grid-cols-2 gap-3 h-[25vh] min-h-[180px] shrink-0">
+                            <div className="h-full">
+                                <InventoryWidget 
+                                    type="بنزين" 
+                                    current={stock.petrol.current} 
+                                    capacity={stock.petrol.capacity} 
+                                    color="emerald"
+                                />
                             </div>
-                            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:scale-110 transition-transform">
-                                <TrendingUp className="w-6 h-6" />
+                            <div className="h-full">
+                                <InventoryWidget 
+                                    type="ديزل" 
+                                    current={stock.diesel.current} 
+                                    capacity={stock.diesel.capacity} 
+                                    color="blue"
+                                />
                             </div>
                         </div>
-                        <div className="mt-4 flex items-center gap-2 text-xs text-emerald-600 bg-emerald-50 w-fit px-2 py-1 rounded-lg">
-                            <ArrowUpRight className="w-3 h-3" /> نشط الآن
+                    </div>
+
+                    {/* 2. LEFT CONTENT (Financials & Compact Table) */}
+                    <div className="xl:col-span-9 space-y-3 h-full flex flex-col">
+                        
+                        {/* Financial Cards - Reduced height/gap */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
+                            <FinancialCard 
+                                title="مبيعات اليوم"
+                                value={parseFloat(safeData.todaySales || 0).toLocaleString('en-US')}
+                                subtitle="إجمالي مبيعات الوردية"
+                                icon={TrendingUp}
+                                color="emerald"
+                                trend={5.2}
+                                minimal={true} 
+                            />
+                            <FinancialCard 
+                                title="المصروفات"
+                                value={parseFloat(safeData.todayExpenses || 0).toLocaleString('en-US')}
+                                subtitle="نثريات وتشغيل"
+                                icon={Wallet}
+                                color="red"
+                                minimal={true}
+                            />
+                             <FinancialCard 
+                                title="رصيد الخزينة"
+                                value={parseFloat(safeData.safeBalance || 0).toLocaleString('en-US')}
+                                subtitle="النقدية الحالية"
+                                icon={DollarSign}
+                                color="amber"
+                                minimal={true}
+                            />
                         </div>
-                    </Card>
-                </motion.div>
 
-                {/* Incoming Fuel */}
-                <motion.div variants={itemVariants}>
-                    <Card className="relative overflow-hidden border-0 ring-1 ring-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white group">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <Text className="text-slate-500 mb-1">وارد الوقود اليوم</Text>
-                                <Metric className="text-slate-900 font-mono">
-                                    {parseFloat(safeData.todayIncoming || 0).toLocaleString('en-US')} <span className="text-sm text-slate-400">لتر</span>
-                                </Metric>
-                            </div>
-                            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:scale-110 transition-transform">
-                                <Truck className="w-6 h-6" />
-                            </div>
-                        </div>
-                         <div className="mt-4 flex items-center gap-2 text-xs text-blue-600 bg-blue-50 w-fit px-2 py-1 rounded-lg">
-                            <Clock className="w-3 h-3" /> آخر تحديث
-                        </div>
-                    </Card>
-                </motion.div>
-
-                {/* Safe Balance */}
-                <motion.div variants={itemVariants}>
-                    <Card className="relative overflow-hidden border-0 ring-1 ring-slate-200 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-slate-900 to-slate-800 text-white">
-                        <div className="flex items-start justify-between relative z-10">
-                            <div>
-                                <Text className="text-slate-400 mb-1">رصيد الخزينة</Text>
-                                <Metric className="text-white font-mono">
-                                    {parseFloat(safeData.safeBalance || 0).toLocaleString('en-US')}
-                                </Metric>
-                            </div>
-                            <div className="p-3 bg-white/10 text-white rounded-xl backdrop-blur-sm">
-                                <Activity className="w-6 h-6" />
-                            </div>
-                        </div>
-                    </Card>
-                </motion.div>
-
-                 {/* Active Wells */}
-                 <motion.div variants={itemVariants}>
-                    <Card className="relative overflow-hidden border-0 ring-1 ring-slate-200 shadow-sm hover:shadow-md transition-shadow bg-white group">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <Text className="text-slate-500 mb-1">العدادات النشطة</Text>
-                                <Metric className="text-slate-900 font-mono">
-                                    {safeData.wells ? safeData.wells.length : 0}
-                                </Metric>
-                            </div>
-                            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:scale-110 transition-transform">
-                                <Activity className="w-6 h-6" />
-                            </div>
-                        </div>
-                    </Card>
-                </motion.div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
-                {/* 2. Fuel Stock Levels */}
-                <motion.div variants={itemVariants} className="lg:col-span-2">
-                    <Card className="border-0 ring-1 ring-slate-200 shadow-sm h-full">
-                        <Title className="mb-6 flex items-center gap-2">
-                            <Droplet className="w-5 h-5 text-blue-500" /> مستويات المخزون
-                        </Title>
-                        <div className="space-y-6">
-                            {/* Petrol */}
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <Text className="font-bold text-slate-700">بنزين (Petrol)</Text>
-                                    <Text className="font-mono text-emerald-600 font-bold">
-                                        {parseInt(stock.petrol.current).toLocaleString()} / {parseInt(stock.petrol.capacity).toLocaleString()} لتر
-                                    </Text>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                                    <motion.div 
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(stock.petrol.current / stock.petrol.capacity) * 100}%` }}
-                                        transition={{ duration: 1.5, ease: "easeOut" }}
-                                        className="bg-emerald-500 h-full rounded-full relative"
-                                    >
-                                        <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
-                                    </motion.div>
-                                </div>
-                            </div>
-
-                            {/* Diesel */}
-                            <div>
-                                <div className="flex justify-between mb-2">
-                                    <Text className="font-bold text-slate-700">ديزل (Diesel)</Text>
-                                    <Text className="font-mono text-blue-600 font-bold">
-                                         {parseInt(stock.diesel.current).toLocaleString()} / {parseInt(stock.diesel.capacity).toLocaleString()} لتر
-                                    </Text>
-                                </div>
-                                <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                                    <motion.div 
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${(stock.diesel.current / stock.diesel.capacity) * 100}%` }}
-                                        transition={{ duration: 1.5, ease: "easeOut", delay: 0.2 }}
-                                        className="bg-blue-600 h-full rounded-full relative"
-                                    >
-                                         <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
-                                    </motion.div>
-                                </div>
-                            </div>
-
-                             {/* Gas (if exists) */}
-                             {stock.gas.capacity > 0 && (
+                        {/* Recent Transactions Table */}
+                        <motion.div 
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm overflow-hidden flex-1 flex flex-col min-h-0"
+                        >
+                            <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50 shrink-0">
                                 <div>
-                                    <div className="flex justify-between mb-2">
-                                        <Text className="font-bold text-slate-700">غاز (Gas)</Text>
-                                        <Text className="font-mono text-amber-600 font-bold">
-                                            {parseInt(stock.gas.current).toLocaleString()} / {parseInt(stock.gas.capacity).toLocaleString()} لتر
-                                        </Text>
-                                    </div>
-                                    <div className="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                                        <motion.div 
-                                            initial={{ width: 0 }}
-                                            animate={{ width: `${(stock.gas.current / stock.gas.capacity) * 100}%` }}
-                                            transition={{ duration: 1.5, ease: "easeOut", delay: 0.4 }}
-                                            className="bg-amber-500 h-full rounded-full relative"
-                                        >
-                                             <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
-                                        </motion.div>
-                                    </div>
+                                    <h3 className="text-base font-bold text-slate-800 dark:text-white">سجل العمليات الحديثة</h3>
+                                    <p className="text-[10px] text-slate-500">آخر المعاملات المسجلة في النظام</p>
                                 </div>
-                             )}
-                        </div>
-                    </Card>
-                </motion.div>
-
-                {/* 3. Station Info / Quick Actions */}
-                <motion.div variants={itemVariants}>
-                    <Card className="border-0 ring-1 ring-slate-200 shadow-sm h-full bg-gradient-to-b from-slate-50 to-white">
-                        <div className="text-center p-6">
-                            <div className="w-20 h-20 bg-white rounded-full mx-auto shadow-lg flex items-center justify-center mb-4 p-2">
-                                {safeData.station?.logo_url ? (
-                                    <img src={safeData.station.logo_url} alt="Logo" className="w-full h-full object-contain" />
-                                ) : (
-                                    <TrendingUp className="w-10 h-10 text-blue-600" />
-                                )}
+                                <button className="text-[10px] font-medium text-blue-500 hover:text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded transition-colors">
+                                    عرض الكل
+                                </button>
                             </div>
-                            <Title className="text-slate-900">{safeData.station?.name || 'PetroDiesel ERP'}</Title>
-                            <Text className="text-slate-500 text-sm mt-1">{safeData.station?.address || 'System Admin'}</Text>
-                        </div>
-                    </Card>
-                </motion.div>
-            </div>
-
-            {/* 4. Recent Sales Table */}
-            <motion.div variants={itemVariants}>
-                <Card className="border-0 ring-1 ring-slate-200 shadow-sm p-0 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100">
-                        <Title>أحدث عمليات البيع</Title>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm text-right">
-                            <thead className="bg-slate-50 text-slate-500 font-bold">
-                                <tr>
-                                    <th className="p-4">الوقت</th>
-                                    <th className="p-4">العامل</th>
-                                    <th className="p-4">الماكينة</th>
-                                    <th className="p-4">الكمية</th>
-                                    <th className="p-4">المبلغ</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {safeData.recentSales && safeData.recentSales.length > 0 ? (
-                                    safeData.recentSales.map((sale, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                            <td className="p-4 font-mono text-slate-500">{sale.time}</td>
-                                            <td className="p-4 font-medium text-slate-700">{sale.worker_name}</td>
-                                            <td className="p-4 text-slate-500">{sale.pump_name}</td>
-                                            <td className="p-4 font-mono dir-ltr text-right">{parseFloat(sale.volume_sold).toFixed(2)} L</td>
-                                            <td className="p-4 font-mono font-bold text-emerald-600 dir-ltr text-right">
-                                                {parseFloat(sale.total_amount).toLocaleString()}
-                                            </td>
+                            <div className="overflow-auto scrollbar-thin flex-1">
+                                <table className="w-full text-sm text-right">
+                                    <thead className="bg-slate-50 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400 font-bold sticky top-0 z-10 text-xs">
+                                        <tr>
+                                            <th className="p-3 w-[15%]">الوقت</th>
+                                            <th className="p-3 w-[15%]">النوع</th>
+                                            <th className="p-3 w-[25%]">الموظف</th>
+                                            <th className="p-3 w-[25%]">التفاصيل</th>
+                                            <th className="p-3 w-[20%] text-left">المبلغ</th>
                                         </tr>
-                                    ))
-                                ) : (
-                                    <tr>
-                                        <td colSpan="5" className="p-8 text-center text-slate-400">لا توجد مبيعات حديثة</td>
-                                    </tr>
-                                )}
-                            </tbody>
-                        </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700 text-slate-700 dark:text-slate-300">
+                                        {/* Reduced count to 10 as requested */}
+                                        {safeData.recentSales && safeData.recentSales.slice(0, 10).map((sale, idx) => (
+                                            <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group text-xs sm:text-sm">
+                                                <td className="p-3 font-mono text-slate-400">{sale.time}</td>
+                                                <td className="p-3">
+                                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">
+                                                        <Fuel className="w-3 h-3" /> بيع
+                                                    </span>
+                                                </td>
+                                                <td className="p-3 font-medium truncate max-w-[120px]">{sale.worker_name}</td>
+                                                <td className="p-3 text-slate-500 dark:text-slate-400 truncate max-w-[180px]">
+                                                    {sale.pump_name} <span className="opacity-50">|</span> {parseFloat(sale.volume_sold).toFixed(2)}L
+                                                </td>
+                                                <td className="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400 dir-ltr text-left">
+                                                    {parseFloat(sale.total_amount).toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                         {(!safeData.recentSales || safeData.recentSales.length === 0) && (
+                                            <tr>
+                                                <td colSpan="5" className="p-8 text-center text-slate-400 text-xs">
+                                                    لا توجد عمليات مسجلة
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </motion.div>
                     </div>
-                </Card>
-            </motion.div>
-        </motion.div>
+                </div>
+            </div>
+            {/* Modal */}
+            <AddTransactionModal 
+                isOpen={activeModal === 'expense'}
+                onClose={() => setActiveModal(null)}
+                type={'expense'}
+                categories={categories || []}
+                safes={safes || []}
+                banks={banks || []}
+                suppliers={suppliers || []}
+                customers={customers || []}
+                baseUrl={window.BASE_URL}
+            />
+        </div>
+    );
+}
+
+// Ultra Compact Quick Action Item
+function QuickActionItem({ label, icon: Icon, color, link, onClick }) {
+    return (
+        <motion.button
+            onClick={() => onClick ? onClick() : (window.location.href = window.BASE_URL ? window.BASE_URL + link : link)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex flex-col items-center justify-center gap-1 p-2 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-600 transition-all group h-[70px]"
+        >
+            <div className={`p-1.5 rounded-lg ${color} text-white shadow-sm`}>
+                <Icon className="w-4 h-4" />
+            </div>
+            <span className="font-bold text-slate-700 dark:text-slate-200 text-[10px] sm:text-xs">{label}</span>
+        </motion.button>
     );
 }

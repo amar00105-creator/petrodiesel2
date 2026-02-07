@@ -172,12 +172,28 @@ class HRController extends Controller
                     $postData['station_id'] = 0;
                 }
 
+                // Check for duplicates
                 if ($entity === 'employee') {
+                    if ($model->findByName($postData['name'])) {
+                        echo json_encode(['success' => false, 'message' => 'هذا الموظف مسجل بالفعل']);
+                        exit;
+                    }
                     if (!empty($postData['password'])) {
                         $postData['password_hash'] = password_hash($postData['password'], PASSWORD_DEFAULT);
                     }
                     if (empty($postData['email'])) {
                         $postData['email'] = strtolower(str_replace(' ', '.', $postData['name'])) . rand(100, 999) . '@petrodiesel.net';
+                    }
+                } elseif ($entity === 'driver') {
+                    if ($model->findByName($postData['name'])) {
+                        echo json_encode(['success' => false, 'message' => 'هذا السائق مسجل بالفعل']);
+                        exit;
+                    }
+                } elseif ($entity === 'worker') {
+                    // Check current station context or if global requested
+                    if ($model->checkDuplicate($stationId, $postData['name'])) {
+                        echo json_encode(['success' => false, 'message' => 'هذا العامل مسجل بالفعل في هذه المحطة']);
+                        exit;
                     }
                 }
 

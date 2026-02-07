@@ -8,6 +8,14 @@ use PDO;
 class Staff extends Model
 {
 
+    public function findByName($name)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE name = :name LIMIT 1");
+        $stmt->bindParam(':name', $name);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
     public function findByEmail($email)
     {
         $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");

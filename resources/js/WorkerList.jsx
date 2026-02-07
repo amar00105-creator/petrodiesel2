@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { motion } from 'framer-motion';
 import { Card, Title, Text, TextInput, Badge, Button } from '@tremor/react';
 import { Search, Plus, Trash2, Edit, ChevronLeft, ChevronRight, UserCircle, Users, HardHat } from 'lucide-react';
@@ -7,14 +7,7 @@ import EditWorkerModal from './EditWorkerModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { toast } from 'sonner';
 
-// Mock Data
-const MOCK_WORKERS = [
-    { id: 1, name: 'Ali Ahmed', phone: '0501234567', national_id: '1020304050', status: 'Active', station: 'Main Station' },
-    { id: 2, name: 'Khan Mohammed', phone: '0559876543', national_id: '2345678901', status: 'Active', station: 'Main Station' },
-    { id: 3, name: 'Saeed Al-Ghamdi', phone: '0541122334', national_id: '1010101010', status: 'On Leave', station: 'North Branch' },
-];
-
-export default function WorkerList({ workers = [] }) {
+const WorkerList = forwardRef(({ workers = [], search = '' }, ref) => {
     // Local state for immediate updates
     const [workerList, setWorkerList] = useState(Array.isArray(workers) ? workers : []);
     
@@ -23,10 +16,16 @@ export default function WorkerList({ workers = [] }) {
         setWorkerList(Array.isArray(workers) ? workers : []);
     }, [workers]);
 
-    const [search, setSearch] = useState('');
+    // Lifted search state
+    // const [search, setSearch] = useState('');
+    
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingWorker, setEditingWorker] = useState(null);
+
+    useImperativeHandle(ref, () => ({
+        openAddModal: () => setIsAddModalOpen(true)
+    }));
 
     const handleEdit = (worker) => {
         setEditingWorker(worker);
@@ -81,7 +80,7 @@ export default function WorkerList({ workers = [] }) {
         }
     };
 
-    const normalizedWorkers = (workerList && workerList.length > 0 ? workerList : MOCK_WORKERS).map(w => ({
+    const normalizedWorkers = (workerList || []).map(w => ({
         id: w.id,
         name: w.name,
         phone: w.phone || 'N/A',
@@ -108,63 +107,43 @@ export default function WorkerList({ workers = [] }) {
                 message={`سيتم حذف العامل "${itemToDelete?.name}". هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.`}
                 isDeleting={isDeleting}
             />
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <Title className="text-3xl font-bold text-navy-900 font-cairo">إدارة العمال</Title>
-                    <Text className="text-slate-500">سجل عمال المحطة والمناوبين</Text>
-                </div>
-                <Button icon={Plus} onClick={() => setIsAddModalOpen(true)} className="rounded-xl font-bold bg-navy-900 hover:bg-navy-800 border-none">إضافة عامل</Button>
-            </div>
-
-            {/* Filters */}
-            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200">
-                <div className="relative max-w-md">
-                    <Search className="absolute right-3 top-3 text-slate-400 w-5 h-5"/>
-                    <TextInput 
-                        placeholder="بحث بالاسم أو رقم الجوال..." 
-                        className="pl-4 pr-10 py-2 rounded-xl"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-            </Card>
+            {/* Header Removed */}
 
             {/* Table */}
-            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0">
+            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:ring-white/10">
                 <div className="overflow-x-auto">
                     <table className="w-full text-right">
-                        <thead className="bg-slate-50 border-b border-slate-200">
+                        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-white/10">
                             <tr>
-                                <th className="p-4 text-sm font-bold text-slate-600">الاسم</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">رقم الجوال</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">الهوية الوطنية / الإقامة</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">الحالة</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">المحطة</th>
-                                <th className="p-4 text-sm font-bold text-slate-600 text-center">إجراءات</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">الاسم</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">رقم الجوال</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">الهوية الوطنية / الإقامة</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">الحالة</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">المحطة</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300 text-center">إجراءات</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                             {filteredWorkers.map((worker) => (
-                                <tr key={worker.id} className="hover:bg-blue-50/30 transition-colors group">
+                                <tr key={worker.id} className="hover:bg-blue-50/30 dark:hover:bg-white/5 transition-colors group">
                                     <td className="p-4 flex items-center gap-3">
-                                        <div className="p-2 bg-slate-100 rounded-full text-slate-500">
+                                        <div className="p-2 bg-slate-100 dark:bg-white/10 rounded-full text-slate-500 dark:text-slate-300">
                                             <HardHat className="w-5 h-5" />
                                         </div>
-                                        <span className="font-bold text-navy-900">{worker.name}</span>
+                                        <span className="font-bold text-navy-900 dark:text-white">{worker.name}</span>
                                     </td>
-                                    <td className="p-4 font-mono text-slate-600">{worker.phone}</td>
-                                    <td className="p-4 font-mono text-slate-600">{worker.national_id}</td>
+                                    <td className="p-4 font-mono text-slate-600 dark:text-slate-400">{worker.phone}</td>
+                                    <td className="p-4 font-mono text-slate-600 dark:text-slate-400">{worker.national_id}</td>
                                     <td className="p-4">
                                         <Badge size="xs" color={worker.status === 'Active' ? 'emerald' : 'amber'}>
                                             {worker.status === 'Active' ? 'على رأس العمل' : 'إجازة'}
                                         </Badge>
                                     </td>
-                                    <td className="p-4 text-slate-500">{worker.station}</td>
+                                    <td className="p-4 text-slate-500 dark:text-slate-400">{worker.station}</td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleEdit(worker)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
-                                            <button onClick={() => openDeleteModal(worker)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                            <button onClick={() => handleEdit(worker)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-white/10 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+                                            <button onClick={() => openDeleteModal(worker)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
                                         </div>
                                     </td>
                                 </tr>
@@ -188,4 +167,6 @@ export default function WorkerList({ workers = [] }) {
             />
         </motion.div>
     );
-}
+});
+
+export default WorkerList;

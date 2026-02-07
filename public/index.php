@@ -71,6 +71,9 @@ $router->add('POST', '/auth/verify_password', 'AuthController', 'verify_password
 
 // API Routes
 $router->add('GET', '/api/server-time', 'ApiController', 'getServerTime');
+$router->add('GET', '/api/activity-logs', 'SettingsController', 'getActivityLogs');
+$router->add('GET', '/api/alerts', 'AlertsController', 'index');
+
 
 // Station Management Routes
 $router->add('GET', '/stations', 'StationController', 'index');
@@ -87,6 +90,7 @@ $router->add('POST', '/stations/assign_user', 'StationController', 'assign_user'
 // We can handle protection inside the controller or use a middleware approach in router
 // For simplicity, we check in controller constructor or method
 $router->add('GET', '/', 'HomeController', 'index');
+$router->add('GET', '/dashboard', 'HomeController', 'index');
 $router->add('POST', '/switchStation', 'HomeController', 'switchStation');
 
 // Purchases Routes

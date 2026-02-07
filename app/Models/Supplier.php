@@ -25,13 +25,14 @@ class Supplier extends Model
 
     public function create($data)
     {
-        // Suppliers are now global - no station_id needed
-        $sql = "INSERT INTO suppliers (name, phone, balance) VALUES (:name, :phone, :balance)";
+        // Re-enabling station_id to fix FK constraint
+        $sql = "INSERT INTO suppliers (name, phone, balance, station_id) VALUES (:name, :phone, :balance, :station_id)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             ':name' => $data['name'],
             ':phone' => $data['phone'] ?? '',
-            ':balance' => $data['balance'] ?? 0.00
+            ':balance' => $data['balance'] ?? 0.00,
+            ':station_id' => $data['station_id']
         ]);
         return $this->db->lastInsertId();
     }

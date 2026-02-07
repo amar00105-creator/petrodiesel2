@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Printer, Filter, PieChart, TrendingUp, DollarSign, Droplets, Users, FileText, Briefcase, Activity, Truck, CheckCircle, Wallet } from 'lucide-react';
+import { Printer, Filter, PieChart, TrendingUp, DollarSign, Droplets, Users, FileText, Briefcase, Activity, Truck, CheckCircle, Wallet, BarChart3, Gauge, Calendar } from 'lucide-react';
 import { TabGroup, TabList, Tab, Title, Text, Card, Metric, Flex, BadgeDelta, Grid, Badge } from '@tremor/react';
 import { toast } from 'sonner';
 import DailySalesReconciliation from './DailySalesReconciliation';
@@ -8,10 +8,35 @@ import TankSalesReport from './TankSalesReport';
 import SupplierReport from './SupplierReport';
 import CustomerReport from './CustomerReport';
 import FinancialFlowReport from './FinancialFlowReport';
+import ProfitLossReport from './ProfitLossReport';
+import LossReport from './LossReport';
+import PumpPerformanceReport from './PumpPerformanceReport';
+import WorkerPerformanceReport from './WorkerPerformanceReport';
+import MonthlyComparisonReport from './MonthlyComparisonReport';
+import AlertsPanel from './components/AlertsPanel';
 
 export default function Reports({ user }) {
     // --- State ---
     const [activeTab, setActiveTab] = useState(0); // 0: Financial, 1: Warehouse, 2: Sales, 3: Employees
+    
+    // Check URL params for tab selection
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get('tab');
+        const subtab = params.get('subtab');
+        
+        if (tab === 'sales') {
+            setActiveTab(2);
+        } else if (tab === 'financial') {
+            setActiveTab(0);
+            if (subtab === 'statement') {
+                setFinancialTab(1);
+            }
+        } else if (tab === 'warehouse') {
+            setActiveTab(1);
+        }
+    }, []);
+
     const [filters, setFilters] = useState({
         station_id: user?.station_id || 'all',
         start_date: null, // Will be set from server date
@@ -146,11 +171,11 @@ export default function Reports({ user }) {
     const renderFinancial = () => (
         <div className="space-y-6 animate-fade-in">
             {/* Financial Sub-Navigation */}
-            <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl w-fit">
+            <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl w-fit dark:bg-white/5">
                 <button
                     onClick={() => setFinancialTab(0)}
                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                        financialTab === 0 ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'
+                        financialTab === 0 ? 'bg-white shadow text-blue-700 dark:bg-blue-600 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
                     }`}
                 >
                     نظرة عامة
@@ -158,7 +183,7 @@ export default function Reports({ user }) {
                 <button
                     onClick={() => setFinancialTab(1)}
                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                        financialTab === 1 ? 'bg-white shadow text-blue-700' : 'text-slate-500 hover:text-slate-700'
+                        financialTab === 1 ? 'bg-white shadow text-blue-700 dark:bg-blue-600 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
                     }`}
                 >
                     كشف حساب (خزنة/بنك)
@@ -170,88 +195,88 @@ export default function Reports({ user }) {
                 {/* Summary Row - 4 Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Net Profit */}
-                    <Card decoration="top" decorationColor="emerald" className="bg-white">
+                    <Card decoration="top" decorationColor="emerald" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
                         <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl">
+                            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl dark:bg-emerald-500/20 dark:text-emerald-400">
                                 <TrendingUp className="w-8 h-8" />
                             </div>
                             <div>
-                                <Text>صافي الربح / الخسارة</Text>
-                                <Metric className={stats?.financial?.net_profit >= 0 ? "text-emerald-700" : "text-rose-600"}>
+                                <Text className="dark:text-slate-400">صافي الربح / الخسارة</Text>
+                                <Metric className={stats?.financial?.net_profit >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
                                     {formatCurrency(stats?.financial?.net_profit)}
                                 </Metric>
                             </div>
                         </Flex>
-                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4 dark:border-white/10">
                             <div>
-                                <Text className="text-xs">الإيرادات</Text>
-                                <div className="font-bold text-emerald-600">{formatCurrency(stats?.financial?.income)}</div>
+                                <Text className="text-xs dark:text-slate-400">الإيرادات</Text>
+                                <div className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.financial?.income)}</div>
                             </div>
                             <div>
-                                <Text className="text-xs">المصروفات</Text>
-                                <div className="font-bold text-rose-600">{formatCurrency(stats?.financial?.expense)}</div>
+                                <Text className="text-xs dark:text-slate-400">المصروفات</Text>
+                                <div className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(stats?.financial?.expense)}</div>
                             </div>
                         </div>
                     </Card>
 
                     {/* Total Cash (Banks + Safes) */}
-                    <Card decoration="top" decorationColor="indigo" className="bg-white">
+                    <Card decoration="top" decorationColor="indigo" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
                         <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
+                            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl dark:bg-indigo-500/20 dark:text-indigo-400">
                                 <Wallet className="w-8 h-8" />
                             </div>
                             <div>
-                                <Text>إجمالي النقد المتاح</Text>
-                                <Metric className="text-indigo-700">
+                                <Text className="dark:text-slate-400">إجمالي النقد المتاح</Text>
+                                <Metric className="text-indigo-700 dark:text-indigo-400">
                                     {formatCurrency(stats?.financial?.total_cash)}
                                 </Metric>
                             </div>
                         </Flex>
-                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4">
+                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4 dark:border-white/10">
                             <div>
-                                <Text className="text-xs">الخزائن ({stats?.financial?.safes?.length || 0})</Text>
-                                <div className="font-bold text-blue-600">{formatCurrency(stats?.financial?.total_safes)}</div>
+                                <Text className="text-xs dark:text-slate-400">الخزائن ({stats?.financial?.safes?.length || 0})</Text>
+                                <div className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats?.financial?.total_safes)}</div>
                             </div>
                             <div>
-                                <Text className="text-xs">البنوك ({stats?.financial?.banks?.length || 0})</Text>
-                                <div className="font-bold text-indigo-600">{formatCurrency(stats?.financial?.total_banks)}</div>
+                                <Text className="text-xs dark:text-slate-400">البنوك ({stats?.financial?.banks?.length || 0})</Text>
+                                <div className="font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(stats?.financial?.total_banks)}</div>
                             </div>
                         </div>
                     </Card>
 
                     {/* Inventory Valuation */}
-                    <Card decoration="top" decorationColor="blue" className="bg-white">
+                    <Card decoration="top" decorationColor="blue" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
                         <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
+                            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl dark:bg-blue-500/20 dark:text-blue-400">
                                 <Droplets className="w-8 h-8" />
                             </div>
                             <div>
-                                <Text>قيمة المخزون اللحظي</Text>
-                                <Metric>{formatCurrency(stats?.financial?.inventory_value)}</Metric>
+                                <Text className="dark:text-slate-400">قيمة المخزون اللحظي</Text>
+                                <Metric className="dark:text-white">{formatCurrency(stats?.financial?.inventory_value)}</Metric>
                             </div>
                         </Flex>
                         <Text className="mt-2 text-slate-400 text-xs">مجموع (حجم الخزان × السعر الحالي)</Text>
                     </Card>
 
                     {/* Debts Summary */}
-                    <Card decoration="top" decorationColor="amber" className="bg-white">
+                    <Card decoration="top" decorationColor="amber" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
                          <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-amber-100 text-amber-600 rounded-xl">
+                            <div className="p-3 bg-amber-100 text-amber-600 rounded-xl dark:bg-amber-500/20 dark:text-amber-400">
                                 <Briefcase className="w-8 h-8" />
                             </div>
                             <div>
-                                <Text>الذمم والديون</Text>
-                                <div className="text-2xl font-bold text-slate-700">ملخص الأرصدة</div>
+                                <Text className="dark:text-slate-400">الذمم والديون</Text>
+                                <div className="text-2xl font-bold text-slate-700 dark:text-white">ملخص الأرصدة</div>
                             </div>
                         </Flex>
                         <div className="mt-4 space-y-3">
                             <Flex className="justify-between">
-                                <Text>ديون الشركات (لنا)</Text>
-                                <Text className="font-bold text-emerald-600">{formatCurrency(stats?.financial?.corporate_debts)}</Text>
+                                <Text className="dark:text-slate-400">ديون الشركات (لنا)</Text>
+                                <Text className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.financial?.corporate_debts)}</Text>
                             </Flex>
                             <Flex className="justify-between">
-                                <Text>التزامات الموردين (علينا)</Text>
-                                <Text className="font-bold text-rose-600">{formatCurrency(stats?.financial?.supplier_debts)}</Text>
+                                <Text className="dark:text-slate-400">التزامات الموردين (علينا)</Text>
+                                <Text className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(stats?.financial?.supplier_debts)}</Text>
                             </Flex>
                         </div>
                     </Card>
@@ -260,17 +285,17 @@ export default function Reports({ user }) {
                 {/* Detail Grids */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Banks & Safes Details */}
-                    <Card className="bg-white">
-                        <Title className="text-slate-800 mb-4">💰 تفاصيل الأرصدة النقدية</Title>
+                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                        <Title className="text-slate-800 mb-4 dark:text-white">💰 تفاصيل الأرصدة النقدية</Title>
                         <div className="space-y-4">
                             {/* Safes */}
                             <div>
-                                <Text className="font-bold text-blue-600 mb-2">الخزائن</Text>
+                                <Text className="font-bold text-blue-600 mb-2 dark:text-blue-400">الخزائن</Text>
                                 <div className="space-y-2">
                                     {stats?.financial?.safes?.map((safe, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2 bg-blue-50 rounded-lg">
-                                            <span className="font-medium text-slate-700">{safe.name}</span>
-                                            <span className="font-bold text-blue-700">{formatCurrency(safe.balance)}</span>
+                                        <div key={idx} className="flex justify-between items-center p-2 bg-blue-50 rounded-lg dark:bg-blue-900/20">
+                                            <span className="font-medium text-slate-700 dark:text-slate-300">{safe.name}</span>
+                                            <span className="font-bold text-blue-700 dark:text-blue-400">{formatCurrency(safe.balance)}</span>
                                         </div>
                                     ))}
                                     {(!stats?.financial?.safes || stats?.financial?.safes.length === 0) && (
@@ -280,17 +305,17 @@ export default function Reports({ user }) {
                             </div>
                             {/* Banks */}
                             <div>
-                                <Text className="font-bold text-indigo-600 mb-2">البنوك</Text>
+                                <Text className="font-bold text-indigo-600 mb-2 dark:text-indigo-400">البنوك</Text>
                                 <div className="space-y-2">
                                     {stats?.financial?.banks?.map((bank, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg">
+                                        <div key={idx} className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg dark:bg-indigo-900/20">
                                             <div>
-                                                <span className="font-medium text-slate-700">{bank.name}</span>
+                                                <span className="font-medium text-slate-700 dark:text-slate-300">{bank.name}</span>
                                                 {bank.account_number && (
                                                     <span className="text-xs text-slate-400 mr-2">({bank.account_number})</span>
                                                 )}
                                             </div>
-                                            <span className="font-bold text-indigo-700">{formatCurrency(bank.balance)}</span>
+                                            <span className="font-bold text-indigo-700 dark:text-indigo-400">{formatCurrency(bank.balance)}</span>
                                         </div>
                                     ))}
                                     {(!stats?.financial?.banks || stats?.financial?.banks.length === 0) && (
@@ -302,8 +327,8 @@ export default function Reports({ user }) {
                     </Card>
 
                     {/* Expense Breakdown */}
-                    <Card className="bg-white">
-                        <Title className="text-slate-800 mb-4">📊 توزيع المصروفات حسب الفئة</Title>
+                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                        <Title className="text-slate-800 mb-4 dark:text-white">📊 توزيع المصروفات حسب الفئة</Title>
                         <div className="space-y-3">
                             {stats?.financial?.expense_breakdown?.map((cat, idx) => {
                                 const percentage = stats?.financial?.expense > 0 
@@ -312,10 +337,10 @@ export default function Reports({ user }) {
                                 return (
                                     <div key={idx} className="space-y-1">
                                         <div className="flex justify-between text-sm">
-                                            <span className="font-medium text-slate-700">{cat.category_name}</span>
-                                            <span className="font-bold text-rose-600">{formatCurrency(cat.total_amount)}</span>
+                                            <span className="font-medium text-slate-700 dark:text-slate-300">{cat.category_name}</span>
+                                            <span className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(cat.total_amount)}</span>
                                         </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden dark:bg-slate-700">
                                             <div 
                                                 className="h-full bg-gradient-to-r from-rose-400 to-rose-600 rounded-full transition-all duration-500"
                                                 style={{ width: `${percentage}%` }}
@@ -338,18 +363,18 @@ export default function Reports({ user }) {
                 {/* Top Customers & Suppliers */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Top Customers (who owe us) */}
-                    <Card className="bg-white">
-                        <Title className="text-slate-800 mb-4">👥 أكبر العملاء المدينين (لنا)</Title>
+                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                        <Title className="text-slate-800 mb-4 dark:text-white">👥 أكبر العملاء المدينين (لنا)</Title>
                         <div className="space-y-2">
                             {stats?.financial?.top_customers?.map((customer, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                                <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-900/30">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                                             {idx + 1}
                                         </div>
-                                        <span className="font-medium text-slate-700">{customer.name}</span>
+                                        <span className="font-medium text-slate-700 dark:text-slate-300">{customer.name}</span>
                                     </div>
-                                    <span className="font-bold text-emerald-700">{formatCurrency(customer.balance)}</span>
+                                    <span className="font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(customer.balance)}</span>
                                 </div>
                             ))}
                             {(!stats?.financial?.top_customers || stats?.financial?.top_customers.length === 0) && (
@@ -359,18 +384,18 @@ export default function Reports({ user }) {
                     </Card>
 
                     {/* Top Suppliers (we owe them) */}
-                    <Card className="bg-white">
-                        <Title className="text-slate-800 mb-4">🚛 أكبر الموردين الدائنين (علينا)</Title>
+                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                        <Title className="text-slate-800 mb-4 dark:text-white">🚛 أكبر الموردين الدائنين (علينا)</Title>
                         <div className="space-y-2">
                             {stats?.financial?.top_suppliers?.map((supplier, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-3 bg-rose-50 rounded-lg border border-rose-100">
+                                <div key={idx} className="flex justify-between items-center p-3 bg-rose-50 rounded-lg border border-rose-100 dark:bg-rose-900/20 dark:border-rose-900/30">
                                     <div className="flex items-center gap-3">
                                         <div className="w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
                                             {idx + 1}
                                         </div>
-                                        <span className="font-medium text-slate-700">{supplier.name}</span>
+                                        <span className="font-medium text-slate-700 dark:text-slate-300">{supplier.name}</span>
                                     </div>
-                                    <span className="font-bold text-rose-700">{formatCurrency(supplier.balance)}</span>
+                                    <span className="font-bold text-rose-700 dark:text-rose-400">{formatCurrency(supplier.balance)}</span>
                                 </div>
                             ))}
                             {(!stats?.financial?.top_suppliers || stats?.financial?.top_suppliers.length === 0) && (
@@ -381,7 +406,7 @@ export default function Reports({ user }) {
                 </div>
                 </>
             ) : (
-                <FinancialFlowReport />
+                <FinancialFlowReport initialGroup={new URLSearchParams(window.location.search).get('group')} />
             )}
         </div>
     );
@@ -391,18 +416,18 @@ export default function Reports({ user }) {
         <div className="space-y-6 animate-fade-in">
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card decoration="top" decorationColor="blue" className="bg-white">
-                    <Text>قيمة المخزون الحالي</Text>
-                    <Metric className="mt-2 text-blue-700">{formatCurrency(stats?.financial?.inventory_value)}</Metric>
+                <Card decoration="top" decorationColor="blue" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                    <Text className="dark:text-slate-400">قيمة المخزون الحالي</Text>
+                    <Metric className="mt-2 text-blue-700 dark:text-blue-400">{formatCurrency(stats?.financial?.inventory_value)}</Metric>
                 </Card>
-                <Card decoration="top" decorationColor="cyan" className="bg-white">
-                    <Text>الوارد (مشتريات) للفترة</Text>
-                    <Metric className="mt-2 text-cyan-700">{formatNumber(stats?.warehouse?.incoming_stock?.total_volume)} <span className="text-sm">لتر</span></Metric>
+                <Card decoration="top" decorationColor="cyan" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                    <Text className="dark:text-slate-400">الوارد (مشتريات) للفترة</Text>
+                    <Metric className="mt-2 text-cyan-700 dark:text-cyan-400">{formatNumber(stats?.warehouse?.incoming_stock?.total_volume)} <span className="text-sm">لتر</span></Metric>
                     <Text className="mt-2 text-xs text-slate-400">بتكلفة: {formatCurrency(stats?.warehouse?.incoming_stock?.total_cost)}</Text>
                 </Card>
-                <Card decoration="top" decorationColor="orange" className="bg-white">
-                     <Text>فاقد التبخر (تقديري)</Text>
-                     <Metric className="mt-2 text-orange-700">{formatNumber(stats?.financial?.evaporation_loss)} <span className="text-sm">لتر</span></Metric>
+                <Card decoration="top" decorationColor="orange" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                     <Text className="dark:text-slate-400">فاقد التبخر (تقديري)</Text>
+                     <Metric className="mt-2 text-orange-700 dark:text-orange-400">{formatNumber(stats?.financial?.evaporation_loss)} <span className="text-sm">لتر</span></Metric>
                      <Text className="mt-2 text-xs text-slate-400">حسب التباين بين الأرصدة</Text>
                 </Card>
             </div>
@@ -440,7 +465,7 @@ export default function Reports({ user }) {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: idx * 0.1 }}
                         >
-                            <Card className={`relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-2 ${
+                            <Card className={`relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-2 dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 ${
                                 isCritical ? 'border-red-300 animate-pulse' : isLow ? 'border-orange-300' : 'border-slate-200'
                             }`}>
                                 {/* Animated Fill Background */}
@@ -492,20 +517,20 @@ export default function Reports({ user }) {
 
                                 {/* Stats Grid */}
                                 <div className="grid grid-cols-2 gap-3 mt-4 relative z-10">
-                                    <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-slate-100">
-                                        <Text className="text-xs text-slate-500 mb-1">القيمة الإجمالية</Text>
+                                    <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-slate-100 dark:bg-slate-800/80 dark:border-slate-700">
+                                        <Text className="text-xs text-slate-500 mb-1 dark:text-slate-400">القيمة الإجمالية</Text>
                                         <div className="font-bold text-emerald-600">{formatCurrency(tank.value)}</div>
                                     </div>
-                                    <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-slate-100">
-                                        <Text className="text-xs text-slate-500 mb-1">آخر معايرة</Text>
-                                        <div className="font-mono text-xs font-bold text-slate-700">
+                                    <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-slate-100 dark:bg-slate-800/80 dark:border-slate-700">
+                                        <Text className="text-xs text-slate-500 mb-1 dark:text-slate-400">آخر معايرة</Text>
+                                        <div className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                                             {tank.last_calibration === 'N/A' ? 'غير متوفر' : new Date(tank.last_calibration).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Variance Indicator */}
-                                <div className={`mt-3 pt-3 border-t border-slate-100 flex justify-between items-center relative z-10`}>
+                                <div className={`mt-3 pt-3 border-t border-slate-100 flex justify-between items-center relative z-10 dark:border-white/10`}>
                                     <Text className="text-xs text-slate-500">التباين (Variance)</Text>
                                     <div className="flex items-center gap-2">
                                         <span className={`font-mono font-bold text-sm ${
@@ -530,12 +555,12 @@ export default function Reports({ user }) {
             {/* Detailed Tables Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
                 {/* Incoming Stock Log */}
-                <Card className="bg-white">
-                    <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2">سجل الوارد (المشتريات)</Title>
+                <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                    <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2 dark:text-white dark:border-white/10">سجل الوارد (المشتريات)</Title>
                     {stats?.warehouse?.incoming_stock?.list?.length > 0 ? (
                         <div className="overflow-x-auto max-h-80 overflow-y-auto">
                             <table className="w-full text-right text-sm">
-                                <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10">
+                                <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10 dark:bg-white/5 dark:text-slate-400">
                                     <tr>
                                         <th className="p-3">التاريخ</th>
                                         <th className="p-3">المورد</th>
@@ -543,13 +568,13 @@ export default function Reports({ user }) {
                                         <th className="p-3">الكمية</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                                     {stats.warehouse.incoming_stock.list.map((item, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50">
-                                            <td className="p-3 whitespace-nowrap">{new Date(item.created_at).toLocaleDateString()}</td>
-                                            <td className="p-3 font-bold">{item.supplier_name}</td>
-                                            <td className="p-3 text-xs">{item.tank_name}</td>
-                                            <td className="p-3 font-mono text-blue-600">{formatNumber(item.volume_received)}</td>
+                                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                                            <td className="p-3 whitespace-nowrap dark:text-slate-300">{new Date(item.created_at).toLocaleDateString()}</td>
+                                            <td className="p-3 font-bold dark:text-white">{item.supplier_name}</td>
+                                            <td className="p-3 text-xs dark:text-slate-400">{item.tank_name}</td>
+                                            <td className="p-3 font-mono text-blue-600 dark:text-blue-400">{formatNumber(item.volume_received)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -561,37 +586,47 @@ export default function Reports({ user }) {
                 </Card>
 
                 {/* Tank Readings Log */}
-                <Card className="bg-white">
-                    <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2">سجل قراءات الخزانات (المعايرة والقياس)</Title>
+                <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                    <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2 dark:text-white dark:border-white/10">سجل قراءات الخزانات (المعايرة والقياس)</Title>
                     {stats?.warehouse?.readings?.length > 0 ? (
                         <div className="overflow-x-auto max-h-80 overflow-y-auto">
                             <table className="w-full text-right text-sm">
-                                <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10">
+                                <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10 dark:bg-white/5 dark:text-slate-400">
                                     <tr>
                                         <th className="p-3">التاريخ</th>
+                                        <th className="p-3">وقت المعايرة</th>
                                         <th className="p-3">الخزان</th>
-                                        <th className="p-3">النوع</th>
-                                        <th className="p-3">القراءة (سم)</th>
-                                        <th className="p-3">الحجم (لتر)</th>
+                                        <th className="p-3">مشرف الوردية</th>
+                                        <th className="p-3">القراءة السابقة</th>
+                                        <th className="p-3">القراءة الحالية</th>
+                                        <th className="p-3">عجز وزيادة</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
+                                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                                     {stats.warehouse.readings.map((reading, idx) => (
-                                        <tr key={idx} className="hover:bg-slate-50">
-                                            <td className="p-3 whitespace-nowrap">{new Date(reading.created_at).toLocaleDateString()}</td>
-                                            <td className="p-3 font-bold">{reading.tank_name}</td>
-                                            <td className="p-3 text-xs">
-                                                <span className={`px-2 py-1 rounded-full ${
-                                                    reading.reading_type === 'opening' ? 'bg-indigo-100 text-indigo-700' :
-                                                    reading.reading_type === 'closing' ? 'bg-slate-100 text-slate-700' :
-                                                    reading.reading_type === 'check' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-green-100 text-green-700'
-                                                }`}>
-                                                    {reading.reading_type === 'check' ? 'معايرة/فحص' : reading.reading_type}
-                                                </span>
+                                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                                            <td className="p-3 whitespace-nowrap dark:text-slate-300">
+                                                {new Date(reading.created_at).toLocaleDateString('ar-EG')}
                                             </td>
-                                            <td className="p-3 font-mono">{reading.reading_cm}</td>
-                                            <td className="p-3 font-mono font-bold text-slate-700">{formatNumber(reading.volume_liters)}</td>
+                                            <td className="p-3 whitespace-nowrap dark:text-slate-300 font-mono text-xs">
+                                                {new Date(reading.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                            </td>
+                                            <td className="p-3 font-bold dark:text-white">{reading.tank_name}</td>
+                                            <td className="p-3 text-xs text-slate-600 dark:text-slate-400">{reading.user_name || '-'}</td>
+                                            <td className="p-3 font-mono text-slate-500 dark:text-slate-400">
+                                                {reading.previous_quantity ? formatNumber(reading.previous_quantity) : '-'}
+                                            </td>
+                                            <td className="p-3 font-mono font-bold text-slate-700 dark:text-white">
+                                                {formatNumber(reading.volume_liters)}
+                                            </td>
+                                            <td className={`p-3 font-mono font-bold ${
+                                                parseFloat(reading.variance) < 0 ? 'text-red-600 dark:text-red-400' : 
+                                                parseFloat(reading.variance) > 0 ? 'text-lime-600 dark:text-lime-400' : 
+                                                'text-slate-400'
+                                            }`}>
+                                                {parseFloat(reading.variance) > 0 && '+'}
+                                                {formatNumber(reading.variance)}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -605,11 +640,11 @@ export default function Reports({ user }) {
 
             {/* NEW: Calibration Logs Table */}
             {stats?.warehouse?.calibration_logs && stats.warehouse.calibration_logs.length > 0 && (
-                <Card className="bg-white mt-6">
-                    <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2">سجل المعايرة</Title>
+                <Card className="bg-white mt-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                    <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2 dark:text-white dark:border-white/10">سجل المعايرة</Title>
                     <div className="overflow-x-auto max-h-96 overflow-y-auto">
                         <table className="w-full text-right text-sm">
-                            <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10">
+                            <thead className="bg-slate-50 text-slate-500 sticky top-0 z-10 dark:bg-white/5 dark:text-slate-400">
                                 <tr>
                                     <th className="p-3">التاريخ</th>
                                     <th className="p-3">الخزان</th>
@@ -620,16 +655,16 @@ export default function Reports({ user }) {
                                     <th className="p-3">ملاحظات</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                                 {stats.warehouse.calibration_logs.map((log, idx) => (
-                                    <tr key={idx} className={`hover:bg-slate-50 ${log.tank_updated ? 'bg-amber-50/30' : ''}`}>
-                                        <td className="p-3 whitespace-nowrap text-xs">
+                                    <tr key={idx} className={`hover:bg-slate-50 dark:hover:bg-white/5 ${log.tank_updated ? 'bg-amber-50/30' : ''}`}>
+                                        <td className="p-3 whitespace-nowrap text-xs dark:text-slate-300">
                                             {new Date(log.created_at).toLocaleString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                         </td>
-                                        <td className="p-3 font-bold text-slate-700">{log.tank_name}</td>
-                                        <td className="p-3 text-xs text-slate-600">{log.user_name || 'غير معروف'}</td>
-                                        <td className="p-3 font-mono text-blue-600">{formatNumber(log.previous_quantity)} L</td>
-                                        <td className="p-3 font-mono text-indigo-600 font-bold">{formatNumber(log.actual_quantity)} L</td>
+                                        <td className="p-3 font-bold text-slate-700 dark:text-white">{log.tank_name}</td>
+                                        <td className="p-3 text-xs text-slate-600 dark:text-slate-400">{log.user_name || 'غير معروف'}</td>
+                                        <td className="p-3 font-mono text-blue-600 dark:text-blue-400">{formatNumber(log.previous_quantity)} L</td>
+                                        <td className="p-3 font-mono text-indigo-600 font-bold dark:text-indigo-400">{formatNumber(log.actual_quantity)} L</td>
                                         <td className={`p-3 font-mono font-bold ${
                                             parseFloat(log.variance) > 0 ? 'text-green-600' : 
                                             parseFloat(log.variance) < 0 ? 'text-red-600' : 
@@ -648,16 +683,16 @@ export default function Reports({ user }) {
                             </tbody>
                         </table>
                     </div>
-                    <div className="mt-3 p-3 bg-slate-50 rounded-lg text-xs text-slate-600">
+                    <div className="mt-3 p-3 bg-slate-50 rounded-lg text-xs text-slate-600 dark:bg-white/5 dark:text-slate-400">
                         💡 السجلات ذات الخلفية الصفراء تشير إلى تحديث رصيد الخزان مباشرة من المعايرة
                     </div>
                 </Card>
             )}
 
             {/* Pending Shipments Section - NEW */}
-            <Card className="bg-white mt-6">
-                <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
-                    <Title className="text-slate-700 flex items-center gap-2">
+            <Card className="bg-white mt-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-100 dark:border-white/10">
+                    <Title className="text-slate-700 flex items-center gap-2 dark:text-white">
                         <Truck className="w-5 h-5 text-orange-500" />
                         تناكر شاحنة
                     </Title>
@@ -678,10 +713,10 @@ export default function Reports({ user }) {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: idx * 0.05 }}
-                                    className={`p-4 rounded-xl border-2 transition-all hover:shadow-md ${
+                                    className={`p-4 rounded-xl border-2 transition-all hover:shadow-md dark:bg-white/5 ${
                                         isDelayed 
-                                        ? 'border-red-200 bg-red-50/50 hover:border-red-300' 
-                                        : 'border-orange-200 bg-orange-50/30 hover:border-orange-300'
+                                        ? 'border-red-200 bg-red-50/50 hover:border-red-300 dark:border-red-900/50 dark:bg-red-900/20' 
+                                        : 'border-orange-200 bg-orange-50/30 hover:border-orange-300 dark:border-orange-900/50 dark:bg-orange-900/20'
                                     }`}
                                 >
                                     {/* Header */}
@@ -693,22 +728,22 @@ export default function Reports({ user }) {
                                                 <Truck className="w-5 h-5" />
                                             </div>
                                             <div>
-                                                <div className="font-bold text-slate-800">#{shipment.invoice_number}</div>
-                                                <div className="text-xs text-slate-500">{shipment.supplier_name}</div>
+                                                <div className="font-bold text-slate-800 dark:text-white">#{shipment.invoice_number}</div>
+                                                <div className="text-xs text-slate-500 dark:text-slate-400">{shipment.supplier_name}</div>
                                             </div>
-                                        </div>
                                         {isDelayed && (
                                             <span className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full animate-pulse">
                                                 تأخير!
                                             </span>
                                         )}
                                     </div>
+                                </div>
                                     
                                     {/* Details */}
                                     <div className="space-y-2 text-sm">
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">نوع الوقود:</span>
-                                            <span className="font-bold text-slate-700 flex items-center gap-1">
+                                            <span className="text-slate-500 dark:text-slate-400">نوع الوقود:</span>
+                                            <span className="font-bold text-slate-700 flex items-center gap-1 dark:text-slate-200">
                                                 <span 
                                                     className="w-3 h-3 rounded-full" 
                                                     style={{ backgroundColor: shipment.fuel_color || '#94a3b8' }}
@@ -717,22 +752,22 @@ export default function Reports({ user }) {
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">الكمية:</span>
-                                            <span className="font-mono font-bold text-blue-600">
+                                            <span className="text-slate-500 dark:text-slate-400">الكمية:</span>
+                                            <span className="font-mono font-bold text-blue-600 dark:text-blue-400">
                                                 {formatNumber(shipment.volume_ordered)} L
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">السائق:</span>
-                                            <span className="font-medium text-slate-700">
+                                            <span className="text-slate-500 dark:text-slate-400">السائق:</span>
+                                            <span className="font-medium text-slate-700 dark:text-slate-200">
                                                 {shipment.driver_name_resolved || shipment.driver_name || 'غير محدد'}
                                             </span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span className="text-slate-500">التاريخ:</span>
-                                            <span className="font-mono text-slate-600 text-xs">
+                                            <span className="text-slate-500 dark:text-slate-400">التاريخ:</span>
+                                            <span className="font-mono text-slate-600 text-xs dark:text-slate-400">
                                                 {new Date(shipment.created_at).toLocaleDateString('ar-EG')}
-                                                <span className={`mr-1 ${isDelayed ? 'text-red-600' : 'text-slate-400'}`}>
+                                                <span className={`mr-1 ${isDelayed ? 'text-red-600 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}`}>
                                                     ({daysAgo} {daysAgo === 1 ? 'يوم' : 'أيام'})
                                                 </span>
                                             </span>
@@ -740,7 +775,7 @@ export default function Reports({ user }) {
                                     </div>
                                     
                                     {/* Status Banner */}
-                                    <div className={`mt-3 pt-3 border-t ${isDelayed ? 'border-red-200' : 'border-orange-200'} text-center`}>
+                                    <div className={`mt-3 pt-3 border-t ${isDelayed ? 'border-red-200 dark:border-red-900/50' : 'border-orange-200 dark:border-orange-900/50'} text-center`}>
                                         <span className={`text-xs font-bold ${isDelayed ? 'text-red-700' : 'text-orange-700'}`}>
                                             {shipment.status === 'ordered' && '📦 تم الطلب'}
                                             {shipment.status === 'in_transit' && '🚚 في الطريق'}
@@ -764,12 +799,12 @@ export default function Reports({ user }) {
             </Card>
 
             {/* Daily Stock Reconciliation Table */}
-            <Card className="bg-white mt-6">
-                <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2">تفاصيل حركة المخزون اليومية (مطابقة الأرصدة)</Title>
+            <Card className="bg-white mt-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+                <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2 dark:text-white dark:border-white/10">تفاصيل حركة المخزون اليومية (مطابقة الأرصدة)</Title>
                 {stats?.warehouse?.daily_reconciliation?.length > 0 ? (
                     <div className="overflow-x-auto">
                         <table className="w-full text-right text-sm">
-                            <thead className="bg-slate-50 text-slate-500 font-bold">
+                            <thead className="bg-slate-50 text-slate-500 font-bold dark:bg-white/5 dark:text-slate-400">
                                 <tr>
                                     <th className="p-3">التاريخ</th>
                                     <th className="p-3">الخزان</th>
@@ -781,11 +816,11 @@ export default function Reports({ user }) {
                                     <th className="p-3">الفارق (Variance)</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                                 {stats.warehouse.daily_reconciliation.map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50">
-                                        <td className="p-3 whitespace-nowrap">{row.date}</td>
-                                        <td className="p-3 font-bold">{row.tank_name}</td>
+                                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                                        <td className="p-3 whitespace-nowrap dark:text-slate-300">{row.date}</td>
+                                        <td className="p-3 font-bold dark:text-white">{row.tank_name}</td>
                                         <td className="p-3 font-mono">{formatNumber(row.opening)}</td>
                                         <td className="p-3 font-mono text-cyan-600">{formatNumber(row.in)}</td>
                                         <td className="p-3 font-mono text-rose-600">{formatNumber(row.out)}</td>
@@ -814,6 +849,14 @@ export default function Reports({ user }) {
     
     // Sales Cards - REFACTORED
     const [salesTab, setSalesTab] = useState(0); // 0: Overview, 1: Daily Report, 2: Tank Report
+    
+    // Check subtab param for sales
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'sales' && params.get('subtab') === 'tank_sales') {
+            setSalesTab(2);
+        }
+    }, []);
 
     const renderSales = () => (
         <div className="animate-fade-in space-y-6">
@@ -1093,47 +1136,47 @@ export default function Reports({ user }) {
 
             {/* Sub Navigation */}
             <TabGroup index={activeTab} onIndexChange={setActiveTab}>
-                <TabList variant="solid" className="bg-white p-1 rounded-2xl shadow-sm border border-slate-100">
+                <TabList variant="solid" className="bg-white/80 backdrop-blur-md p-1 rounded-2xl shadow-sm border border-slate-100 dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:ring-white/10">
                     {/* LOCAL REPORTS SECTION */}
-                    <div className="inline-flex items-center px-3 py-1 bg-slate-100 rounded-lg mr-2">
-                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">📍 تقارير محلية</span>
+                    <div className="hidden md:inline-flex items-center px-3 py-1 bg-slate-100/50 rounded-lg mr-2 dark:bg-white/5 mx-2">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">📍 تقارير محلية</span>
                     </div>
                     
-                     <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-emerald-600 ui-selected:text-white ui-selected:shadow-md transition-all">
+                     <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-emerald-600 ui-selected:text-white ui-selected:shadow-md transition-all dark:text-slate-400 dark:ui-selected:text-white">
                         <div className="flex items-center gap-2">
                             <DollarSign className="w-5 h-5"/> <span>المالية</span>
                         </div>
                     </Tab>
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-blue-600 ui-selected:text-white ui-selected:shadow-md transition-all">
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-blue-600 ui-selected:text-white ui-selected:shadow-md transition-all dark:text-slate-400 dark:ui-selected:text-white">
                         <div className="flex items-center gap-2">
                              <Droplets className="w-5 h-5"/> <span>المستودعات</span>
                         </div>
                     </Tab>
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-violet-600 ui-selected:text-white ui-selected:shadow-md transition-all">
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-violet-600 ui-selected:text-white ui-selected:shadow-md transition-all dark:text-slate-400 dark:ui-selected:text-white">
                         <div className="flex items-center gap-2">
                              <TrendingUp className="w-5 h-5"/> <span>المبيعات</span>
                         </div>
                     </Tab>
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-amber-500 ui-selected:text-white ui-selected:shadow-md transition-all">
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-amber-500 ui-selected:text-white ui-selected:shadow-md transition-all dark:text-slate-400 dark:ui-selected:text-white">
                         <div className="flex items-center gap-2">
                              <Users className="w-5 h-5"/> <span>الموظفين</span>
                         </div>
                     </Tab>
 
                     {/* DIVIDER */}
-                    <div className="inline-block w-px h-8 bg-slate-200 mx-3"></div>
+                    <div className="hidden md:inline-block w-px h-8 bg-slate-200 mx-3 dark:bg-white/10"></div>
 
                     {/* GLOBAL REPORTS SECTION */}
-                    <div className="inline-flex items-center px-3 py-1 bg-gradient-to-r from-cyan-100 to-blue-100 rounded-lg mr-2">
-                        <span className="text-xs font-bold text-cyan-700 uppercase tracking-wider">🌍 تقارير عامة</span>
+                    <div className="hidden md:inline-flex items-center px-3 py-1 bg-gradient-to-r from-cyan-100/50 to-blue-100/50 rounded-lg mr-2 dark:from-cyan-900/20 dark:to-blue-900/20">
+                        <span className="text-xs font-bold text-cyan-700 uppercase tracking-wider dark:text-cyan-400">🌍 تقارير عامة</span>
                     </div>
                     
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-gradient-to-r ui-selected:from-cyan-600 ui-selected:to-blue-600 ui-selected:text-white ui-selected:shadow-lg transition-all">
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-gradient-to-r ui-selected:from-cyan-600 ui-selected:to-blue-600 ui-selected:text-white ui-selected:shadow-lg transition-all dark:text-slate-400 dark:ui-selected:text-white">
                         <div className="flex items-center gap-2">
                              <Truck className="w-5 h-5"/> <span>تقرير مورد</span>
                         </div>
                     </Tab>
-                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-gradient-to-r ui-selected:from-emerald-600 ui-selected:to-green-600 ui-selected:text-white ui-selected:shadow-lg transition-all">
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-gradient-to-r ui-selected:from-emerald-600 ui-selected:to-green-600 ui-selected:text-white ui-selected:shadow-lg transition-all dark:text-slate-400 dark:ui-selected:text-white">
                         <div className="flex items-center gap-2">
                              <Users className="w-5 h-5"/> <span>تقرير عميل</span>
                         </div>

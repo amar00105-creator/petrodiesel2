@@ -12,7 +12,7 @@ use App\Models\Customer;
 use App\Helpers\AuthHelper;
 use App\Helpers\ViteHelper;
 
-require_once __DIR__ . '/../Models/Finance.php'; // Contains Safe and Bank
+
 require_once __DIR__ . '/../Models/Transaction.php';
 require_once __DIR__ . '/../Models/TransactionCategory.php';
 require_once __DIR__ . '/../Models/Supplier.php';

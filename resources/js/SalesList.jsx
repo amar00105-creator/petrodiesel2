@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, Title, Text, TextInput, Select, SelectItem, Badge, Button, Flex } from '@tremor/react';
-import { Search, Filter, Download, FileText, Trash2, Edit, ChevronLeft, ChevronRight, Fuel, Calendar, CreditCard, Plus, Eye } from 'lucide-react';
+import { Search, Filter, Download, FileText, Trash2, Edit, ChevronLeft, ChevronRight, Fuel, Calendar, CreditCard, Plus, Eye, RefreshCw, Database, Droplets, Wallet, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
@@ -9,8 +9,8 @@ import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 export default function SalesList({ sales = [] }) {
     const [search, setSearch] = useState('');
-    const [filterPump, setFilterPump] = useState('');
-    const [filterMethod, setFilterMethod] = useState('');
+    const [filterType, setFilterType] = useState(''); // 'pump', 'fuel', 'method', 'safe', 'bank'
+    const [filterValue, setFilterValue] = useState('');
 
     const [allSales, setAllSales] = useState(sales); // Local state for optimistic updates
 
@@ -37,7 +37,10 @@ export default function SalesList({ sales = [] }) {
             unit_price: sale.unit_price || 0,
             method: method === 'cash' ? 'نقدي' : 'آجل',
             account: accountName,
-            raw_method: method
+            raw_method: method,
+            raw_safe: sale.safe_name, // For filtering
+            raw_bank: sale.bank_name, // For filtering
+            raw_customer: sale.customer_name // For filtering
         };
     });
 
@@ -96,11 +99,44 @@ export default function SalesList({ sales = [] }) {
         }
     };
 
-    const filteredSales = normalizedSales.filter(sale => 
-        (sale.id.toString().includes(search) || sale.pump.toLowerCase().includes(search.toLowerCase())) &&
-        (filterPump ? sale.pump === filterPump : true) &&
-        (filterMethod ? sale.method.toLowerCase() === filterMethod.toLowerCase() : true)
-    );
+    // Dynamic Filter Options
+    const getFilterOptions = () => {
+        if (!filterType) return [];
+        const options = new Set();
+        normalizedSales.forEach(sale => {
+            if (filterType === 'pump') options.add(sale.pump);
+            else if (filterType === 'fuel') options.add(sale.fuel);
+            else if (filterType === 'method') options.add(sale.method); // 'نقدي', 'آجل'
+            else if (filterType === 'safe') {
+                if (sale.raw_safe) options.add(sale.raw_safe);
+                if (sale.raw_bank) options.add(sale.raw_bank);
+            }
+        });
+        return Array.from(options).filter(Boolean).sort();
+    };
+
+    const filteredSales = normalizedSales.filter(sale => {
+        const matchesSearch = 
+            sale.id.toString().includes(search) || 
+            sale.pump.toLowerCase().includes(search.toLowerCase());
+
+        // Dynamic Filtering Logic
+        let matchesFilter = true;
+        if (filterType && filterValue) {
+            if (filterType === 'pump') matchesFilter = sale.pump === filterValue;
+            else if (filterType === 'fuel') matchesFilter = sale.fuel === filterValue;
+            else if (filterType === 'method') matchesFilter = sale.method === filterValue;
+            else if (filterType === 'safe') matchesFilter = (sale.raw_safe === filterValue || sale.raw_bank === filterValue);
+        }
+
+        return matchesSearch && matchesFilter;
+    });
+
+    const resetFilters = () => {
+        setFilterType('');
+        setFilterValue('');
+        setSearch('');
+    };
 
     return (
         <motion.div 
@@ -128,8 +164,8 @@ export default function SalesList({ sales = [] }) {
             {/* Header & Actions */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <Title className="text-3xl font-bold text-navy-900 font-cairo">سجل المبيعات</Title>
-                    <Text className="text-slate-500">استعراض وإدارة جميع عمليات بيع الوقود</Text>
+                    <Title className="text-3xl font-bold text-navy-900 font-cairo dark:text-white">سجل المبيعات</Title>
+                    <Text className="text-slate-500 dark:text-slate-400">استعراض وإدارة جميع عمليات بيع الوقود</Text>
                 </div>
                 <div className="flex gap-6">
                     <button onClick={() => window.location.href=`${window.BASE_URL}/sales/create`} className="button">
@@ -158,44 +194,90 @@ export default function SalesList({ sales = [] }) {
             </div>
 
             {/* Filters Bar */}
-            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="relative">
-                        <Search className="absolute right-3 top-3 text-slate-400 w-5 h-5"/>
-                        <TextInput 
-                            placeholder="بحث برقم العملية..." 
-                            className="pl-4 pr-10 py-2 rounded-xl"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <Select placeholder="فلتر الماكينة" value={filterPump} onValueChange={setFilterPump} className="rounded-xl">
-                        <SelectItem value="Pump 1" icon={Fuel}>Pump 1</SelectItem>
-                        <SelectItem value="Pump 2" icon={Fuel}>Pump 2</SelectItem>
-                        <SelectItem value="Pump 3" icon={Fuel}>Pump 3</SelectItem>
-                    </Select>
-                    <Select placeholder="طريقة الدفع" value={filterMethod} onValueChange={setFilterMethod} className="rounded-xl">
-                        <SelectItem value="Cash" icon={BanknoteIcon}>نقدي (Cash)</SelectItem>
-                        <SelectItem value="Credit" icon={CreditCard}>آجل (Credit)</SelectItem>
-                    </Select>
-                    <div className="flex items-center gap-2">
-                        <div className="relative w-full">
-                            <Calendar className="absolute right-3 top-3 text-slate-400 w-5 h-5"/>
-                            <TextInput type="date" className="pl-4 pr-10 py-2 rounded-xl" />
+            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                    {/* Search - Spans 3 columns */}
+                    <div className="md:col-span-3 relative">
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">البحث</label>
+                        <div className="relative">
+                            <Search className="absolute right-3 top-2.5 text-slate-400 w-5 h-5"/>
+                            <TextInput 
+                                placeholder="بحث برقم العملية..." 
+                                className="pl-4 pr-10 py-2 rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20 w-full transition-all focus:ring-2 focus:ring-blue-100 dark:focus:ring-white/10"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                            />
                         </div>
+                    </div>
+
+                    {/* Filter Type - Spans 3 columns */}
+                    <div className="md:col-span-3">
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">نوع الفلترة</label>
+                        <Select 
+                            placeholder="اختر نوع الفلترة" 
+                            value={filterType} 
+                            onValueChange={(val) => { setFilterType(val); setFilterValue(''); }} 
+                            className="rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20"
+                        >
+                            <SelectItem value="pump" icon={Fuel}>الماكينة (Pump)</SelectItem>
+                            <SelectItem value="fuel" icon={Droplets}>نوع الوقود (Fuel)</SelectItem>
+                            <SelectItem value="method" icon={CreditCard}>طريقة الدفع (Method)</SelectItem>
+                            <SelectItem value="safe" icon={Wallet}>الخزنة / البنك (Safe/Bank)</SelectItem>
+                        </Select>
+                    </div>
+
+                    {/* Filter Value - Spans 3 columns */}
+                    <div className="md:col-span-3">
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">
+                            {filterType ? 'القيمة المحددة' : 'اختر النوع أولاً'}
+                        </label>
+                        <Select 
+                            placeholder="اختر القيمة..." 
+                            value={filterValue} 
+                            onValueChange={setFilterValue} 
+                            disabled={!filterType}
+                            className="rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20 disabled:opacity-50"
+                        >
+                            {getFilterOptions().map((opt, idx) => (
+                                <SelectItem key={idx} value={opt} icon={Database}>
+                                    {opt}
+                                </SelectItem>
+                            ))}
+                        </Select>
+                    </div>
+
+                    {/* Date - Spans 2 columns */}
+                    <div className="md:col-span-2 relative">
+                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">التاريخ</label>
+                        <div className="relative w-full">
+                            <Calendar className="absolute right-3 top-2.5 text-slate-400 w-5 h-5"/>
+                            <TextInput type="date" className="pl-4 pr-10 py-2 rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20 w-full transition-all focus:ring-2 focus:ring-blue-100" />
+                        </div>
+                    </div>
+
+                     {/* Reset Button - Spans 1 column */}
+                     <div className="md:col-span-1 flex justify-end">
+                        <button 
+                            onClick={resetFilters}
+                            title="إعادة تعيين الفلاتر"
+                            className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-red-600 transition-colors dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20"
+                        >
+                            <RefreshCw className={`w-5 h-5 ${filterType || search ? 'text-red-500' : ''}`} />
+                        </button>
                     </div>
                 </div>
             </Card>
 
             {/* Data Table */}
-            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0">
+            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
                 <div className="overflow-x-auto">
                     <table className="w-full text-right">
-                        <thead className="bg-slate-50 border-b border-slate-200">
+                        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-slate-300">
                             <tr>
                                 <th className="p-4 text-sm font-bold text-slate-600">رقم #</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">التاريخ والوقت</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">الماكينة / الصنف</th>
+                                <th className="p-4 text-sm font-bold text-slate-600">نوع الوقود</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">الكمية (L)</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">المبلغ (SDG)</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">طريقة الدفع</th>
@@ -203,7 +285,7 @@ export default function SalesList({ sales = [] }) {
                                 <th className="p-4 text-sm font-bold text-slate-600 text-center">إجراءات</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                             {filteredSales.length === 0 && (
                                 <tr>
                                     <td colSpan="8" className="p-8 text-center text-slate-400">
@@ -215,16 +297,27 @@ export default function SalesList({ sales = [] }) {
                                 </tr>
                             )}
                             {filteredSales.map((sale) => (
-                                <tr key={sale.id} className="hover:bg-blue-50/30 transition-colors group">
-                                    <td className="p-4 font-mono font-bold text-slate-700">#{sale.id}</td>
-                                    <td className="p-4 text-sm text-slate-600 ltr:text-left direction-ltr">{sale.date}</td>
+                                <tr key={sale.id} className="hover:bg-blue-50/30 transition-colors group dark:hover:bg-white/5">
+                                    <td className="p-4 font-mono font-bold text-slate-700 dark:text-slate-300">#{sale.id}</td>
+                                    <td className="p-4 text-sm text-slate-600 ltr:text-left direction-ltr dark:text-slate-400">{sale.date}</td>
                                     <td className="p-4">
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-navy-900">{sale.pump}</span>
-                                            <span className="text-xs text-slate-500">{sale.fuel}</span>
+                                            <span className="font-bold text-navy-900 dark:text-white">{sale.pump}</span>
+                                            {/* Removed duplicated fuel info here since we have a new column */}
                                         </div>
                                     </td>
-                                    <td className="p-4 font-mono">{Number(sale.liters).toFixed(2)}</td>
+                                    <td className="p-4">
+                                        <span className={`text-sm font-bold ${
+                                            (sale.fuel || '').toLowerCase().includes('diesel') || (sale.fuel || '').includes('جاز')
+                                                ? 'text-blue-600 dark:text-blue-400' 
+                                                : (sale.fuel || '').toLowerCase().includes('petrol') || (sale.fuel || '').toLowerCase().includes('benzene') || (sale.fuel || '').includes('بنزين')
+                                                    ? 'text-orange-600 dark:text-orange-400'
+                                                    : 'text-slate-600 dark:text-slate-400'
+                                        }`}>
+                                            {sale.fuel}
+                                        </span>
+                                    </td>
+                                    <td className="p-4 font-mono dark:text-slate-300">{Number(sale.liters).toFixed(2)}</td>
                                     <td className="p-4 font-mono font-bold text-emerald-600">{Number(sale.amount).toFixed(2)}</td>
                                     <td className="p-4">
                                         <Badge 
@@ -237,7 +330,7 @@ export default function SalesList({ sales = [] }) {
                                     </td>
                                     <td className="p-4">
                                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold ${
-                                            sale.raw_method === 'cash' ? 'bg-slate-100 text-slate-700' : 'bg-blue-50 text-blue-700'
+                                            sale.raw_method === 'cash' ? 'bg-slate-100 text-slate-700 dark:bg-white/10 dark:text-slate-300' : 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'
                                         }`}>
                                             {sale.account}
                                         </span>
@@ -262,11 +355,11 @@ export default function SalesList({ sales = [] }) {
                 </div>
                 
                 {/* Pagination */}
-                <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50 dark:bg-white/5 dark:border-white/5">
                     <Text className="text-sm text-slate-500">عرض {filteredSales.length} سجل</Text>
                     <div className="flex gap-2">
-                        <button className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50"><ChevronRight className="w-4 h-4"/></button>
-                        <button className="p-2 border border-slate-200 rounded-lg hover:bg-white"><ChevronLeft className="w-4 h-4"/></button>
+                        <button className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 dark:border-slate-700 dark:hover:bg-white/5 dark:text-slate-400"><ChevronRight className="w-4 h-4"/></button>
+                        <button className="p-2 border border-slate-200 rounded-lg hover:bg-white dark:border-slate-700 dark:hover:bg-white/5 dark:text-slate-400"><ChevronLeft className="w-4 h-4"/></button>
                     </div>
                 </div>
             </Card>
@@ -305,10 +398,10 @@ function SaleModal({ isOpen, onClose, sale }) {
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden dark:bg-[#1e293b]"
             >
-                <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 className="font-bold text-lg text-navy-900">تعديل عملية بيع #{sale?.id}</h3>
+                <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center dark:bg-white/5 dark:border-white/10">
+                    <h3 className="font-bold text-lg text-navy-900 dark:text-white">تعديل عملية بيع #{sale?.id}</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-red-500 transition-colors text-xl font-bold">
                         &times;
                     </button>
@@ -317,30 +410,30 @@ function SaleModal({ isOpen, onClose, sale }) {
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">الكمية (لتر)</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">الكمية (لتر)</label>
                             <input type="number" step="0.01" name="liters" required defaultValue={sale?.liters}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white" 
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">سعر اللتر</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">سعر اللتر</label>
                             <input type="number" step="0.01" name="price" required defaultValue={sale?.unit_price}
-                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white" 
                             />
                         </div>
                     </div>
 
                      <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">المبلغ الإجمالي</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">المبلغ الإجمالي</label>
                         <input type="number" step="0.01" name="amount" required defaultValue={sale?.amount}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white" 
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">طريقة الدفع</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-300">طريقة الدفع</label>
                         <select name="method" defaultValue={sale?.method}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                         >
                             <option value="Cash">نقدي (Cash)</option>
                             <option value="Credit">آجل (Credit)</option>
@@ -349,7 +442,7 @@ function SaleModal({ isOpen, onClose, sale }) {
 
                     <div className="pt-4 flex justify-end gap-2 text-sm font-bold">
                         <button type="button" onClick={onClose} 
-                            className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
+                            className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors dark:text-slate-300 dark:hover:bg-white/10">
                             إلغاء
                         </button>
                         <button type="submit" 
@@ -377,7 +470,7 @@ function SalePreviewModal({ isOpen, onClose, sale }) {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden print:rounded-none print:shadow-none print:max-w-none"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden print:rounded-none print:shadow-none print:max-w-none dark:bg-[#1e293b]"
             >
                 {/* Print Styles */}
                 <style>{`
@@ -465,8 +558,8 @@ function SalePreviewModal({ isOpen, onClose, sale }) {
                             <div className="flex items-center gap-3">
                                 <Calendar className="w-5 h-5 text-slate-400 print-hidden" />
                                 <div>
-                                    <p className="text-xs text-slate-500 print:text-slate-700">التاريخ والوقت</p>
-                                    <p className="font-bold text-slate-800 print:text-lg">{sale.date}</p>
+                                    <p className="text-xs text-slate-500 print:text-slate-700 dark:text-slate-400">التاريخ والوقت</p>
+                                    <p className="font-bold text-slate-800 print:text-lg dark:text-white">{sale.date}</p>
                                 </div>
                             </div>
                             <div className="text-left">
@@ -499,8 +592,8 @@ function SalePreviewModal({ isOpen, onClose, sale }) {
                         </div>
 
                         {/* Sales Details Table */}
-                        <div className="bg-slate-50 p-6 rounded-xl print:bg-white print:border-2 print:border-slate-800">
-                            <h4 className="font-bold text-slate-700 mb-4 flex items-center gap-2 print:text-lg print:text-slate-900 print:mb-6">
+                        <div className="bg-slate-50 p-6 rounded-xl print:bg-white print:border-2 print:border-slate-800 dark:bg-white/5">
+                            <h4 className="font-bold text-slate-700 mb-4 flex items-center gap-2 print:text-lg print:text-slate-900 print:mb-6 dark:text-white">
                                 <FileText className="w-4 h-4 print-hidden" />
                                 تفاصيل الفاتورة
                             </h4>
@@ -508,23 +601,23 @@ function SalePreviewModal({ isOpen, onClose, sale }) {
                             <table className="w-full">
                                 <thead className="border-b-2 border-slate-300 print:border-slate-800">
                                     <tr>
-                                        <th className="text-right pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base">البند</th>
-                                        <th className="text-center pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base">الكمية</th>
-                                        <th className="text-center pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base">السعر</th>
-                                        <th className="text-left pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base">المجموع</th>
+                                        <th className="text-right pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base dark:text-slate-400">البند</th>
+                                        <th className="text-center pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base dark:text-slate-400">الكمية</th>
+                                        <th className="text-center pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base dark:text-slate-400">السعر</th>
+                                        <th className="text-left pb-3 text-sm text-slate-600 print:text-slate-900 print:text-base dark:text-slate-400">المجموع</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="border-b border-slate-200 print:border-slate-400">
-                                        <td className="py-4 text-slate-700 print:text-slate-900 print:text-lg">{sale.fuel}</td>
+                                    <tr className="border-b border-slate-200 print:border-slate-400 dark:border-white/10">
+                                        <td className="py-4 text-slate-700 print:text-slate-900 print:text-lg dark:text-white">{sale.fuel}</td>
                                         <td className="py-4 text-center font-mono text-blue-600 print:text-slate-900 print:text-lg">{Number(sale.liters).toFixed(2)} لتر</td>
-                                        <td className="py-4 text-center font-mono text-slate-700 print:text-slate-900 print:text-lg">{Number(sale.unit_price).toFixed(2)} SDG</td>
+                                        <td className="py-4 text-center font-mono text-slate-700 print:text-slate-900 print:text-lg dark:text-slate-300">{Number(sale.unit_price).toFixed(2)} SDG</td>
                                         <td className="py-4 text-left font-mono font-bold text-emerald-600 print:text-slate-900 print:text-lg">{Number(sale.amount).toFixed(2)} SDG</td>
                                     </tr>
                                 </tbody>
                                 <tfoot>
-                                    <tr className="border-t-2 border-slate-800">
-                                        <td colSpan="3" className="pt-4 text-right font-bold text-slate-800 print:text-xl">المبلغ الإجمالي:</td>
+                                    <tr className="border-t-2 border-slate-800 dark:border-white/20">
+                                        <td colSpan="3" className="pt-4 text-right font-bold text-slate-800 print:text-xl dark:text-white">المبلغ الإجمالي:</td>
                                         <td className="pt-4 text-left font-mono font-black text-2xl text-emerald-600 print:text-slate-900 print:text-3xl">{Number(sale.amount).toFixed(2)} SDG</td>
                                     </tr>
                                 </tfoot>
@@ -539,7 +632,7 @@ function SalePreviewModal({ isOpen, onClose, sale }) {
                     </div>
 
                     {/* Footer Actions - Screen Only */}
-                    <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 print-hidden">
+                    <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 print-hidden dark:bg-white/5 dark:border-white/10">
                         <button 
                             onClick={handlePrint}
                             className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors flex items-center gap-2"
@@ -551,7 +644,7 @@ function SalePreviewModal({ isOpen, onClose, sale }) {
                         </button>
                         <button 
                             onClick={onClose}
-                            className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition-colors"
+                            className="px-6 py-2.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition-colors dark:bg-white/10 dark:hover:bg-white/20 dark:text-white"
                         >
                             إغلاق
                         </button>

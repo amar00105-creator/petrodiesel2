@@ -27,8 +27,10 @@
 
             if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
                 document.documentElement.classList.add('dark-mode');
+                document.documentElement.classList.add('dark');
             } else {
                 document.documentElement.classList.remove('dark-mode');
+                document.documentElement.classList.remove('dark');
             }
         })();
     </script>
@@ -253,6 +255,7 @@
             const icon = document.getElementById('theme-icon');
 
             html.classList.toggle('dark-mode');
+            html.classList.toggle('dark');
 
             const isDark = html.classList.contains('dark-mode');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');

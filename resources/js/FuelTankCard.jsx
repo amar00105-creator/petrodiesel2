@@ -6,9 +6,11 @@ const FuelTankCard = ({
   tank, 
   onEdit, 
   onDelete, 
-  onCalibrate 
+  onCalibrate,
+  generalSettings = {}
 }) => {
   const { name, product, percentage, total_cap, current } = tank;
+  const mode = generalSettings.volume_display_mode || 'liters';
 
   // Color Theme Logic
   const isDiesel = product && (product.includes('Diesel') || product.includes('ديزل') || product.includes('جاز'));
@@ -37,6 +39,39 @@ const FuelTankCard = ({
         `0 0 10px ${theme.shadow}`
       ] 
     },
+  };
+
+  // Format volume - always show liters first, then gallons below
+  const formatCurrent = () => {
+    const gallons = current / 4.5;
+    if (mode === 'gallons') {
+      return <span>{gallons.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-emerald-300 text-xs">جالون</span></span>;
+    }
+    if (mode === 'both') {
+      return (
+        <div className="flex flex-col items-center leading-tight">
+          <span className="text-white">{parseFloat(current).toLocaleString()} <span className="text-emerald-300 text-xs">لتر</span></span>
+          <span className="text-gray-400 text-sm">{gallons.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-emerald-300/70 text-xs">جالون</span></span>
+        </div>
+      );
+    }
+    return <span>{parseFloat(current).toLocaleString()} <span className="text-emerald-300 text-xs">لتر</span></span>;
+  };
+
+  const formatCapacity = () => {
+    const gallons = total_cap / 4.5;
+    if (mode === 'gallons') {
+      return <span>{gallons.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-amber-300 text-xs">جالون</span></span>;
+    }
+    if (mode === 'both') {
+      return (
+        <div className="flex flex-col items-center leading-tight">
+          <span>{parseFloat(total_cap).toLocaleString()} <span className="text-amber-300 text-xs">لتر</span></span>
+          <span className="text-gray-500 text-sm">{gallons.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-amber-300/70 text-xs">جالون</span></span>
+        </div>
+      );
+    }
+    return <span>{parseFloat(total_cap).toLocaleString()} <span className="text-amber-300 text-xs">لتر</span></span>;
   };
 
   return (
@@ -107,18 +142,18 @@ const FuelTankCard = ({
           <div className="text-5xl font-black text-white drop-shadow-lg tracking-tighter">
               {percentage}%
           </div>
-          <span className="text-xs text-gray-400 uppercase tracking-widest mt-1">Full</span>
+          <span className="text-sm text-cyan-300 font-bold tracking-widest mt-1">النسبة</span>
       </div>
 
       {/* Footer Details */}
-      <div className="w-full z-10 grid grid-cols-2 gap-2 bg-black/40 p-3 rounded-xl border border-white/5 backdrop-blur-sm">
-          <div className="flex flex-col items-center border-r border-white/10">
-              <span className="text-[10px] text-gray-500 uppercase">Current</span>
-              <span className="text-lg font-mono font-bold text-white">{parseFloat(current).toLocaleString()} <span className="text-[10px] text-gray-400">L</span></span>
+      <div className="w-full z-10 grid grid-cols-2 gap-2 bg-black/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
+          <div className="flex flex-col items-center border-r border-white/20">
+              <span className="text-sm text-cyan-300 font-bold mb-1">الكمية الحالية</span>
+              <span className="text-xl font-mono font-bold text-white">{formatCurrent()}</span>
           </div>
           <div className="flex flex-col items-center">
-              <span className="text-[10px] text-gray-500 uppercase">Capacity</span>
-              <span className="text-lg font-mono font-bold text-gray-300">{parseFloat(total_cap).toLocaleString()} <span className="text-[10px] text-gray-500">L</span></span>
+              <span className="text-sm text-amber-300 font-bold mb-1">السعة الكلية</span>
+              <span className="text-xl font-mono font-bold text-gray-200">{formatCapacity()}</span>
           </div>
       </div>
 

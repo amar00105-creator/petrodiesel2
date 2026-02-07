@@ -36,7 +36,8 @@ class SupplierController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = $_POST;
 
-            // Suppliers are now global - no station_id needed
+            // Re-enabling station_id
+            $data['station_id'] = AuthHelper::user()['station_id'];
             $supplierModel = new Supplier();
             $supplierModel->create($data);
 
@@ -58,10 +59,12 @@ class SupplierController extends Controller
                 exit;
             }
 
-            // Suppliers are now global - no station_id needed
+            // Re-enabling station_id
+            $user = AuthHelper::user();
             $data = [
                 'name' => $input['name'],
-                'phone' => $input['phone'] ?? ''
+                'phone' => $input['phone'] ?? '',
+                'station_id' => $user['station_id']
             ];
 
             $supplierModel = new Supplier();

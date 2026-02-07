@@ -8,28 +8,16 @@ use App\Models\Setting;
 class ApiController extends Controller
 {
     /**
-     * Get current server time based on configured timezone
+     * Get current server time based on configured timezone.
+     * The timezone is already set in index.php from the settings table.
      */
     public function getServerTime()
     {
         header('Content-Type: application/json');
 
-        // Get offset from settings
-        $offsetDays = 0;
-        try {
-            $settingModel = new Setting();
-            $offSetSetting = $settingModel->get('server_date_offset');
-            if ($offSetSetting) {
-                $offsetDays = (int)$offSetSetting['value'];
-            }
-        } catch (\Exception $e) {
-            // Ignore if setting not found
-        }
+        // PHP timezone is already configured in index.php from settings
+        $timestamp = time();
 
-        // Apply offset to current time
-        $timestamp = time() + ($offsetDays * 86400); // 86400 seconds in a day
-
-        // Return current time in various formats
         echo json_encode([
             'success' => true,
             'timestamp' => $timestamp,
@@ -37,7 +25,6 @@ class ApiController extends Controller
             'time' => date('H:i:s', $timestamp),
             'datetime' => date('Y-m-d H:i:s', $timestamp),
             'timezone' => date_default_timezone_get(),
-            'offset_days' => $offsetDays, // useful for debugging
             'formatted' => [
                 'full' => date('Y-m-d H:i:s', $timestamp),
                 'date_only' => date('Y-m-d', $timestamp),

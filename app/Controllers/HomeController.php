@@ -42,13 +42,26 @@ class HomeController extends Controller
             $activeUsersCount = 0;
         }
 
+        // Data for Add Expense Modal
+        $transactionCategoryModel = new \App\Models\TransactionCategory();
+        $safeModel = new \App\Models\Safe();
+        $bankModel = new \App\Models\Bank();
+        $supplierModel = new \App\Models\Supplier();
+        $customerModel = new \App\Models\Customer();
+
         // Pass data to view
         $this->view('home/index', [
             'user' => $user,
             'data' => $dashboardData,
             'allStations' => $allStations,
             'activeUsersCount' => $activeUsersCount,
-            'hide_topbar' => true
+            'hide_topbar' => true,
+            // Injected Data for Modal
+            'categories' => $transactionCategoryModel->getAll(),
+            'safes' => $safeModel->getAll($stationId),
+            'banks' => $bankModel->getAll($stationId),
+            'suppliers' => $supplierModel->getAll($stationId),
+            'customers' => $customerModel->getAll($stationId)
         ]);
     }
 

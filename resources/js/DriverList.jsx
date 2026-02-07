@@ -1,21 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { motion } from 'framer-motion';
 import { Card, Title, Text, TextInput, Badge, Button } from '@tremor/react';
 import { Search, Plus, Trash2, Edit, Truck } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { toast } from 'sonner';
 
-export default function DriverList({ drivers = [] }) {
+const DriverList = forwardRef(({ drivers = [], search = '' }, ref) => {
     const [driverList, setDriverList] = useState(Array.isArray(drivers) ? drivers : []);
 
     React.useEffect(() => {
         setDriverList(Array.isArray(drivers) ? drivers : []);
     }, [drivers]);
 
-    const [search, setSearch] = useState('');
+    // const [search, setSearch] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalMode, setModalMode] = useState('add'); // 'add' or 'edit'
     const [currentDriver, setCurrentDriver] = useState(null);
+
+    useImperativeHandle(ref, () => ({
+        openAddModal: handleAdd
+    }));
 
     // Filter Logic
     const filteredDrivers = driverList.filter(d => 
@@ -93,28 +97,7 @@ export default function DriverList({ drivers = [] }) {
                 message={`سيتم حذف السائق "${itemToDelete?.name}". هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.`}
                 isDeleting={isDeleting}
             />
-            {/* Header & Actions */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h2 className="text-xl font-bold text-navy-900">سجل السائقين</h2>
-                    <p className="text-slate-500 text-sm">إدارة السائقين وشاحناتهم</p>
-                </div>
-                <div className="flex gap-2 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64">
-                        <Search className="absolute right-3 top-2.5 text-slate-400 w-4 h-4"/>
-                        <input 
-                            type="text"
-                            placeholder="بحث..." 
-                            className="w-full pr-9 pl-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
-                    <Button icon={Plus} onClick={handleAdd} className="rounded-xl font-bold bg-navy-900 hover:bg-navy-800 border-none">
-                        إضافة
-                    </Button>
-                </div>
-            </div>
+            {/* Header Removed */}
 
             {/* List */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -123,35 +106,35 @@ export default function DriverList({ drivers = [] }) {
                         key={driver.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="bg-white rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden"
+                        className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 rounded-xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 w-1 h-full bg-blue-500" />
                         
                         <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-lg">
                                     {driver.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-navy-900">{driver.name}</h3>
-                                    <div className="text-xs text-slate-500 flex items-center gap-1">
+                                    <h3 className="font-bold text-navy-900 dark:text-white">{driver.name}</h3>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                         <Truck className="w-3 h-3" />
                                         {driver.truck_number || 'بدون شاحنة'}
                                     </div>
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEdit(driver)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600">
+                                <button onClick={() => handleEdit(driver)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300">
                                     <Edit className="w-4 h-4" />
                                 </button>
-                                <button onClick={() => openDeleteModal(driver)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600">
+                                <button onClick={() => openDeleteModal(driver)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-red-600 dark:text-red-400">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-sm mt-4 pt-4 border-t border-slate-50">
-                            <div className="text-slate-500">{driver.phone || 'لا يوجد هاتف'}</div>
+                        <div className="flex items-center justify-between text-sm mt-4 pt-4 border-t border-slate-50 dark:border-white/5">
+                            <div className="text-slate-500 dark:text-slate-400">{driver.phone || 'لا يوجد هاتف'}</div>
                             <Badge size="xs" color="slate">سائق</Badge>
                         </div>
                     </motion.div>
@@ -176,7 +159,7 @@ export default function DriverList({ drivers = [] }) {
             )}
         </div>
     );
-}
+});
 
 function DriverModal({ isOpen, onClose, mode, driver, onSuccess }) {
     if (!isOpen) return null;
@@ -270,3 +253,5 @@ function DriverModal({ isOpen, onClose, mode, driver, onSuccess }) {
         </div>
     );
 }
+
+export default DriverList;

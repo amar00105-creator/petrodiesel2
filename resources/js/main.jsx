@@ -5,6 +5,7 @@ import AutoLock from './components/AutoLock';
 import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
+import { ThemeProvider } from './components/ThemeProvider';
 
 // DEBUG ALERT
 // console.log("Main.jsx is executing...");
@@ -318,7 +319,12 @@ try {
             // Default to Dashboard if page is unknown or intentionally dashboard
             Component = Dashboard;
             props = {
-                data: getData('data') // Dashboard data from controller
+                data: getData('data'), // Dashboard data from controller
+                categories: getData('categories'),
+                safes: getData('safes'),
+                banks: getData('banks'),
+                suppliers: getData('suppliers'),
+                customers: getData('customers')
             };
             if (page && page !== 'dashboard') {
                console.warn(`Unknown page "${page}", falling back to Dashboard.`);
@@ -344,34 +350,35 @@ try {
         };
     }
 
-    // Unified Render Logic
     root.render(
-        <ErrorBoundary>
-            <Toaster 
-                position="top-left" 
-                richColors 
-                toastOptions={{
-                    className: 'font-cairo !bg-white/95 !backdrop-blur-md !border-slate-200 !shadow-2xl !rounded-2xl',
-                    style: { fontFamily: 'Cairo, sans-serif' }
-                }}
-            />
-            <FuturisticHeader 
-                page={page} 
-                user={user} 
-                stats={stats} 
-                allStations={allStations}
-                currency={currencyCode} 
-            />
+        <ThemeProvider>
+            <ErrorBoundary>
+                <Toaster 
+                    position="top-left" 
+                    richColors 
+                    toastOptions={{
+                        className: 'font-cairo !bg-white/95 !backdrop-blur-md !border-slate-200 !shadow-2xl !rounded-2xl dark:!bg-slate-900/95 dark:!border-slate-800 dark:!text-white',
+                        style: { fontFamily: 'Cairo, sans-serif' }
+                    }}
+                />
+                <FuturisticHeader 
+                    page={page} 
+                    user={user} 
+                    stats={stats} 
+                    allStations={allStations}
+                    currency={currencyCode} 
+                />
 
-            {/* Explicitly bypass Suspense for SafesPage to fix hydration error */}
-            {page === 'accounting-safes' ? (
-                <SafesPage {...props} />
-            ) : (
-                <React.Suspense fallback={<LoadingSpinner />}>
-                    <Component {...props} />
-                </React.Suspense>
-            )}
-        </ErrorBoundary>
+                {/* Explicitly bypass Suspense for SafesPage to fix hydration error */}
+                {page === 'accounting-safes' ? (
+                    <SafesPage {...props} />
+                ) : (
+                    <React.Suspense fallback={<LoadingSpinner />}>
+                        <Component {...props} />
+                    </React.Suspense>
+                )}
+            </ErrorBoundary>
+        </ThemeProvider>
     );
 
     }

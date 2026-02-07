@@ -121,7 +121,7 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
             <div className="flex justify-end mb-6">
                 <a 
                     href="/PETRODIESEL2/public/pumps/create"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 font-bold"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 font-bold dark:bg-blue-600 dark:hover:bg-blue-700 dark:shadow-none"
                 >
                     <Plus className="w-5 h-5" /> إضافة ماكينة
                 </a>
@@ -129,12 +129,15 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
 
             {/* Grid */}
             {pumps.length === 0 ? (
-                <Card className="text-center py-20 bg-slate-50 border-dashed border-2 border-slate-200">
-                    <div className="inline-flex p-4 bg-slate-100 rounded-full mb-4 text-slate-400">
+                <Card className="relative overflow-hidden text-center py-20 bg-slate-50 border-dashed border-2 border-slate-200 dark:bg-white/5 dark:backdrop-blur-xl dark:border-blue-400/20 dark:shadow-[0_0_40px_-10px_rgba(59,130,246,0.1)]">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08),transparent_70%)] pointer-events-none" />
+                    <div className="relative z-10">
+                    <div className="inline-flex p-4 bg-slate-100 rounded-full mb-4 text-slate-400 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-1 dark:ring-blue-400/20">
                         <Fuel className="w-12 h-12" />
                     </div>
-                    <Title className="text-slate-600">لا توجد مكائن مضافة</Title>
-                    <Text className="mt-2 text-slate-400">ابدأ بإضافة أول ماكينة وقود للنظام</Text>
+                    <Title className="text-slate-600 dark:text-blue-100 dark:drop-shadow-sm">لا توجد مكائن مضافة</Title>
+                    <Text className="mt-2 text-slate-400 dark:text-slate-400">ابدأ بإضافة أول ماكينة وقود للنظام</Text>
+                    </div>
                 </Card>
             ) : (
                 <Grid numItems={2} numItemsMd={3} numItemsLg={5} className="gap-4">

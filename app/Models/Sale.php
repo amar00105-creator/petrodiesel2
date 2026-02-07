@@ -15,15 +15,18 @@ class Sale extends Model
                        w.name as worker_name,
                        cust.name as customer_name,
                        safes.name as safe_name,
-                       banks.bank_name as bank_name
+                       banks.bank_name as bank_name,
+                       ft.name as product_type
                 FROM sales s
                 LEFT JOIN counters c ON s.counter_id = c.id
                 LEFT JOIN pumps p ON c.pump_id = p.id
+                LEFT JOIN tanks t ON p.tank_id = t.id
+                LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
                 LEFT JOIN workers w ON s.worker_id = w.id
                 LEFT JOIN customers cust ON s.customer_id = cust.id
-                LEFT JOIN transactions t ON (t.related_entity_id = s.id AND t.related_entity_type = 'sales' AND t.type = 'income')
-                LEFT JOIN safes ON (t.to_type = 'safe' AND t.to_id = safes.id)
-                LEFT JOIN banks ON (t.to_type = 'bank' AND t.to_id = banks.id)
+                LEFT JOIN transactions tr ON (tr.related_entity_id = s.id AND tr.related_entity_type = 'sales' AND tr.type = 'income')
+                LEFT JOIN safes ON (tr.to_type = 'safe' AND tr.to_id = safes.id)
+                LEFT JOIN banks ON (tr.to_type = 'bank' AND tr.to_id = banks.id)
                 WHERE s.station_id = ? ";
 
         $params = [$stationId];

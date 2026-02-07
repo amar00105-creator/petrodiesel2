@@ -104,6 +104,36 @@ class ReportsController extends Controller
             return;
         }
 
+        if (isset($_GET['action']) && $_GET['action'] === 'get_profit_loss') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getProfitLoss();
+            return;
+        }
+
+        if (isset($_GET['action']) && $_GET['action'] === 'get_loss_report') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getLossReport();
+            return;
+        }
+
+        if (isset($_GET['action']) && $_GET['action'] === 'get_pump_performance') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getPumpPerformance();
+            return;
+        }
+
+        if (isset($_GET['action']) && $_GET['action'] === 'get_worker_performance') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getWorkerPerformance();
+            return;
+        }
+
+        if (isset($_GET['action']) && $_GET['action'] === 'get_monthly_comparison') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getMonthlyComparison();
+            return;
+        }
+
 
         $this->view('reports/index', [
             'user' => $user,
@@ -1058,14 +1088,16 @@ class ReportsController extends Controller
             $stmt->execute([$tankId, $date]);
             $sales = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            // Get opening balance (reading from previous day's closing OR today's opening)
+            // Get opening balance (reading from previous day's closing OR calculate from current)
             $prevDate = date('Y-m-d', strtotime($date . ' -1 day'));
             $openingVol = $this->tankModel->getReadingAt($tankId, $prevDate);
-            if ($openingVol === false) $openingVol = 0;
 
             // Calculate totals
             $totalVolumeSold = array_sum(array_column($sales, 'volume_sold'));
             $totalAmount = array_sum(array_column($sales, 'total_amount'));
+
+            // Get purchases for this tank on this date
+            $purchaseVol = $this->purchaseModel->getVolumeByTank($tankId, $date, $date);
 
             // Get closing reading for the day
             $closingReadingSql = "SELECT * FROM tank_readings 
@@ -1075,13 +1107,32 @@ class ReportsController extends Controller
             $stmt->execute([$tankId, $date]);
             $closingReading = $stmt->fetch(\PDO::FETCH_ASSOC);
 
-            // Get purchases for this tank on this date
-            $purchaseVol = $this->purchaseModel->getVolumeByTank($tankId, $date, $date);
+            // Get any calibration variance for this day
+            $calibrationSql = "SELECT variance FROM tank_calibrations 
+                               WHERE tank_id = ? AND DATE(created_at) = ? 
+                               ORDER BY id DESC LIMIT 1";
+            $stmt = $db->prepare($calibrationSql);
+            $stmt->execute([$tankId, $date]);
+            $calibration = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $variance = $calibration ? floatval($calibration['variance']) : 0;
 
-            // Calculate theoretical and actual closing
+            // Current calibrated volume (actual after calibration)
+            $actual = $closingReading ? floatval($closingReading['volume_liters']) : floatval($tank['current_volume']);
+
+            // If no historical reading exists, calculate opening balance
+            // Formula: Opening = Current + Sold - Purchases - Variance
+            // This gives the tank volume at start of day before any operations, accounting for calibration
+            if ($openingVol === false || $openingVol === null || $openingVol == 0) {
+                $openingVol = $actual + $totalVolumeSold - $purchaseVol - $variance;
+            }
+
+            // Calculate theoretical closing (what it should be based on math)
             $theoretical = $openingVol + $purchaseVol - $totalVolumeSold;
-            $actual = $closingReading ? $closingReading['volume_liters'] : $tank['current_volume'];
-            $variance = $actual - $theoretical;
+
+            // If we don't have an explicit calibration record, calculate variance dynamically based on current theoretical vs actual
+            if (!$calibration) {
+                $variance = $actual - $theoretical;
+            }
 
             echo json_encode([
                 'success' => true,
@@ -1214,6 +1265,28 @@ class ReportsController extends Controller
             $stmt->execute([$supplierId, $startDate, $endDate]);
             $byStation = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+            // 4b. Get Transactions from the transactions table (expenses/payments to supplier)
+            $stmt = $db->prepare("
+                SELECT 
+                    t.*,
+                    tc.name as category_name,
+                    u.name as user_name,
+                    CASE 
+                        WHEN t.from_type = 'bank' THEN (SELECT bank_name FROM banks WHERE id = t.from_id)
+                        WHEN t.from_type = 'safe' THEN (SELECT name FROM safes WHERE id = t.from_id)
+                        ELSE NULL
+                    END as account_name
+                FROM transactions t
+                LEFT JOIN transaction_categories tc ON t.category_id = tc.id
+                LEFT JOIN users u ON t.created_by = u.id
+                WHERE t.related_entity_type = 'supplier' 
+                AND t.related_entity_id = ?
+                AND t.date BETWEEN ? AND ?
+                ORDER BY t.date ASC, t.id ASC
+            ");
+            $stmt->execute([$supplierId, $startDate, $endDate]);
+            $supplierTransactions = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
             // 5. Build Transactions Array (for statement view)
             $transactions = [];
             $runningBalance = 0;
@@ -1240,6 +1313,7 @@ class ReportsController extends Controller
                 // Add payment if exists
                 if ($paidValue > 0) {
                     $runningBalance -= $paidValue;
+                    $totalPaid += $paidValue; // Add to totalPaid
                     $transactions[] = [
                         'date' => date('Y-m-d', strtotime($purchase['created_at'])),
                         'statement_title' => 'دفعة',
@@ -1250,6 +1324,52 @@ class ReportsController extends Controller
                         'price' => 0,
                         'amount_paid' => $paidValue,
                         'purchase_value' => 0,
+                        'running_balance' => $runningBalance
+                    ];
+                }
+            }
+
+            // 5b. Add transactions from the transactions table (expense payments)
+            foreach ($supplierTransactions as $trans) {
+                $transAmount = floatval($trans['amount']);
+                // For expense to supplier: reduce balance (money paid to them)
+                if ($trans['type'] === 'expense') {
+                    $runningBalance -= $transAmount;
+                    $totalPaid += $transAmount;
+
+                    // Build statement title with reference number
+                    $refNumber = $trans['reference_number'] ?? '';
+                    $statementTitle = $refNumber ? 'ر.الاشعار ' . $refNumber : 'دفعة للمورد';
+
+                    // Use bank/safe name as category, fallback to category_name
+                    $categoryDisplay = $trans['account_name'] ?: ($trans['category_name'] ?? 'مصروف');
+
+                    $transactions[] = [
+                        'date' => $trans['date'],
+                        'statement_title' => $statementTitle,
+                        'statement_subtitle' => $trans['description'] ?: $categoryDisplay,
+                        'type' => 'payment',
+                        'category' => $categoryDisplay,
+                        'quantity' => 0,
+                        'price' => 0,
+                        'amount_paid' => $transAmount,
+                        'purchase_value' => 0,
+                        'running_balance' => $runningBalance
+                    ];
+                }
+                // For income from supplier (e.g., refund): increase balance
+                elseif ($trans['type'] === 'income') {
+                    $runningBalance += $transAmount;
+                    $transactions[] = [
+                        'date' => $trans['date'],
+                        'statement_title' => 'استلام من المورد',
+                        'statement_subtitle' => $trans['description'] ?: ($trans['category_name'] ?? 'إيراد'),
+                        'type' => 'income',
+                        'category' => $trans['category_name'] ?? 'إيراد',
+                        'quantity' => 0,
+                        'price' => 0,
+                        'amount_paid' => 0,
+                        'purchase_value' => $transAmount,
                         'running_balance' => $runningBalance
                     ];
                 }
@@ -1503,5 +1623,612 @@ class ReportsController extends Controller
         }
 
         return $workerStats;
+    }
+
+    /**
+     * Get Profit & Loss Report
+     * Calculates revenue, expenses, and net profit for a given period
+     */
+    public function getProfitLoss()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $stationId = $_GET['station_id'] ?? 'all';
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-d');
+
+            $db = \App\Config\Database::connect();
+
+            // === REVENUE ===
+
+            // 1. Fuel Sales Revenue
+            $salesSql = "SELECT COALESCE(SUM(total_price), 0) as fuel_sales 
+                         FROM sales 
+                         WHERE sale_date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $salesSql .= " AND station_id = ?";
+                $stmt = $db->prepare($salesSql);
+                $stmt->execute([$startDate, $endDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($salesSql);
+                $stmt->execute([$startDate, $endDate]);
+            }
+            $fuelSales = $stmt->fetchColumn() ?: 0;
+
+            // 2. Other Sales (non-fuel income transactions)
+            $otherSalesSql = "SELECT COALESCE(SUM(amount), 0) as other_sales 
+                              FROM transactions 
+                              WHERE type = 'income' 
+                              AND related_entity_type != 'sales'
+                              AND date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $otherSalesSql .= " AND station_id = ?";
+                $stmt = $db->prepare($otherSalesSql);
+                $stmt->execute([$startDate, $endDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($otherSalesSql);
+                $stmt->execute([$startDate, $endDate]);
+            }
+            $otherSales = $stmt->fetchColumn() ?: 0;
+
+            // 3. Customer Payments (income from customers paying debts)
+            $customerPaymentsSql = "SELECT COALESCE(SUM(amount), 0) as customer_payments 
+                                    FROM transactions 
+                                    WHERE related_entity_type = 'customer' 
+                                    AND type = 'income'
+                                    AND date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $customerPaymentsSql .= " AND station_id = ?";
+                $stmt = $db->prepare($customerPaymentsSql);
+                $stmt->execute([$startDate, $endDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($customerPaymentsSql);
+                $stmt->execute([$startDate, $endDate]);
+            }
+            $customerPayments = $stmt->fetchColumn() ?: 0;
+
+            // === EXPENSES ===
+
+            // 1. Purchase Cost (fuel purchases)
+            $purchaseSql = "SELECT COALESCE(SUM(total_cost), 0) as purchase_cost 
+                            FROM purchases 
+                            WHERE purchase_date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $purchaseSql .= " AND station_id = ?";
+                $stmt = $db->prepare($purchaseSql);
+                $stmt->execute([$startDate, $endDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($purchaseSql);
+                $stmt->execute([$startDate, $endDate]);
+            }
+            $purchaseCost = $stmt->fetchColumn() ?: 0;
+
+            // 2. Salaries and Wages (from payroll)
+            $salariesSql = "SELECT COALESCE(SUM(net_salary), 0) as salaries 
+                            FROM payroll 
+                            WHERE month BETWEEN ? AND ?";
+            $stmt = $db->prepare($salariesSql);
+            $stmt->execute([substr($startDate, 0, 7), substr($endDate, 0, 7)]);
+            $salaries = $stmt->fetchColumn() ?: 0;
+
+            // 3. Operational Expenses (from transactions)
+            $expensesSql = "SELECT COALESCE(SUM(amount), 0) as operational_expenses 
+                            FROM transactions 
+                            WHERE type = 'expense' 
+                            AND related_entity_type != 'supplier'
+                            AND date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $expensesSql .= " AND station_id = ?";
+                $stmt = $db->prepare($expensesSql);
+                $stmt->execute([$startDate, $endDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($expensesSql);
+                $stmt->execute([$startDate, $endDate]);
+            }
+            $operationalExpenses = $stmt->fetchColumn() ?: 0;
+
+            // 4. Supplier Payments
+            $supplierPaymentsSql = "SELECT COALESCE(SUM(amount), 0) as supplier_payments 
+                                    FROM transactions 
+                                    WHERE related_entity_type = 'supplier' 
+                                    AND type = 'expense'
+                                    AND date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $supplierPaymentsSql .= " AND station_id = ?";
+                $stmt = $db->prepare($supplierPaymentsSql);
+                $stmt->execute([$startDate, $endDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($supplierPaymentsSql);
+                $stmt->execute([$startDate, $endDate]);
+            }
+            $supplierPayments = $stmt->fetchColumn() ?: 0;
+
+            // === TOTALS ===
+            $totalRevenue = $fuelSales + $otherSales + $customerPayments;
+            $totalExpenses = $purchaseCost + $salaries + $operationalExpenses + $supplierPayments;
+
+            // === PREVIOUS PERIOD (for comparison) ===
+            $periodDays = (strtotime($endDate) - strtotime($startDate)) / 86400;
+            $prevEndDate = date('Y-m-d', strtotime($startDate . ' -1 day'));
+            $prevStartDate = date('Y-m-d', strtotime($prevEndDate . " -$periodDays days"));
+
+            // Previous Revenue
+            $prevRevenueSql = "SELECT COALESCE(SUM(total_price), 0) FROM sales WHERE sale_date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $prevRevenueSql .= " AND station_id = ?";
+                $stmt = $db->prepare($prevRevenueSql);
+                $stmt->execute([$prevStartDate, $prevEndDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($prevRevenueSql);
+                $stmt->execute([$prevStartDate, $prevEndDate]);
+            }
+            $prevRevenue = $stmt->fetchColumn() ?: 0;
+
+            // Previous Expenses
+            $prevExpensesSql = "SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE type = 'expense' AND date BETWEEN ? AND ?";
+            if ($stationId !== 'all') {
+                $prevExpensesSql .= " AND station_id = ?";
+                $stmt = $db->prepare($prevExpensesSql);
+                $stmt->execute([$prevStartDate, $prevEndDate, $stationId]);
+            } else {
+                $stmt = $db->prepare($prevExpensesSql);
+                $stmt->execute([$prevStartDate, $prevEndDate]);
+            }
+            $prevExpenses = $stmt->fetchColumn() ?: 0;
+
+            echo json_encode([
+                'success' => true,
+                'data' => [
+                    'fuel_sales' => floatval($fuelSales),
+                    'other_sales' => floatval($otherSales),
+                    'customer_payments' => floatval($customerPayments),
+                    'total_revenue' => floatval($totalRevenue),
+                    'purchase_cost' => floatval($purchaseCost),
+                    'salaries' => floatval($salaries),
+                    'operational_expenses' => floatval($operationalExpenses),
+                    'supplier_payments' => floatval($supplierPayments),
+                    'total_expenses' => floatval($totalExpenses)
+                ],
+                'previous_period' => [
+                    'total_revenue' => floatval($prevRevenue),
+                    'total_expenses' => floatval($prevExpenses),
+                    'net_profit' => floatval($prevRevenue - $prevExpenses)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+
+    /**
+     * Get Loss/Evaporation Report
+     * Calculates variance between theoretical and actual tank volumes
+     */
+    public function getLossReport()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $stationId = $_GET['station_id'] ?? 'all';
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-d');
+
+            $db = \App\Config\Database::connect();
+
+            // Get all tanks
+            $tanksSql = "SELECT t.*, ft.name as fuel_name, ft.color_hex as fuel_color
+                         FROM tanks t 
+                         LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id";
+            if ($stationId !== 'all') {
+                $tanksSql .= " WHERE t.station_id = ?";
+                $stmt = $db->prepare($tanksSql);
+                $stmt->execute([$stationId]);
+            } else {
+                $stmt = $db->query($tanksSql);
+            }
+            $tanks = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $tankData = [];
+            $totalLoss = 0;
+            $totalPercent = 0;
+
+            foreach ($tanks as $tank) {
+                // Get opening balance (reading before start date or earliest reading)
+                $openingSql = "SELECT volume_liters FROM tank_readings 
+                               WHERE tank_id = ? AND reading_date < ? 
+                               ORDER BY reading_date DESC, id DESC LIMIT 1";
+                $stmt = $db->prepare($openingSql);
+                $stmt->execute([$tank['id'], $startDate]);
+                $opening = $stmt->fetchColumn();
+
+                if ($opening === false) {
+                    // No prior reading, use capacity as starting point or 0
+                    $opening = 0;
+                }
+
+                // Get total purchases (incoming)
+                $purchasesSql = "SELECT COALESCE(SUM(volume_liters), 0) FROM purchases 
+                                 WHERE tank_id = ? AND purchase_date BETWEEN ? AND ?";
+                $stmt = $db->prepare($purchasesSql);
+                $stmt->execute([$tank['id'], $startDate, $endDate]);
+                $totalIn = $stmt->fetchColumn() ?: 0;
+
+                // Get total sales (outgoing)
+                $salesSql = "SELECT COALESCE(SUM(s.volume_liters), 0) 
+                             FROM sales s
+                             JOIN counters c ON s.counter_id = c.id
+                             JOIN pumps p ON c.pump_id = p.id
+                             WHERE p.tank_id = ? AND s.sale_date BETWEEN ? AND ?";
+                $stmt = $db->prepare($salesSql);
+                $stmt->execute([$tank['id'], $startDate, $endDate]);
+                $totalOut = $stmt->fetchColumn() ?: 0;
+
+                // Get transfers in
+                $transfersInSql = "SELECT COALESCE(SUM(quantity), 0) FROM tank_transfers 
+                                   WHERE to_tank_id = ? AND transfer_date BETWEEN ? AND ?";
+                $stmt = $db->prepare($transfersInSql);
+                $stmt->execute([$tank['id'], $startDate, $endDate]);
+                $transfersIn = $stmt->fetchColumn() ?: 0;
+
+                // Get transfers out
+                $transfersOutSql = "SELECT COALESCE(SUM(quantity), 0) FROM tank_transfers 
+                                    WHERE from_tank_id = ? AND transfer_date BETWEEN ? AND ?";
+                $stmt = $db->prepare($transfersOutSql);
+                $stmt->execute([$tank['id'], $startDate, $endDate]);
+                $transfersOut = $stmt->fetchColumn() ?: 0;
+
+                $totalInWithTransfers = $totalIn + $transfersIn;
+                $totalOutWithTransfers = $totalOut + $transfersOut;
+
+                // Theoretical balance
+                $theoretical = $opening + $totalInWithTransfers - $totalOutWithTransfers;
+
+                // Actual balance (current volume or latest reading)
+                $actualSql = "SELECT volume_liters FROM tank_readings 
+                              WHERE tank_id = ? AND reading_date <= ? 
+                              ORDER BY reading_date DESC, id DESC LIMIT 1";
+                $stmt = $db->prepare($actualSql);
+                $stmt->execute([$tank['id'], $endDate]);
+                $actual = $stmt->fetchColumn();
+
+                if ($actual === false) {
+                    $actual = $tank['current_volume'];
+                }
+
+                // Calculate variance
+                $variance = $actual - $theoretical;
+
+                // Calculate loss percentage (relative to sales volume)
+                $lossPercent = $totalOutWithTransfers > 0
+                    ? (abs($variance) / $totalOutWithTransfers) * 100
+                    : 0;
+
+                // Only count as loss if variance is negative
+                if ($variance < 0) {
+                    $totalLoss += abs($variance);
+                    $totalPercent += $lossPercent;
+                }
+
+                $tankData[] = [
+                    'id' => $tank['id'],
+                    'name' => $tank['name'],
+                    'fuel_name' => $tank['fuel_name'],
+                    'fuel_color' => $tank['fuel_color'],
+                    'opening_balance' => round($opening, 2),
+                    'total_in' => round($totalInWithTransfers, 2),
+                    'total_out' => round($totalOutWithTransfers, 2),
+                    'theoretical_balance' => round($theoretical, 2),
+                    'actual_balance' => round($actual, 2),
+                    'variance' => round($variance, 2),
+                    'loss_percent' => round($variance < 0 ? $lossPercent : -$lossPercent, 2)
+                ];
+            }
+
+            $avgPercent = count($tankData) > 0 ? $totalPercent / count($tankData) : 0;
+
+            echo json_encode([
+                'success' => true,
+                'tanks' => $tankData,
+                'summary' => [
+                    'totalLoss' => round($totalLoss, 2),
+                    'avgLossPercent' => round($avgPercent, 2)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+
+    /**
+     * Get Pump Performance Report
+     * Shows sales rankings and statistics for each pump
+     */
+    public function getPumpPerformance()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $stationId = $_GET['station_id'] ?? 'all';
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-d');
+
+            $db = \App\Config\Database::connect();
+
+            // Get pump performance data
+            $sql = "SELECT 
+                        p.id as pump_id,
+                        p.name as pump_name,
+                        ft.name as fuel_name,
+                        ft.color_hex as fuel_color,
+                        COUNT(s.id) as transaction_count,
+                        COALESCE(SUM(s.volume_liters), 0) as total_volume,
+                        COALESCE(SUM(s.total_price), 0) as total_revenue
+                    FROM pumps p
+                    LEFT JOIN tanks t ON p.tank_id = t.id
+                    LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
+                    LEFT JOIN counters c ON c.pump_id = p.id
+                    LEFT JOIN sales s ON s.counter_id = c.id AND s.sale_date BETWEEN ? AND ?
+                    WHERE 1=1";
+
+            $params = [$startDate, $endDate];
+
+            if ($stationId !== 'all') {
+                $sql .= " AND p.station_id = ?";
+                $params[] = $stationId;
+            }
+
+            $sql .= " GROUP BY p.id, p.name, ft.name, ft.color_hex
+                      ORDER BY total_revenue DESC";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $pumps = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Calculate totals and percentages
+            $totalSales = array_sum(array_column($pumps, 'total_revenue'));
+            $totalVolume = array_sum(array_column($pumps, 'total_volume'));
+
+            foreach ($pumps as &$pump) {
+                $pump['percentage'] = $totalSales > 0
+                    ? ($pump['total_revenue'] / $totalSales) * 100
+                    : 0;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'pumps' => $pumps,
+                'summary' => [
+                    'totalSales' => floatval($totalSales),
+                    'totalVolume' => floatval($totalVolume)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+
+    /**
+     * Get Worker Performance Report
+     * Shows sales rankings for workers
+     */
+    public function getWorkerPerformance()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $stationId = $_GET['station_id'] ?? 'all';
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = $_GET['end_date'] ?? date('Y-m-d');
+
+            $db = \App\Config\Database::connect();
+
+            // Get worker performance data
+            $sql = "SELECT 
+                        w.id as worker_id,
+                        w.name as worker_name,
+                        COUNT(s.id) as transaction_count,
+                        COALESCE(SUM(s.volume_liters), 0) as total_volume,
+                        COALESCE(SUM(s.total_price), 0) as total_revenue
+                    FROM workers w
+                    LEFT JOIN sales s ON s.worker_id = w.id AND s.sale_date BETWEEN ? AND ?
+                    WHERE 1=1";
+
+            $params = [$startDate, $endDate];
+
+            if ($stationId !== 'all') {
+                $sql .= " AND w.station_id = ?";
+                $params[] = $stationId;
+            }
+
+            $sql .= " GROUP BY w.id, w.name
+                      HAVING total_revenue > 0
+                      ORDER BY total_revenue DESC";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
+            $workers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Calculate totals and percentages
+            $totalSales = array_sum(array_column($workers, 'total_revenue'));
+            $totalVolume = array_sum(array_column($workers, 'total_volume'));
+            $avgPerWorker = count($workers) > 0 ? $totalSales / count($workers) : 0;
+
+            foreach ($workers as &$worker) {
+                $worker['percentage'] = $totalSales > 0
+                    ? ($worker['total_revenue'] / $totalSales) * 100
+                    : 0;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'workers' => $workers,
+                'summary' => [
+                    'totalSales' => floatval($totalSales),
+                    'totalVolume' => floatval($totalVolume),
+                    'avgPerWorker' => floatval($avgPerWorker)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+
+    /**
+     * Get Monthly Comparison Report
+     * Shows month-by-month comparison of sales, purchases, and profit
+     */
+    public function getMonthlyComparison()
+    {
+        header('Content-Type: application/json');
+
+        try {
+            $stationId = $_GET['station_id'] ?? 'all';
+            $year = $_GET['year'] ?? date('Y');
+
+            $db = \App\Config\Database::connect();
+
+            $months = [];
+            $monthNames = [
+                'يناير',
+                'فبراير',
+                'مارس',
+                'أبريل',
+                'مايو',
+                'يونيو',
+                'يوليو',
+                'أغسطس',
+                'سبتمبر',
+                'أكتوبر',
+                'نوفمبر',
+                'ديسمبر'
+            ];
+
+            $totalYearlySales = 0;
+            $bestMonth = null;
+            $bestSales = 0;
+            $prevMonthSales = 0;
+
+            for ($m = 1; $m <= 12; $m++) {
+                $startDate = sprintf('%04d-%02d-01', $year, $m);
+                $endDate = date('Y-m-t', strtotime($startDate));
+
+                // Get Sales
+                $salesSql = "SELECT COALESCE(SUM(total_price), 0) FROM sales 
+                             WHERE sale_date BETWEEN ? AND ?";
+                if ($stationId !== 'all') {
+                    $salesSql .= " AND station_id = ?";
+                    $stmt = $db->prepare($salesSql);
+                    $stmt->execute([$startDate, $endDate, $stationId]);
+                } else {
+                    $stmt = $db->prepare($salesSql);
+                    $stmt->execute([$startDate, $endDate]);
+                }
+                $sales = $stmt->fetchColumn() ?: 0;
+
+                // Get Purchases
+                $purchasesSql = "SELECT COALESCE(SUM(total_cost), 0) FROM purchases 
+                                 WHERE purchase_date BETWEEN ? AND ?";
+                if ($stationId !== 'all') {
+                    $purchasesSql .= " AND station_id = ?";
+                    $stmt = $db->prepare($purchasesSql);
+                    $stmt->execute([$startDate, $endDate, $stationId]);
+                } else {
+                    $stmt = $db->prepare($purchasesSql);
+                    $stmt->execute([$startDate, $endDate]);
+                }
+                $purchases = $stmt->fetchColumn() ?: 0;
+
+                // Get Expenses
+                $expensesSql = "SELECT COALESCE(SUM(amount), 0) FROM transactions 
+                                WHERE type = 'expense' AND date BETWEEN ? AND ?";
+                if ($stationId !== 'all') {
+                    $expensesSql .= " AND station_id = ?";
+                    $stmt = $db->prepare($expensesSql);
+                    $stmt->execute([$startDate, $endDate, $stationId]);
+                } else {
+                    $stmt = $db->prepare($expensesSql);
+                    $stmt->execute([$startDate, $endDate]);
+                }
+                $expenses = $stmt->fetchColumn() ?: 0;
+
+                $profit = $sales - $purchases - $expenses;
+
+                // Calculate growth
+                $growth = null;
+                if ($prevMonthSales > 0) {
+                    $growth = (($sales - $prevMonthSales) / $prevMonthSales) * 100;
+                }
+
+                $months[] = [
+                    'month' => $m,
+                    'name' => $monthNames[$m - 1],
+                    'sales' => floatval($sales),
+                    'purchases' => floatval($purchases),
+                    'expenses' => floatval($expenses),
+                    'profit' => floatval($profit),
+                    'growth' => $growth
+                ];
+
+                $totalYearlySales += $sales;
+
+                if ($sales > $bestSales) {
+                    $bestSales = $sales;
+                    $bestMonth = $monthNames[$m - 1];
+                }
+
+                $prevMonthSales = $sales;
+            }
+
+            // Calculate yearly growth (compared to previous year)
+            $prevYearSql = "SELECT COALESCE(SUM(total_price), 0) FROM sales 
+                            WHERE YEAR(sale_date) = ?";
+            if ($stationId !== 'all') {
+                $prevYearSql .= " AND station_id = ?";
+                $stmt = $db->prepare($prevYearSql);
+                $stmt->execute([$year - 1, $stationId]);
+            } else {
+                $stmt = $db->prepare($prevYearSql);
+                $stmt->execute([$year - 1]);
+            }
+            $prevYearSales = $stmt->fetchColumn() ?: 0;
+
+            $yearlyGrowth = $prevYearSales > 0
+                ? (($totalYearlySales - $prevYearSales) / $prevYearSales) * 100
+                : 0;
+
+            echo json_encode([
+                'success' => true,
+                'months' => $months,
+                'summary' => [
+                    'bestMonth' => $bestMonth,
+                    'totalYearlySales' => floatval($totalYearlySales),
+                    'avgMonthlySales' => floatval($totalYearlySales / 12),
+                    'yearlyGrowth' => round($yearlyGrowth, 1)
+                ]
+            ]);
+        } catch (\Exception $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage()
+            ]);
+        }
+        exit;
     }
 }

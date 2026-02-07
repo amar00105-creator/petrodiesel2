@@ -270,7 +270,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
             className="p-6 max-w-[1800px] mx-auto space-y-8"
         >
             {/* Consolidated Header & Toolbar */}
-            <div className="flex flex-col xl:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+            <div className="flex flex-col xl:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-100 dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:shadow-none">
                 
                 {/* Search & View Toggles */}
                  <div className="flex w-full xl:w-auto gap-4">
@@ -278,22 +278,22 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                         <Search className="absolute right-3 top-3 text-slate-400 w-5 h-5"/>
                         <TextInput 
                             placeholder="بحث عن خزان أو منتج..." 
-                            className="pl-4 pr-10 py-2 rounded-xl border-slate-200"
+                            className="pl-4 pr-10 py-2 rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-slate-400"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
-                     <div className="flex gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
+                     <div className="flex gap-1 bg-slate-100 p-1 rounded-xl shrink-0 dark:bg-white/5">
                         <button 
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white shadow text-blue-600 dark:bg-blue-600 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
                             title="شبكة"
                         >
                             <LayoutGrid className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-blue-600' : 'text-slate-500 hover:text-slate-700'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white shadow text-blue-600 dark:bg-blue-600 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'}`}
                             title="قائمة"
                         >
                             <ListIcon className="w-5 h-5" />
@@ -305,7 +305,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                 <div className="flex gap-2 w-full xl:w-auto justify-end overflow-x-auto pb-1 xl:pb-0">
                     <Button 
                         variant="secondary" 
-                        className="rounded-xl font-bold border-slate-200 hover:border-emerald-500 hover:text-emerald-600 whitespace-nowrap"
+                        className="rounded-xl font-bold border-slate-200 hover:border-emerald-500 hover:text-emerald-600 whitespace-nowrap dark:bg-white/5 dark:border-white/10 dark:text-slate-300 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400"
                         onClick={() => { setTankToDelete(null); setTransferModalOpen(true); }} // Open transfer modal without specific tank (Source select mode)
                     >
                         <span className="flex items-center gap-2">
@@ -322,12 +322,12 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                         إضافة خزان
                     </Button>
                     <button 
-                        className="custom-btn btn"
+                        className="custom-btn btn dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
                         onClick={() => setIsDischargeOpen(true)}
                     >
                         <span>تفريغ شحنة</span>
                     </button>
-                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold border-slate-200 whitespace-nowrap">تقرير</Button>
+                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold border-slate-200 whitespace-nowrap dark:bg-white/5 dark:border-white/10 dark:text-slate-300">تقرير</Button>
                 </div>
             </div>
 
@@ -338,6 +338,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                         <FuelTankCard 
                             key={tank.id} 
                             tank={tank} 
+                            generalSettings={generalSettings}
                             onEdit={() => handleEdit(tank)}
                             onDelete={() => initiateDelete(tank)}
                             onCalibrate={() => { setSelectedTank(tank); setCalibrationModalOpen(true); }}
@@ -353,10 +354,10 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
 
             {/* List View (Table) */}
             {viewMode === 'list' && (
-                 <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0">
+                 <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
                     <div className="overflow-x-auto">
                         <table className="w-full text-right">
-                            <thead className="bg-slate-50 border-b border-slate-200">
+                            <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-slate-300">
                                 <tr>
                                     <th className="p-4 text-sm font-bold text-slate-600">اسم الخزان</th>
                                     <th className="p-4 text-sm font-bold text-slate-600">المنتج</th>
@@ -366,11 +367,11 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                     <th className="p-4 text-sm font-bold text-slate-600 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {filteredTanks.map((tank) => (
-                                    <tr key={tank.id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="p-4 font-bold text-navy-900 flex items-center gap-3">
-                                            <div className="p-2 bg-slate-100 rounded-lg"><Droplet className="w-5 h-5 text-blue-500" /></div>
+                                    <tr key={tank.id} className="hover:bg-blue-50/30 transition-colors group dark:hover:bg-white/5">
+                                        <td className="p-4 font-bold text-navy-900 flex items-center gap-3 dark:text-white">
+                                            <div className="p-2 bg-slate-100 rounded-lg dark:bg-white/10"><Droplet className="w-5 h-5 text-blue-500" /></div>
                                             {tank.name}
                                         </td>
                                         <td className="p-4"><Badge size="xs" color="slate">{tank.product}</Badge></td>
@@ -380,10 +381,10 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                                 <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${tank.percentage}%` }}></div>
                                             </div>
                                         </td>
-                                        <td className="p-4 font-mono">
+                                        <td className="p-4 font-mono dark:text-slate-300">
                                             {generalSettings.volume_display_mode === 'gallons' ? (tank.total_cap / 4.5).toLocaleString(undefined, { maximumFractionDigits: 0 }) : tank.total_cap.toLocaleString()}
                                         </td>
-                                        <td className="p-4 font-mono font-bold">
+                                        <td className="p-4 font-mono font-bold dark:text-white">
                                             {formatVolume(tank.current)}
                                         </td>
                                         <td className="p-4 text-center">

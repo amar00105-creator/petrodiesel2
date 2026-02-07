@@ -16,7 +16,9 @@ export default function GlobalTable({
     stats,
     exportName = 'export',
     hideHeader = false,
-    hideFilters = false
+    hideFilters = false,
+    searchWrapperClass = 'relative flex-1',
+    actionsInToolbar = false
 }) {
     const [search, setSearch] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
@@ -72,16 +74,17 @@ export default function GlobalTable({
             {!hideHeader && (
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 print:hidden">
                 <div>
-                    <Title className="text-2xl font-bold text-navy-900 font-cairo">{title}</Title>
+                    <Title className="text-2xl font-bold text-navy-900 font-cairo dark:text-white">{title}</Title>
                     {subtitle && <Text className="text-slate-500">{subtitle}</Text>}
                 </div>
                 
+                {!actionsInToolbar && (
                 <div className="flex flex-wrap gap-2 items-center">
                     {/* Export / Print */}
                     <div className="relative">
                         <button 
                             onClick={() => setShowExportMenu(!showExportMenu)}
-                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
                         >
                             <Download className="w-4 h-4" /> تصدير
                         </button>
@@ -95,7 +98,7 @@ export default function GlobalTable({
                     
                     <button 
                         onClick={() => window.print()}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
                     >
                         <Printer className="w-4 h-4" /> طباعة
                     </button>
@@ -109,6 +112,7 @@ export default function GlobalTable({
                         </button>
                     )}
                 </div>
+                )}
             </div>
             )}
 
@@ -121,40 +125,76 @@ export default function GlobalTable({
 
             {/* Filters Bar */}
             {!hideFilters && (
-            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 print:hidden">
-                <div className="flex flex-col md:flex-row gap-4">
-                    <div className="relative flex-1">
+            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 print:hidden dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
+                <div className="flex flex-col md:flex-row items-center gap-4">
+                    <div className={searchWrapperClass}>
                         <Search className="absolute right-3 top-3 text-slate-400 w-5 h-5"/>
                         <TextInput 
                             placeholder={searchPlaceholder}
-                            className="pl-4 pr-10 py-2 rounded-xl"
+                            className="pl-4 pr-10 py-2 rounded-xl dark:bg-slate-800/50 dark:border-slate-700 dark:text-white dark:placeholder-slate-500"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
                     </div>
                     {filters}
+
+                    {actionsInToolbar && (
+                    <div className="flex flex-wrap gap-2 items-center">
+                         {/* Export / Print */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setShowExportMenu(!showExportMenu)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
+                            >
+                                <Download className="w-4 h-4" /> تصدير
+                            </button>
+                            {showExportMenu && (
+                                <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-xl shadow-lg border border-slate-100 py-2 z-50">
+                                    <button onClick={() => handleExport('csv')} className="w-full text-right px-4 py-2 hover:bg-slate-50 text-sm font-medium">Excel (CSV)</button>
+                                    <button onClick={() => handleExport('print')} className="w-full text-right px-4 py-2 hover:bg-slate-50 text-sm font-medium">PDF / Print</button>
+                                </div>
+                            )}
+                        </div>
+                        
+                        <button 
+                            onClick={() => window.print()}
+                            className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-50 transition-colors dark:bg-white/5 dark:border-white/10 dark:text-white dark:hover:bg-white/10"
+                        >
+                            <Printer className="w-4 h-4" /> طباعة
+                        </button>
+
+                        {onAdd && (
+                            <button 
+                                onClick={onAdd}
+                                className="flex items-center gap-2 px-6 py-2 bg-navy-900 text-white rounded-xl font-bold hover:bg-navy-800 transition-colors shadow-lg shadow-navy-900/20"
+                            >
+                                <Plus className="w-5 h-5" /> {addButtonLabel}
+                            </button>
+                        )}
+                    </div>
+                    )}
                 </div>
             </Card>
             )}
 
             {/* Table */}
-            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 print:shadow-none print:ring-0">
+            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 print:shadow-none print:ring-0 dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
                 <div className="overflow-x-auto">
                     <table className="w-full text-right">
-                        <thead className="bg-slate-50 border-b border-slate-200 print:bg-white">
+                        <thead className="bg-slate-50 border-b border-slate-200 print:bg-white dark:bg-white/5 dark:border-white/10 dark:text-slate-300">
                             <tr>
                                 {columns.map((col, idx) => (
-                                    <th key={idx} className={`p-4 text-sm font-bold text-slate-600 ${col.className || ''}`}>
+                                    <th key={idx} className={`p-4 text-sm font-bold text-slate-600 dark:text-slate-300 ${col.className || ''}`}>
                                         {col.header}
                                     </th>
                                 ))}
-                                {actions && <th className="p-4 text-sm font-bold text-slate-600 text-center print:hidden">إجراءات</th>}
+                                {actions && <th className="p-4 text-sm font-bold text-slate-600 text-center print:hidden dark:text-slate-300">إجراءات</th>}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                             {paginatedData.length > 0 ? (
                                 paginatedData.map((item, rowIndex) => (
-                                    <tr key={item.id || rowIndex} className="hover:bg-blue-50/30 transition-colors group">
+                                    <tr key={item.id || rowIndex} className="hover:bg-blue-50/30 transition-colors group dark:hover:bg-white/5">
                                         {columns.map((col, colIndex) => (
                                             <td key={colIndex} className={`p-4 ${col.className || ''}`}>
                                                 {col.render ? col.render(item) : (col.accessor ? item[col.accessor] : '')}
@@ -186,23 +226,23 @@ export default function GlobalTable({
                 </div>
 
                 {/* Pagination */}
-                <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50 print:hidden">
-                    <Text className="text-sm text-slate-500">
+                <div className="p-4 border-t border-slate-100 flex justify-between items-center bg-slate-50/50 print:hidden dark:bg-white/5 dark:border-white/5">
+                    <Text className="text-sm text-slate-500 dark:text-slate-400">
                         عرض {paginatedData.length} من أصل {filteredData.length} سجل
                     </Text>
                     <div className="flex gap-2">
                         <button 
                             disabled={currentPage === 1}
                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                            className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <ChevronRight className="w-4 h-4"/>
                         </button>
-                        <span className="flex items-center px-4 font-mono font-bold text-slate-600">{currentPage} / {totalPages || 1}</span>
+                        <span className="flex items-center px-4 font-mono font-bold text-slate-600 dark:text-white">{currentPage} / {totalPages || 1}</span>
                         <button 
                             disabled={currentPage === totalPages || totalPages === 0}
                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                            className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="p-2 border border-slate-200 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
                         >
                             <ChevronLeft className="w-4 h-4"/>
                         </button>

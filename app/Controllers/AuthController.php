@@ -20,6 +20,15 @@ class AuthController extends Controller
 
             if ($user && password_verify($password, $user['password_hash'])) {
                 AuthHelper::login($user);
+
+                // Log successful login
+                try {
+                    $logModel = new \App\Models\ActivityLog();
+                    $logModel->log($user['id'], 'login', 'session', null, "تسجيل دخول: {$user['name']}");
+                } catch (\Exception $e) {
+                    // Silently fail if logging fails
+                }
+
                 $this->redirect('/');
             } else {
                 $error = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
@@ -32,6 +41,17 @@ class AuthController extends Controller
 
     public function logout()
     {
+        // Log logout before destroying session
+        try {
+            $user = AuthHelper::user();
+            if ($user) {
+                $logModel = new \App\Models\ActivityLog();
+                $logModel->log($user['id'], 'logout', 'session', null, "تسجيل خروج: {$user['name']}");
+            }
+        } catch (\Exception $e) {
+            // Silently fail if logging fails
+        }
+
         AuthHelper::logout();
         $this->redirect('/login');
     }

@@ -109,7 +109,7 @@ export default function RoleManager({ roles = [], onSave, onDelete }) {
 
     return (
         <div className="space-y-6">
-            <Card className="rounded-2xl shadow-md ring-1 ring-slate-100">
+            <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
                 <div className="flex justify-between items-center mb-6">
                     <Title>أدوار النظام والصلاحيات</Title>
                     <button 
@@ -122,11 +122,11 @@ export default function RoleManager({ roles = [], onSave, onDelete }) {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                     {roles.map(role => (
-                        <div key={role.id} className="p-4 border border-slate-200 rounded-xl hover:shadow-md transition-shadow bg-white relative group">
+                        <div key={role.id} className="p-4 border border-slate-200 rounded-xl hover:shadow-md transition-shadow bg-white relative group dark:bg-white/5 dark:border-white/10">
                             <div className="flex justify-between items-start mb-2">
                                 <div className="flex items-center gap-2">
                                     <Shield className={`w-5 h-5 ${role.is_system == 1 ? 'text-amber-500' : 'text-blue-500'}`} />
-                                    <h3 className="font-bold text-lg text-slate-800">{role.name}</h3>
+                                    <h3 className="font-bold text-lg text-slate-800 dark:text-white">{role.name}</h3>
                                 </div>
                                 <div className="flex gap-2 opacity-100 transition-opacity">
                                     <button 
@@ -147,7 +147,7 @@ export default function RoleManager({ roles = [], onSave, onDelete }) {
                                     )}
                                 </div>
                             </div>
-                            <p className="text-sm text-slate-500 mb-4 h-10 line-clamp-2">
+                            <p className="text-sm text-slate-500 mb-4 h-10 line-clamp-2 dark:text-slate-400">
                                 {role.description || 'لا يوجد وصف'}
                             </p>
                             <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-50">
@@ -169,12 +169,12 @@ export default function RoleManager({ roles = [], onSave, onDelete }) {
                             initial={{ scale: 0.95, opacity: 0 }} 
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col"
+                            className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col dark:bg-slate-900 dark:border dark:border-white/10 dark:text-white"
                         >
                             {/* Modal Header */}
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                <Title>{editingRole.id ? 'تعديل الدور' : 'إنشاء دور جديد'}</Title>
-                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 dark:bg-white/5 dark:border-white/10">
+                                <Title className="dark:text-white">{editingRole.id ? 'تعديل الدور' : 'إنشاء دور جديد'}</Title>
+                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
@@ -183,19 +183,21 @@ export default function RoleManager({ roles = [], onSave, onDelete }) {
                             <div className="flex-1 overflow-y-auto p-6 space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">اسم الدور</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1 dark:text-slate-300 text-right">اسم الدور</label>
                                         <TextInput 
                                             value={editingRole.name} 
                                             onChange={(e) => setEditingRole({...editingRole, name: e.target.value})} 
                                             placeholder="مثال: مدير مبيعات" 
+                                            className="text-right dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-bold text-slate-700 mb-1">الوصف</label>
+                                        <label className="block text-sm font-bold text-slate-700 mb-1 dark:text-slate-300 text-right">الوصف</label>
                                         <TextInput 
                                             value={editingRole.description} 
                                             onChange={(e) => setEditingRole({...editingRole, description: e.target.value})} 
                                             placeholder="وصف مختصر..." 
+                                            className="text-right dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                         />
                                     </div>
                                 </div>
@@ -246,13 +248,12 @@ export default function RoleManager({ roles = [], onSave, onDelete }) {
                                 )}
                             </div>
 
-                            {/* Modal Footer */}
-                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-between gap-3">
+                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-between gap-3 dark:bg-white/5 dark:border-white/10">
                                 <div>
                                     {editingRole.id && editingRole.is_system != 1 && (
                                         <button 
                                             onClick={() => handleRequestDelete(editingRole)}
-                                            className="px-4 py-2 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors flex items-center gap-2"
+                                            className="px-4 py-2 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors flex items-center gap-2 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400"
                                         >
                                             <Trash2 className="w-4 h-4" /> حذف الدور
                                         </button>
@@ -261,7 +262,7 @@ export default function RoleManager({ roles = [], onSave, onDelete }) {
                                 <div className="flex gap-3">
                                     <button 
                                         onClick={() => setIsModalOpen(false)}
-                                        className="px-6 py-2 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-colors"
+                                        className="px-6 py-2 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-colors dark:text-slate-400 dark:hover:bg-white/10"
                                     >
                                         إلغاء
                                     </button>

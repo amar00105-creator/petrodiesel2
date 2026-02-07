@@ -77,23 +77,23 @@ export default function EditSupplierModal({ isOpen, onClose, supplier, onSuccess
 
     return (
         <Dialog open={isOpen} onClose={onClose} static={true} className="z-[100]">
-            <DialogPanel className="max-w-md w-full bg-white rounded-2xl shadow-2xl ring-1 ring-slate-900/5 p-0 overflow-hidden">
-                <div className="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-center">
+            <DialogPanel className="max-w-md w-full bg-white rounded-2xl shadow-2xl ring-1 ring-slate-900/5 p-0 overflow-hidden dark:bg-[#1e293b] dark:ring-white/10 dark:shadow-none">
+                <div className="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-center dark:bg-white/5 dark:border-white/10">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                            <Building2 className="w-5 h-5 text-navy-900" />
+                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 dark:text-white">
+                            <Building2 className="w-5 h-5 text-navy-900 dark:text-blue-400" />
                             تعديل بيانات المورد
                         </h2>
-                        <p className="text-slate-500 text-sm">تعديل الاسم أو الهاتف</p>
+                        <p className="text-slate-500 text-sm dark:text-slate-400">تعديل الاسم أو الهاتف</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500 dark:hover:bg-white/10 dark:text-slate-400">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">اسم المورد</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">اسم المورد</label>
                         <div className="relative">
                             <Building2 className="absolute right-3 top-3 text-slate-400 w-5 h-5" />
                             <input
@@ -102,14 +102,14 @@ export default function EditSupplierModal({ isOpen, onClose, supplier, onSuccess
                                 value={formData.name}
                                 onChange={handleChange}
                                 placeholder="اسم المورد"
-                                className="w-full pr-10 pl-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all"
+                                className="w-full pr-10 pl-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-slate-500"
                                 required
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">رقم الهاتف</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">رقم الهاتف</label>
                         <div className="relative">
                             <Phone className="absolute right-3 top-3 text-slate-400 w-5 h-5" />
                             <input
@@ -118,7 +118,7 @@ export default function EditSupplierModal({ isOpen, onClose, supplier, onSuccess
                                 value={formData.phone}
                                 onChange={handleChange}
                                 placeholder="05xxxxxxxx"
-                                className="w-full pr-10 pl-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all"
+                                className="w-full pr-10 pl-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-slate-500"
                             />
                         </div>
                     </div>
@@ -127,7 +127,7 @@ export default function EditSupplierModal({ isOpen, onClose, supplier, onSuccess
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors ml-2"
+                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors ml-2 dark:text-slate-400 dark:hover:bg-white/5"
                         >
                             إلغاء
                         </button>

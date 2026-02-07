@@ -72,18 +72,18 @@ export default function SupplierList({ suppliers = [], hideHeader = false }) {
     const columns = [
         { header: 'اسم المنشأة / المورد', accessor: 'name', render: (item) => (
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-slate-100 rounded-lg text-slate-500">
+                <div className="p-2 bg-slate-100 rounded-lg text-slate-500 dark:bg-white/10 dark:text-slate-400">
                     <Building2 className="w-5 h-5" />
                 </div>
-                <span className="font-bold text-navy-900">{item.name}</span>
+                <span className="font-bold text-navy-900 dark:text-white">{item.name}</span>
             </div>
         )},
-        { header: 'رقم الهاتف', accessor: 'phone', className: 'font-mono text-slate-600', render: (item) => (
+        { header: 'رقم الهاتف', accessor: 'phone', className: 'font-mono text-slate-600 dark:text-slate-300', render: (item) => (
             <div className="flex items-center gap-2">
                 <Phone className="w-3 h-3 text-slate-400"/> {item.phone}
             </div>
         )},
-        { header: 'العنوان', accessor: 'address', className: 'text-sm text-slate-500', render: (item) => (
+        { header: 'العنوان', accessor: 'address', className: 'text-sm text-slate-500 dark:text-slate-400', render: (item) => (
             <div className="flex items-center gap-2">
                 <MapPin className="w-3 h-3 text-slate-400"/> {item.address}
             </div>

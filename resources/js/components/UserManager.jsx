@@ -52,10 +52,10 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
 
     return (
         <div className="space-y-6">
-            <Card className="rounded-2xl shadow-md ring-1 ring-slate-100">
+            <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
                 <div className="flex justify-between items-center mb-6">
                     <div className="flex items-center gap-3">
-                        <Title>إدارة المستخدمين وتعيين الأدوار</Title>
+                        <Title className="dark:text-white">إدارة المستخدمين وتعيين الأدوار</Title>
                         <Badge color="blue">{users.length} مستخدم</Badge>
                     </div>
                     <button 
@@ -68,7 +68,7 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
 
                 <div className="overflow-x-auto">
                     <table className="w-full text-right">
-                        <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200">
+                        <thead className="bg-slate-50 text-slate-500 text-xs uppercase font-bold border-b border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10">
                             <tr>
                                 <th className="p-4">المستخدم</th>
                                 <th className="p-4">البريد الإلكتروني</th>
@@ -84,8 +84,8 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
                                 const stationName = user.station_name || 'عام / جميع المحطات';
                                 
                                 return (
-                                    <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="p-4 font-bold text-slate-800 flex items-center gap-3">
+                                    <tr key={user.id} className="hover:bg-slate-50/50 transition-colors dark:hover:bg-white/5 dark:border-white/10">
+                                        <td className="p-4 font-bold text-slate-800 flex items-center gap-3 dark:text-white">
                                             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
                                                 {user.name.charAt(0).toUpperCase()}
                                             </div>
@@ -133,19 +133,19 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
                             initial={{ scale: 0.95, opacity: 0 }} 
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0.95, opacity: 0 }}
-                            className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden"
+                            className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden dark:bg-slate-900 dark:border dark:border-white/10 dark:text-white"
                         >
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 dark:bg-white/5 dark:border-white/10">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
                                         <User className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <Title>{editingUser.mode === 'create' ? 'إضافة مستخدم جديد' : editingUser.name}</Title>
-                                        <Text className="text-xs">{editingUser.mode === 'create' ? 'أدخل بيانات المستخدم الجديد' : editingUser.email}</Text>
+                                        <Title className="dark:text-white">{editingUser.mode === 'create' ? 'إضافة مستخدم جديد' : editingUser.name}</Title>
+                                        <Text className="text-xs dark:text-slate-400">{editingUser.mode === 'create' ? 'أدخل بيانات المستخدم الجديد' : editingUser.email}</Text>
                                     </div>
                                 </div>
-                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-white">
                                     <X className="w-6 h-6" />
                                 </button>
                             </div>
@@ -154,28 +154,31 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
                                 {editingUser.mode === 'create' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-1">اسم المستخدم</label>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1 dark:text-slate-300 text-right">اسم المستخدم</label>
                                             <TextInput 
                                                 value={editingUser.name} 
                                                 onChange={(e) => setEditingUser({...editingUser, name: e.target.value})} 
                                                 placeholder="الاسم الكامل"
+                                                className="text-right dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 mb-1">البريد الإلكتروني</label>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1 dark:text-slate-300 text-right">البريد الإلكتروني</label>
                                             <TextInput 
                                                 value={editingUser.email} 
                                                 onChange={(e) => setEditingUser({...editingUser, email: e.target.value})} 
                                                 placeholder="example@email.com"
+                                                className="text-right dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                             />
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-sm font-bold text-slate-700 mb-1">كلمة المرور (Secret)</label>
+                                            <label className="block text-sm font-bold text-slate-700 mb-1 dark:text-slate-300 text-right">كلمة المرور (Secret)</label>
                                             <TextInput 
                                                 type="password"
                                                 value={editingUser.password} 
                                                 onChange={(e) => setEditingUser({...editingUser, password: e.target.value})} 
                                                 placeholder="********"
+                                                className="text-right dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                             />
                                         </div>
                                     </div>
@@ -186,6 +189,7 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
                                         value={editingUser.station_ids || []} 
                                         onValueChange={(val) => setEditingUser({...editingUser, station_ids: val})}
                                         placeholder="اختر المحطات..."
+                                        className="text-right !dark:bg-slate-800 !dark:fill-slate-800 !dark:border-slate-700 !dark:text-white [&>button]:!dark:bg-slate-800 [&>button]:!dark:text-white"
                                     >
                                         {stations.map(station => (
                                             <MultiSelectItem key={station.id} value={String(station.id)}>
@@ -197,18 +201,19 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">الدور الوظيفي (الصلاحيات)</label>
-                                    <Select 
+                                    <label className="block text-sm font-bold text-slate-700 mb-1 dark:text-slate-300 text-right">الدور الوظيفي (الصلاحيات)</label>
+                                    <select 
                                         value={String(editingUser.role_id || '0')} 
-                                        onValueChange={(val) => setEditingUser({...editingUser, role_id: val === '0' ? null : val})}
+                                        onChange={(e) => setEditingUser({...editingUser, role_id: e.target.value === '0' ? null : e.target.value})}
+                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-blue-500 border outline-none transition-all"
                                     >
-                                        <SelectItem value="0">غير محدد (صلاحيات افتراضية)</SelectItem>
+                                        <option value="0">غير محدد (صلاحيات افتراضية)</option>
                                         {roles.map(role => (
-                                            <SelectItem key={role.id} value={String(role.id)} icon={ShieldCheck}>
+                                            <option key={role.id} value={String(role.id)}>
                                                 {role.name}
-                                            </SelectItem>
+                                            </option>
                                         ))}
-                                    </Select>
+                                    </select>
                                 </div>
 
                                 <div>
@@ -238,7 +243,7 @@ export default function UserManager({ users = [], roles = [], stations = [], onS
                                 </div>
                             </div>
 
-                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3">
+                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end gap-3 dark:bg-white/5 dark:border-white/10">
                                 <button 
                                     onClick={() => setIsModalOpen(false)}
                                     className="px-6 py-2 rounded-xl font-bold text-slate-500 hover:bg-slate-200 transition-colors"

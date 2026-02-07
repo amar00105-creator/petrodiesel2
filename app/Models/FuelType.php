@@ -79,4 +79,10 @@ class FuelType extends Model
         $stmt->execute([$code]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function getLastInsertId()
+    {
+        $db = \App\Config\Database::connect();
+        return $db->lastInsertId();
+    }
 }

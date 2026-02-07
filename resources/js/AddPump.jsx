@@ -205,7 +205,7 @@ export default function AddPump(props) {
             initial="hidden"
             animate="visible"
             variants={containerVariants}
-            className="p-6 max-w-[1600px] mx-auto bg-slate-50"
+            className="p-6 max-w-[1600px] mx-auto bg-slate-50 dark:bg-[#0F172A]"
         >
             <div className="grid grid-cols-12 gap-6 h-full">
                 
@@ -213,14 +213,14 @@ export default function AddPump(props) {
                 <motion.div variants={itemVariants} className="col-span-12 lg:col-span-4 flex flex-col gap-6 sticky top-6 h-fit">
                     
                     {/* Live Status Card - Styled like Accounting Summary Cards */}
-                    <Card className="relative overflow-hidden border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6">
+                    <Card className="relative overflow-hidden border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6 dark:bg-white/5 dark:ring-white/10">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[#E0F2FE] rounded-full blur-3xl -mr-16 -mt-16 opacity-50"></div>
                         
                         <div className="relative z-10">
                             <Flex alignItems="start" className="mb-4">
                                 <div>
-                                    <Text className="text-slate-500 mb-1">إجمالي الماكينات</Text>
-                                    <Metric className="text-3xl font-bold text-slate-900 font-mono">{stats.totalPumps}</Metric>
+                                    <Text className="text-slate-500 mb-1 dark:text-slate-400">إجمالي الماكينات</Text>
+                                    <Metric className="text-3xl font-bold text-slate-900 font-mono dark:text-white">{stats.totalPumps}</Metric>
                                 </div>
                                 <div className="p-3 bg-[#E0F2FE] text-blue-600 rounded-xl">
                                     <Activity className="w-6 h-6" />
@@ -240,8 +240,8 @@ export default function AddPump(props) {
                     </Card>
 
                     {/* Preview Context Card */}
-                    <Card className="border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6 rounded-2xl">
-                        <Title className="text-center mb-2 text-navy-900 font-cairo">المحاكاة الحية</Title>
+                    <Card className="border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6 rounded-2xl dark:bg-white/5 dark:ring-white/10">
+                        <Title className="text-center mb-2 text-navy-900 font-cairo dark:text-white">المحاكاة الحية</Title>
                         <Text className="text-center text-slate-400 text-xs mb-8">معاينة فورية للبيانات المدخلة</Text>
 
                         <div className="relative flex justify-center mb-8">
@@ -278,17 +278,17 @@ export default function AddPump(props) {
 
                         {/* Dynamic Pump Preview */}
                         <motion.div 
-                            className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60 shadow-sm"
+                            className="bg-slate-50 rounded-2xl p-5 border border-slate-200/60 shadow-sm dark:bg-slate-800 dark:border-slate-700"
                             whileHover={{ scale: 1.02 }}
                             transition={{ type: "spring", stiffness: 400, damping: 17 }}
                         >
                             <div className="flex items-center gap-4">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 ${formData.name ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-emerald-500/30' : 'bg-white text-slate-300 shadow-slate-200'}`}>
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transform rotate-3 ${formData.name ? 'bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-emerald-500/30' : 'bg-white text-slate-300 shadow-slate-200 dark:bg-slate-800 dark:text-slate-600 dark:shadow-none'}`}>
                                     <Fuel className="w-6 h-6" />
                                 </div>
                                 <div className="flex-1">
-                                    <h3 className="font-bold text-navy-900 text-lg leading-tight">{formData.name || 'اسم الماكينة'}</h3>
-                                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                    <h3 className="font-bold text-navy-900 text-lg leading-tight dark:text-white">{formData.name || 'اسم الماكينة'}</h3>
+                                    <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 dark:text-slate-400">
                                         <span className={`w-2 h-2 rounded-full ${formData.tank_id ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                                         {formData.tank_id ? 'جاهزة للربط' : 'بانتظار الإعداد'}
                                     </p>
@@ -304,12 +304,12 @@ export default function AddPump(props) {
                     <form onSubmit={handleSubmit} className="space-y-8">
                         
                         {/* Section 1: Main Config */}
-                        <Card className="border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6 rounded-2xl">
+                        <Card className="border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6 rounded-2xl dark:bg-white/5 dark:ring-white/10">
                             <div className="flex items-center justify-between mb-8">
                                 <div className="flex items-center gap-4">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 font-bold text-lg ring-4 ring-blue-50/50">1</span>
+                                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-50 text-blue-600 font-bold text-lg ring-4 ring-blue-50/50 dark:bg-blue-500/20 dark:text-blue-400 dark:ring-blue-500/10">1</span>
                                     <div>
-                                        <h2 className="text-xl font-bold text-navy-900">بيانات التكوين الأساسية</h2>
+                                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">بيانات التكوين الأساسية</h2>
                                         <p className="text-slate-400 text-sm">اربط الماكينة بخزان الوقود المناسب</p>
                                     </div>
                                 </div>
@@ -330,14 +330,14 @@ export default function AddPump(props) {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="group">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-3 group-focus-within:text-blue-600 transition-colors">اسم الماكينة</label>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-3 group-focus-within:text-blue-600 transition-colors dark:text-slate-300 dark:group-focus-within:text-blue-400">اسم الماكينة</label>
                                     <div className="relative">
                                         <input
                                             type="text"
                                             name="name"
                                             value={formData.name}
                                             onChange={handleChange}
-                                            className="w-full h-14 bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-5 pl-12 font-bold text-navy-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300"
+                                            className="w-full h-14 bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-5 pl-12 font-bold text-navy-900 placeholder:text-slate-300 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-300 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:bg-slate-700"
                                             placeholder="مثال: الطلمبة الرئيسية"
                                             required
                                         />
@@ -346,13 +346,13 @@ export default function AddPump(props) {
                                 </div>
 
                                 <div className="group">
-                                    <label className="block text-sm font-semibold text-slate-700 mb-3 group-focus-within:text-emerald-600 transition-colors">الخزان المصدر</label>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-3 group-focus-within:text-emerald-600 transition-colors dark:text-slate-300 dark:group-focus-within:text-emerald-400">الخزان المصدر</label>
                                     <div className="relative">
                                         <select
                                             name="tank_id"
                                             value={formData.tank_id}
                                             onChange={handleChange}
-                                            className="w-full h-14 bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-5 pl-12 font-bold text-navy-900 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all duration-300 appearance-none cursor-pointer"
+                                            className="w-full h-14 bg-slate-50/50 border-2 border-slate-100 rounded-2xl px-5 pl-12 font-bold text-navy-900 focus:bg-white focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all duration-300 appearance-none cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:bg-slate-700"
                                             required
                                         >
                                             <option value="">اختر الخزان...</option>
@@ -370,28 +370,28 @@ export default function AddPump(props) {
                         </Card>
 
                         {/* Section 2: Nozzles */}
-                        <Card className="border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6 rounded-2xl relative overflow-hidden">
+                        <Card className="border-0 ring-1 ring-slate-200 shadow-sm bg-white p-6 rounded-2xl relative overflow-hidden dark:bg-white/5 dark:ring-white/10">
                              {/* Accents */}
                              <div className="absolute top-0 right-0 w-2 h-full bg-gradient-to-b from-blue-500 to-indigo-600"></div>
 
                             <div className="flex justify-between items-start mb-8">
                                 <div className="flex items-center gap-4">
-                                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 font-bold text-lg ring-4 ring-indigo-50/50">2</span>
+                                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-indigo-50 text-indigo-600 font-bold text-lg ring-4 ring-indigo-50/50 dark:bg-indigo-500/20 dark:text-indigo-400 dark:ring-indigo-500/10">2</span>
                                     <div>
-                                        <h2 className="text-xl font-bold text-navy-900">تكوين المسدسات</h2>
+                                        <h2 className="text-xl font-bold text-navy-900 dark:text-white">تكوين المسدسات</h2>
                                         <p className="text-slate-400 text-sm">حدد عدد المسدسات والعدادات لكل ماكينة</p>
                                     </div>
                                 </div>
                                 
-                                <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100">
-                                    <span className="text-sm font-bold text-slate-600 px-2">عدد المسدسات:</span>
+                                <div className="flex items-center gap-3 bg-slate-50 p-2 rounded-2xl border border-slate-100 dark:bg-slate-800 dark:border-slate-700">
+                                    <span className="text-sm font-bold text-slate-600 px-2 dark:text-slate-300">عدد المسدسات:</span>
                                     <div className="flex gap-1">
                                         {[1, 2, 3, 4].map(num => (
                                             <button
                                                 key={num}
                                                 type="button"
                                                 onClick={() => setFormData(p => ({ ...p, counter_count: num }))}
-                                                className={`w-10 h-10 rounded-xl font-bold transition-all duration-300 ${formData.counter_count == num ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105' : 'bg-white text-slate-400 hover:bg-indigo-50'}`}
+                                                className={`w-10 h-10 rounded-xl font-bold transition-all duration-300 ${formData.counter_count == num ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-105' : 'bg-white text-slate-400 hover:bg-indigo-50 dark:bg-slate-700 dark:text-slate-400 dark:hover:bg-slate-600'}`}
                                             >
                                                 {num}
                                             </button>
@@ -408,7 +408,7 @@ export default function AddPump(props) {
                                             initial={{ opacity: 0, x: -20 }}
                                             animate={{ opacity: 1, x: 0 }}
                                             exit={{ opacity: 0, scale: 0.9 }}
-                                            className="group relative bg-slate-50/50 hover:bg-white rounded-2xl p-6 border-2 border-slate-100 hover:border-indigo-100 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-900/5"
+                                            className="group relative bg-slate-50/50 hover:bg-white rounded-2xl p-6 border-2 border-slate-100 hover:border-indigo-100 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-900/5 dark:bg-white/5 dark:border-white/5 dark:hover:bg-white/10 dark:hover:border-indigo-500/30"
                                         >
                                             {/* Delete Button */}
                                             <button
@@ -426,26 +426,26 @@ export default function AddPump(props) {
 
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pl-4">
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">اسم العداد</label>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">اسم العداد</label>
                                                     <input
                                                         type="text"
                                                         value={formData.counter_names[i] || ''}
                                                         onChange={e => handleArrayChange(i, 'counter_names', e.target.value)}
-                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-navy-900 outline-none focus:border-indigo-500 transition-colors"
+                                                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-navy-900 outline-none focus:border-indigo-500 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                                         placeholder={`مثال: عداد ${i + 1}`}
                                                         required
                                                     />
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">قراءة العداد الحالية</label>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">قراءة العداد الحالية</label>
                                                     <div className="relative">
                                                         <input
                                                             type="number"
                                                             step="0.01"
                                                             value={formData.readings[i] || ''}
                                                             onChange={e => handleArrayChange(i, 'readings', e.target.value)}
-                                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-10 text-sm font-mono font-bold text-navy-900 outline-none focus:border-indigo-500 transition-colors"
+                                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-10 text-sm font-mono font-bold text-navy-900 outline-none focus:border-indigo-500 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                                             placeholder="000000.00"
                                                             required
                                                         />
@@ -454,12 +454,12 @@ export default function AddPump(props) {
                                                 </div>
 
                                                 <div className="space-y-2">
-                                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">تعيين لعامل</label>
+                                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">تعيين لعامل</label>
                                                     <div className="relative">
                                                         <select
                                                             value={formData.workers[i] || ''}
                                                             onChange={e => handleArrayChange(i, 'workers', e.target.value)}
-                                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-10 text-sm font-bold text-navy-900 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer"
+                                                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 pl-10 text-sm font-bold text-navy-900 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                                             required
                                                         >
                                                             <option value="">-- اختر عامل --</option>
@@ -484,7 +484,7 @@ export default function AddPump(props) {
                                 whileTap={{ scale: 0.98 }}
                                 type="button"
                                 onClick={() => window.location.href = '/PETRODIESEL2/public/pumps'}
-                                className="px-8 py-4 rounded-2xl bg-white text-slate-500 font-bold border border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-colors"
+                                className="px-8 py-4 rounded-2xl bg-white text-slate-500 font-bold border border-slate-200 hover:bg-slate-50 hover:text-slate-700 transition-colors dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
                             >
                                 إلغاء
                             </motion.button>

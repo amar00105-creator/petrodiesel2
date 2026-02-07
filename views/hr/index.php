@@ -11,7 +11,7 @@
     data-user='<?= json_encode($user ?? []) ?>'
     data-stats='<?= json_encode($stats ?? []) ?>'
     data-all-stations='<?= json_encode($allStations ?? []) ?>'
-    class="min-h-screen bg-slate-50">
+    class="min-h-screen bg-slate-50 dark:bg-[#0F172A]">
     <!-- React loads here -->
     <div class="flex items-center justify-center min-h-screen">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

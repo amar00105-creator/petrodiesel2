@@ -236,7 +236,7 @@
         <div class="header">
             <div style="display: flex; gap: 20px; align-items: center;">
                 <div class="company-logo">
-                    <img src="/PETRODIESEL2/public/assets/images/logo.png" alt="PetroDiesel Logo" style="max-height: 80px;">
+                    <img src="<?= BASE_URL ?>/assets/images/logo.png" alt="PetroDiesel Logo" style="max-height: 80px;">
                 </div>
                 <div class="company-info">
                     <h1>PETRODIESEL</h1>

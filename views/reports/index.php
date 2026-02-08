@@ -2,7 +2,7 @@
 // views/reports/index.php
 ?>
 <script>
-    window.BASE_URL = '/PETRODIESEL2/public';
+    window.BASE_URL = "<?= BASE_URL ?>";
 </script>
 <!-- React Root -->
 <div id="root"

@@ -221,9 +221,44 @@
     <div class="login-container">
         <div class="glass-card">
             <div class="logo-area">
-                <i class="fas fa-gas-pump logo-icon"></i>
+                <!-- Unified Glass Container for Logo + Icon -->
+                <div style="
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 20px;
+                    padding: 16px 28px;
+                    margin-bottom: 20px;
+                    background: rgba(255,255,255,0.12); 
+                    backdrop-filter: blur(14px); 
+                    -webkit-backdrop-filter: blur(14px);
+                    border-radius: 20px;
+                    border: 1px solid rgba(255,255,255,0.2);
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.15);
+                ">
+                    <!-- Fuel Icon -->
+                    <i class="fas fa-gas-pump" style="
+                        font-size: 38px; 
+                        color: #60a5fa; 
+                        filter: drop-shadow(0 0 12px rgba(96,165,250,0.7));
+                    "></i>
+
+                    <!-- Separator -->
+                    <div style="
+                        width: 1px; 
+                        height: 45px; 
+                        background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.3), transparent);
+                    "></div>
+
+                    <!-- Logo -->
+                    <img src="<?php echo BASE_URL; ?>/img/logo.png" alt="Petro Diesel" style="
+                        height: 65px; 
+                        width: auto;
+                        filter: drop-shadow(0 0 12px rgba(255,255,255,0.5)) brightness(1.15);
+                    ">
+                </div>
                 <h1 class="app-name">بتروديزل ERP</h1>
-                <p class="app-subtitle">نظام إدارة محطات الوقود المتكامل</p>
+                <p class="app-subtitle">نظام بتروديزل لإدارة محطات الوقود المتكامل الذكي</p>
             </div>
 
             <?php if (isset($error)): ?>

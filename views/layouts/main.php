@@ -79,11 +79,31 @@
 
     <!-- Collapsible Glassmorphism Sidebar -->
     <div class="sidebar" id="mainSidebar">
-        <div class="sidebar-header">
+        <div class="sidebar-header" style="display: flex; align-items: center; gap: 12px;">
+            <!-- Fuel Icon on LEFT -->
             <i class="fas fa-gas-pump sidebar-logo"></i>
-            <span class="sidebar-title">بتروديزل</span>
-            <!-- Close Button for Mobile -->
-            <i class="fas fa-times d-md-none" onclick="closeSidebar()" style="margin-right: auto; cursor: pointer; color: var(--text-secondary);"></i>
+
+            <!-- Logo in Glass Container (fills remaining space) -->
+            <div class="sidebar-title" style="
+                flex: 1;
+                padding: 10px 16px;
+                background: rgba(255,255,255,0.12); 
+                backdrop-filter: blur(10px); 
+                -webkit-backdrop-filter: blur(10px);
+                border-radius: 12px;
+                border: 1px solid rgba(255,255,255,0.15);
+                box-shadow: 0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">
+                <img src="<?= BASE_URL ?>/img/logo.png" alt="Petro Diesel" style="
+                    height: 55px; 
+                    width: auto;
+                    object-fit: contain;
+                    filter: drop-shadow(0 0 8px rgba(255,255,255,0.4)) brightness(1.15);
+                ">
+            </div>
         </div>
 
         <nav class="sidebar-nav">

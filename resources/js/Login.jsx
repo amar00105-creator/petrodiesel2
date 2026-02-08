@@ -153,15 +153,30 @@ export default function Login() {
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/30 rounded-full blur-3xl -ml-20 -mb-20"></div>
                     
                     <div className="relative z-20">
-                        <motion.div 
-                            animate={{ y: [0, -10, 0] }}
-                            transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                            className="w-32 h-32 bg-white/10 backdrop-blur-md rounded-3xl mx-auto mb-8 ring-1 ring-white/20 flex items-center justify-center shadow-2xl"
-                        >
-                            <ShieldCheck className="w-16 h-16 text-emerald-400" />
-                        </motion.div>
+                        <div className="flex items-center justify-center gap-6 mb-8">
+                            {/* Petro Diesel Logo */}
+                            <motion.div 
+                                animate={{ y: [0, -10, 0] }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                            >
+                                <img 
+                                    src="./img/logo.png"
+                                    alt="Petro Diesel"
+                                    className="h-24 w-auto drop-shadow-2xl"
+                                />
+                            </motion.div>
+                            
+                            {/* Fuel Icon */}
+                            <motion.div 
+                                animate={{ y: [0, -10, 0] }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 0.5 }}
+                                className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-3xl ring-1 ring-white/20 flex items-center justify-center shadow-2xl"
+                            >
+                                <Droplets className="w-12 h-12 text-emerald-400" />
+                            </motion.div>
+                        </div>
                         
-                        <h2 className="text-4xl font-bold text-white mb-6 font-cairo">نظام بتروديزل لإدارة الموارد</h2>
+                        <h2 className="text-3xl font-bold text-white mb-6 font-cairo">نظام بتروديزل لإدارة محطات الوقود المتكامل الذكي</h2>
                         <p className="text-blue-100 text-lg leading-relaxed max-w-sm mx-auto">
                             الجيل الجديد من أنظمة إدارة محطات الوقود. تحكم شامل، تقارير دقيقة، وأداء فائق السرعة.
                         </p>

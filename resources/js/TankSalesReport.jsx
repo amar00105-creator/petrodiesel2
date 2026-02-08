@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Printer } from 'lucide-react';
+import { Calendar, Printer, Eye } from 'lucide-react';
 import { Card, Title, Text } from '@tremor/react';
 import { toast } from 'sonner';
 
@@ -130,6 +130,100 @@ export default function TankSalesReport({ stationId }) {
                             />
                             <Calendar className="w-5 h-5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
                         </div>
+
+                        {/* Preview Button */}
+                        <button
+                            onClick={() => {
+                                const printWindow = window.open('', '_blank');
+                                // Get the table content specifically
+                                const tableElement = document.querySelector('.overflow-x-auto');
+                                const content = tableElement ? tableElement.innerHTML : '<p>لا توجد بيانات</p>';
+                                printWindow.document.write(`
+                                    <html dir="rtl" lang="ar">
+                                    <head>
+                                        <title>معاينة تقرير مبيعات البير</title>
+                                        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+                                        <style>
+                                            * { box-sizing: border-box; margin: 0; padding: 0; }
+                                            body { 
+                                                font-family: 'Cairo', sans-serif; 
+                                                background: #f0f0f0; 
+                                                padding: 20px;
+                                                display: flex;
+                                                justify-content: center;
+                                            }
+                                            .a4-page {
+                                                width: 210mm;
+                                                min-height: 297mm;
+                                                background: white url('${window.BASE_URL || ''}/img/background.png') no-repeat center center;
+                                                background-size: cover;
+                                                padding: 8mm 15mm 15mm 15mm;
+                                                box-shadow: 0 0 20px rgba(0,0,0,0.15);
+                                                position: relative;
+                                            }
+                                            .report-header {
+                                                display: flex;
+                                                justify-content: space-between;
+                                                align-items: center;
+                                                border-bottom: 3px solid #374151;
+                                                padding-bottom: 15px;
+                                                margin-bottom: 20px;
+                                            }
+                                            .logo-section img {
+                                                height: 60px;
+                                                width: auto;
+                                            }
+                                            .title-section {
+                                                text-align: center;
+                                                flex: 1;
+                                            }
+                                            .title-section h1 {
+                                                font-size: 20px;
+                                                font-weight: 900;
+                                                color: #1f2937;
+                                                margin-bottom: 5px;
+                                            }
+                                            .title-section p {
+                                                font-size: 14px;
+                                                color: #6b7280;
+                                            }
+                                            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                                            th, td { border: 1px solid #333; padding: 8px; text-align: center; font-size: 11px; }
+                                            th { background: #374151; color: white; font-weight: bold; }
+                                            tfoot td { font-weight: bold; }
+                                            .print\\:hidden { display: none !important; }
+                                            @media print {
+                                                body { background: white; padding: 0; }
+                                                .a4-page { box-shadow: none; padding: 10mm; }
+                                            }
+                                        </style>
+                                    </head>
+                                    <body>
+                                        <div class="a4-page">
+                                            <div class="report-header">
+                                                <div class="logo-section">
+                                                    <img src="${window.BASE_URL || ''}/img/logo.png" alt="Petro Diesel" />
+                                                </div>
+                                                <div class="title-section">
+                                                    <h1>تقرير مبيعات البير</h1>
+                                                    <p>التاريخ: ${new Date(date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                                                </div>
+                                                <div class="logo-section" style="visibility: hidden;">
+                                                    <img src="${window.BASE_URL || ''}/img/logo.png" alt="" />
+                                                </div>
+                                            </div>
+                                            ${content}
+                                        </div>
+                                    </body>
+                                    </html>
+                                `);
+                                printWindow.document.close();
+                            }}
+                            className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                            title="معاينة التقرير"
+                        >
+                            <Eye className="w-5 h-5" />
+                        </button>
 
                         {/* Print Button */}
                         <button

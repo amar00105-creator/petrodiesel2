@@ -281,9 +281,9 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                             onChange={handlePumpChange}
                                             className="w-full bg-transparent border-b border-slate-300 dark:border-white/10 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all appearance-none cursor-pointer hover:border-slate-400 dark:hover:border-white/30"
                                         >
-                                            <option value="" className="text-slate-500 bg-white dark:bg-slate-900">اختر الماكينة...</option>
+                                            <option value="" className="text-slate-500 bg-white dark:bg-slate-900 dark:text-slate-300">اختر الماكينة...</option>
                                             {pumps.map(pump => (
-                                                <option key={pump.id} value={pump.id} className="text-slate-800 bg-white dark:bg-slate-900">{pump.name} - {pump.product_name || 'وقود'}</option>
+                                                <option key={pump.id} value={pump.id} className="text-slate-800 bg-white dark:bg-slate-900 dark:text-white">{pump.name} - {pump.product_name || 'وقود'}</option>
                                             ))}
                                         </select>
                                     </div>
@@ -299,9 +299,9 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                             disabled={!formData.pump_id}
                                             className="w-full bg-transparent border-b border-slate-300 dark:border-white/10 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-purple-500 dark:focus:border-purple-400 transition-all appearance-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:border-slate-400 dark:hover:border-white/30"
                                         >
-                                            <option value="" className="bg-white dark:bg-slate-900">اختر العداد...</option>
+                                            <option value="" className="bg-white dark:bg-slate-900 dark:text-slate-300">اختر العداد...</option>
                                             {pumps.find(p => p.id == formData.pump_id)?.counters?.map(c => (
-                                                <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900">{c.name}</option>
+                                                <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900 dark:text-white">{c.name}</option>
                                             ))}
                                         </select>
                                         {loading && <div className="absolute left-4 top-10"><RefreshCw className="w-4 h-4 animate-spin text-purple-500"/></div>}
@@ -407,8 +407,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                             onChange={(e) => setFormData(p => ({...p, account_type: e.target.value, account_id: ''}))}
                                                             className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                         >
-                                                            <option value="safe" className="bg-white dark:bg-slate-900">خزنة</option>
-                                                            <option value="bank" className="bg-white dark:bg-slate-900">بنك</option>
+                                                            <option value="safe" className="bg-white dark:bg-slate-900 dark:text-white">خزنة</option>
+                                                            <option value="bank" className="bg-white dark:bg-slate-900 dark:text-white">بنك</option>
                                                         </select>
                                                     </div>
                                                     <div className="flex-1">
@@ -418,10 +418,10 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                             onChange={(e) => setFormData(p => ({...p, account_id: e.target.value}))}
                                                             className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                         >
-                                                            <option value="" className="bg-white dark:bg-slate-900">اختر...</option>
+                                                            <option value="" className="bg-white dark:bg-slate-900 dark:text-slate-300">اختر...</option>
                                                             {formData.account_type === 'safe' 
-                                                                ? safes.map(s => <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900">{s.name}</option>)
-                                                                : banks.map(b => <option key={b.id} value={b.id} className="bg-white dark:bg-slate-900">{b.bank_name} - {b.account_number}</option>)
+                                                                ? safes.map(s => <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900 dark:text-white">{s.name}</option>)
+                                                                : banks.map(b => <option key={b.id} value={b.id} className="bg-white dark:bg-slate-900 dark:text-white">{b.bank_name} - {b.account_number}</option>)
                                                             }
                                                         </select>
                                                     </div>
@@ -434,9 +434,9 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                         onChange={(e) => setFormData(p => ({...p, customer_id: e.target.value}))}
                                                         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                     >
-                                                        <option value="" className="bg-white dark:bg-slate-900">اختر العميل...</option>
+                                                        <option value="" className="bg-white dark:bg-slate-900 dark:text-slate-300">اختر العميل...</option>
                                                         {customers.map(c => (
-                                                            <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900">{c.name} - رصيد: {formatCurrency(c.balance)}</option>
+                                                            <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900 dark:text-white">{c.name} - رصيد: {formatCurrency(c.balance)}</option>
                                                         ))}
                                                     </select>
                                                 </div>

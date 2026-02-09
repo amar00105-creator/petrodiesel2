@@ -78,11 +78,15 @@ class TankController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
+            // Get user's active station
+            $user = \App\Helpers\AuthHelper::user();
+            $stationId = $user['station_id'] ?? 1;
+
             // Try reading JSON input first
             $input = json_decode(file_get_contents('php://input'), true);
 
             $data = [
-                'station_id' => 1, // Default station for now
+                'station_id' => $stationId,
                 'name' => $input['name'] ?? $_POST['name'] ?? '',
                 'fuel_type_id' => (isset($input['fuel_type_id']) && !str_starts_with($input['fuel_type_id'], 'legacy_')) ? $input['fuel_type_id'] : null,
                 'product_type' => $input['product_type'] ?? $_POST['product_type'] ?? 'Diesel', // Legacy fallback

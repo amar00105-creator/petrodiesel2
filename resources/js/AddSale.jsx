@@ -229,78 +229,82 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                     animate={{ opacity: 1, y: 0 }}
                     className="lg:col-span-9"
                 >
-                    {/* DUAL MODE CONTAINER: 
-                        Dark Mode: Chat Bot Gradient Border + Dark Semi-Opaque Background 
-                        Light Mode: Glassmorphism Card
-                    */}
-                    <div className="relative rounded-[20px] p-[1.5px] dark:bg-gradient-to-br dark:from-[#7e7e7e] dark:via-[#363636] dark:to-[#363636] bg-white/60 backdrop-blur-xl border border-white/40 shadow-2xl transition-all">
+                    {/* Dark Mode: Deep Glass with Subtle Edge */}
+                    <div className="relative rounded-3xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/20 dark:border-white/5 shadow-2xl dark:shadow-black/50 overflow-hidden transition-all duration-300">
                         
-                        {/* Inner Content Wrapper */}
-                        <div className="dark:bg-black/50 bg-transparent rounded-[18px] w-full p-6 overflow-hidden relative">
+                        {/* Glass Shine Effect (Top Edge) */}
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50 dark:opacity-100"></div>
+
+                        <div className="p-8 relative">
                              {/* Decorative Top Light Effect for Dark Mode */}
-                             <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-xl hidden dark:block pointer-events-none"></div>
+                             <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl hidden dark:block pointer-events-none"></div>
+                             <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl hidden dark:block pointer-events-none"></div>
 
                             {/* Header Row */}
                             <div className="flex justify-between items-center mb-8 relative z-10">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                                        <Calculator className="w-5 h-5" />
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400 shadow-lg shadow-blue-500/10">
+                                        <Calculator className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h1 className="text-xl font-bold text-slate-800 dark:text-white leading-none">تسجيل مبيعات</h1>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            <span className="text-xs font-mono text-slate-500 dark:text-slate-400">#{invoiceNumber}</span>
-                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                        <h1 className="text-2xl font-bold text-slate-800 dark:text-white leading-none tracking-tight">تسجيل مبيعات</h1>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-mono font-bold">#{invoiceNumber}</span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <input 
-                                    type="date" 
-                                    value={formData.sale_date}
-                                    onChange={(e) => setFormData(prev => ({...prev, sale_date: e.target.value}))}
-                                    className="bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-sm font-bold rounded-xl px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer hover:bg-white dark:hover:bg-white/10"
-                                />
+                                <div className="relative group">
+                                    <input 
+                                        type="date" 
+                                        value={formData.sale_date}
+                                        onChange={(e) => setFormData(prev => ({...prev, sale_date: e.target.value}))}
+                                        className="bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:border-blue-500/50 transition-all cursor-pointer hover:bg-white dark:hover:bg-white/10"
+                                    />
+                                    <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/10 pointer-events-none"></div>
+                                </div>
                             </div>
 
                             {/* Form Grid */}
-                            <div className="space-y-6 relative z-10">
+                            <div className="space-y-8 relative z-10">
                                 
                                 {/* 1. Pump & Counter Section */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 rounded-xl bg-slate-50/50 dark:bg-white/5 border border-slate-100 dark:border-white/5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1 rounded-2xl bg-slate-100/50 dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
                                     {/* Pump Select */}
-                                    <div className="relative group">
-                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">الماكينة (Pump)</label>
+                                    <div className="relative group p-4">
+                                        <label className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider mb-2 block flex items-center gap-2">
+                                            <Truck className="w-3 h-3" /> الماكينة
+                                        </label>
                                         <select 
                                             value={formData.pump_id} 
                                             onChange={handlePumpChange}
-                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-3 text-slate-700 dark:text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-0 dark:focus:border-white/30 transition-all appearance-none"
+                                            className="w-full bg-transparent border-b border-slate-300 dark:border-white/10 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all appearance-none cursor-pointer hover:border-slate-400 dark:hover:border-white/30"
                                         >
-                                            <option value="" className="text-slate-500 bg-white dark:bg-slate-800">اختر الماكينة...</option>
+                                            <option value="" className="text-slate-500 bg-white dark:bg-slate-900">اختر الماكينة...</option>
                                             {pumps.map(pump => (
-                                                <option key={pump.id} value={pump.id} className="text-slate-800 bg-white dark:bg-slate-800">{pump.name} - {pump.product_name || 'وقود'}</option>
+                                                <option key={pump.id} value={pump.id} className="text-slate-800 bg-white dark:bg-slate-900">{pump.name} - {pump.product_name || 'وقود'}</option>
                                             ))}
                                         </select>
-                                        <div className="absolute left-3 top-[38px] pointer-events-none opacity-50"><Truck className="w-4 h-4 text-slate-500 dark:text-white" /></div>
                                     </div>
 
                                     {/* Counter Select */}
-                                    <div className="relative group">
-                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">العداد (Counter)</label>
+                                    <div className="relative group p-4 border-t md:border-t-0 md:border-r border-slate-200 dark:border-white/5 md:pr-6">
+                                        <label className="text-xs font-bold text-purple-500 dark:text-purple-400 uppercase tracking-wider mb-2 block flex items-center gap-2">
+                                            <Calculator className="w-3 h-3" /> العداد
+                                        </label>
                                         <select 
                                             value={formData.counter_id} 
                                             onChange={handleCounterChange}
                                             disabled={!formData.pump_id}
-                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-3 text-slate-700 dark:text-white font-bold outline-none focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-0 dark:focus:border-white/30 transition-all appearance-none disabled:opacity-50"
+                                            className="w-full bg-transparent border-b border-slate-300 dark:border-white/10 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-purple-500 dark:focus:border-purple-400 transition-all appearance-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:border-slate-400 dark:hover:border-white/30"
                                         >
-                                            <option value="" className="bg-white dark:bg-slate-800 py-2">اختر العداد...</option>
+                                            <option value="" className="bg-white dark:bg-slate-900">اختر العداد...</option>
                                             {pumps.find(p => p.id == formData.pump_id)?.counters?.map(c => (
-                                                <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800">{c.name}</option>
+                                                <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900">{c.name}</option>
                                             ))}
                                         </select>
-                                        <div className="absolute left-3 top-[38px] pointer-events-none opacity-50">
-                                            {loading ? <RefreshCw className="w-4 h-4 animate-spin text-blue-500"/> : <Calculator className="w-4 h-4 text-slate-500 dark:text-white" />}
-                                        </div>
+                                        {loading && <div className="absolute left-4 top-10"><RefreshCw className="w-4 h-4 animate-spin text-purple-500"/></div>}
                                     </div>
                                 </div>
 
@@ -313,80 +317,79 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                             exit={{ height: 0, opacity: 0 }}
                                             className="overflow-hidden"
                                         >
-                                            <div className="flex flex-wrap items-center gap-3 p-2">
+                                            <div className="flex flex-wrap items-center gap-3">
                                                 <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border ${getFuelStyle(selectedCounter.fuel_type)}`}>
                                                     <Droplets className="w-3.5 h-3.5" />
                                                     <span className="text-xs font-bold">{selectedCounter.fuel_type}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/5">
+                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/5">
                                                     <User className="w-3.5 h-3.5" />
                                                     <span className="text-xs font-bold">{selectedCounter.worker_name}</span>
                                                 </div>
                                                 {selectedCounter.tank_name && (
-                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/20 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-500/30">
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-500/20">
                                                         <Database className="w-3.5 h-3.5" />
                                                         <span className="text-xs font-bold">{selectedCounter.tank_name}</span>
-                                                        <span className="text-[10px] font-mono bg-blue-100 dark:bg-blue-400/30 px-1.5 py-0.5 rounded">
+                                                        <span className="text-[10px] font-mono bg-blue-100 dark:bg-blue-500/20 px-1.5 py-0.5 rounded ml-1">
                                                             {parseFloat(selectedCounter.tank_volume).toLocaleString()} L
                                                         </span>
                                                     </div>
                                                 )}
                                                 <div className="mr-auto flex items-center gap-2">
-                                                    <span className="text-xs text-slate-500 dark:text-slate-400">السعر:</span>
-                                                    <span className="text-sm font-bold font-mono text-slate-800 dark:text-white">{formatCurrency(formData.unit_price)}</span>
+                                                    <span className="text-xs text-slate-500 dark:text-slate-400">سعر الوحدة:</span>
+                                                    <span className="text-sm font-bold font-mono text-slate-800 dark:text-white px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded border border-slate-200 dark:border-white/10">{formatCurrency(formData.unit_price)}</span>
                                                 </div>
                                             </div>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
 
-                                {/* 2. Readings Inputs - "Chat Textarea" Style */}
+                                {/* 2. Readings Inputs - Transparent Glass Fields */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* Opening Reading (Read Only) */}
-                                    <div className="relative">
-                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">القراءة السابقة</label>
-                                        <div className="w-full bg-slate-50 dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-4 text-slate-500 dark:text-slate-400 font-mono text-lg font-bold">
+                                    {/* Opening Reading */}
+                                    <div className="relative p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 group transition-all hover:bg-slate-100 dark:hover:bg-white/[0.07]">
+                                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1 block">القراءة السابقة</label>
+                                        <div className="text-2xl font-mono font-bold text-slate-600 dark:text-slate-300 tracking-wider">
                                             {formatNumber(formData.opening_reading) || '---'}
+                                        </div>
+                                        <div className="absolute top-5 left-5 opacity-20 group-hover:opacity-40 transition-opacity">
+                                            <Calculator className="w-6 h-6 text-slate-400 dark:text-white" />
                                         </div>
                                     </div>
 
-                                    {/* Closing Reading (Input) */}
-                                    <div className="relative">
-                                        <label className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-2 block">القراءة الحالية</label>
+                                    {/* Closing Reading */}
+                                    <div className="relative p-5 rounded-2xl bg-white dark:bg-emerald-900/10 border border-emerald-500/20 dark:border-emerald-500/20 group focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all shadow-sm">
+                                        <label className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1 block">القراءة الحالية</label>
                                         <input 
                                             type="number" 
                                             value={formData.closing_reading} 
                                             onChange={handleReadingChange}
                                             disabled={!selectedCounter}
-                                            className={`
-                                                w-full bg-white dark:bg-transparent text-slate-800 dark:text-white font-mono text-xl font-black 
-                                                border border-slate-200 dark:border-none dark:border-b dark:border-white/10 
-                                                rounded-xl dark:rounded-none px-4 py-3 outline-none 
-                                                focus:ring-2 focus:ring-emerald-500/20 dark:focus:ring-0 dark:focus:border-emerald-500/50 
-                                                transition-all placeholder:text-slate-300 dark:placeholder:text-white/20
-                                            `}
+                                            className="w-full bg-transparent text-3xl font-mono font-black text-slate-800 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-white/10"
                                             placeholder="000000"
                                         />
-                                        <div className="absolute left-0 bottom-4 text-xs text-slate-400 dark:text-slate-500 font-bold px-3 pointer-events-none">لتر</div>
+                                        <div className="absolute top-5 left-5 opacity-50 group-focus-within:opacity-100 transition-opacity">
+                                             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/20 px-2 py-1 rounded">LITERS</span>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {/* 3. Payment Section */}
-                                <div className="pt-4 border-t border-slate-100 dark:border-white/10">
+                                <div className="pt-6 border-t border-slate-200/60 dark:border-white/5">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {/* Method Toggle */}
                                         <div>
-                                            <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">طريقة الدفع</label>
-                                            <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
+                                            <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 block">طريقة الدفع</label>
+                                            <div className="flex bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-slate-200 dark:border-white/5">
                                                 <button 
                                                     onClick={() => setFormData(p => ({...p, payment_method: 'cash'}))}
-                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'cash' ? 'bg-white dark:bg-white/10 text-emerald-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'cash' ? 'bg-white dark:bg-white/10 text-emerald-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                                                 >
                                                     نقدي
                                                 </button>
                                                 <button 
                                                     onClick={() => setFormData(p => ({...p, payment_method: 'credit'}))}
-                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'credit' ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'}`}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'credit' ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                                                 >
                                                     آجل
                                                 </button>
@@ -398,42 +401,42 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                             {formData.payment_method === 'cash' ? (
                                                 <div className="flex gap-4">
                                                     <div className="w-1/3">
-                                                         <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">الحساب</label>
+                                                         <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">نوع الحساب</label>
                                                          <select 
                                                             value={formData.account_type}
                                                             onChange={(e) => setFormData(p => ({...p, account_type: e.target.value, account_id: ''}))}
-                                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-white outline-none"
+                                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                         >
-                                                            <option value="safe" className="bg-white dark:bg-slate-800">خزنة</option>
-                                                            <option value="bank" className="bg-white dark:bg-slate-800">بنك</option>
+                                                            <option value="safe" className="bg-white dark:bg-slate-900">خزنة</option>
+                                                            <option value="bank" className="bg-white dark:bg-slate-900">بنك</option>
                                                         </select>
                                                     </div>
                                                     <div className="flex-1">
-                                                        <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">وجهة الايداع</label>
+                                                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">وجهة الايداع</label>
                                                          <select 
                                                             value={formData.account_id}
                                                             onChange={(e) => setFormData(p => ({...p, account_id: e.target.value}))}
-                                                            className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-white outline-none"
+                                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                         >
-                                                            <option value="" className="bg-white dark:bg-slate-800">اختر...</option>
+                                                            <option value="" className="bg-white dark:bg-slate-900">اختر...</option>
                                                             {formData.account_type === 'safe' 
-                                                                ? safes.map(s => <option key={s.id} value={s.id} className="bg-white dark:bg-slate-800">{s.name}</option>)
-                                                                : banks.map(b => <option key={b.id} value={b.id} className="bg-white dark:bg-slate-800">{b.bank_name} - {b.account_number}</option>)
+                                                                ? safes.map(s => <option key={s.id} value={s.id} className="bg-white dark:bg-slate-900">{s.name}</option>)
+                                                                : banks.map(b => <option key={b.id} value={b.id} className="bg-white dark:bg-slate-900">{b.bank_name} - {b.account_number}</option>)
                                                             }
                                                         </select>
                                                     </div>
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <label className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">العميل</label>
+                                                    <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2 block">العميل</label>
                                                     <select 
                                                         value={formData.customer_id}
                                                         onChange={(e) => setFormData(p => ({...p, customer_id: e.target.value}))}
-                                                        className="w-full bg-white dark:bg-transparent border border-slate-200 dark:border-none dark:border-b dark:border-white/10 rounded-xl dark:rounded-none px-4 py-3 text-sm font-bold text-slate-700 dark:text-white outline-none"
+                                                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                     >
-                                                        <option value="" className="bg-white dark:bg-slate-800">اختر العميل...</option>
+                                                        <option value="" className="bg-white dark:bg-slate-900">اختر العميل...</option>
                                                         {customers.map(c => (
-                                                            <option key={c.id} value={c.id} className="bg-white dark:bg-slate-800">{c.name} - رصيد: {formatCurrency(c.balance)}</option>
+                                                            <option key={c.id} value={c.id} className="bg-white dark:bg-slate-900">{c.name} - رصيد: {formatCurrency(c.balance)}</option>
                                                         ))}
                                                     </select>
                                                 </div>
@@ -450,15 +453,15 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                         onClick={handleSubmit}
                                         disabled={submitting || !formData.closing_reading}
                                         className={`
-                                            px-8 py-3 rounded-xl font-bold text-white shadow-lg flex items-center gap-2 transition-all
+                                            px-8 py-4 rounded-xl font-bold text-white shadow-lg flex items-center gap-2 transition-all relative overflow-hidden group
                                             disabled:opacity-50 disabled:cursor-not-allowed
-                                            bg-gradient-to-br from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600
-                                            dark:from-[#292929] dark:via-[#555555] dark:to-[#292929] dark:shadow-inner dark:border-none
+                                            bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500
+                                            dark:from-blue-600 dark:via-indigo-600 dark:to-purple-600
                                         `}
-                                        style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2)' }}
                                     >
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                         {submitting ? <RefreshCw className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
-                                        حفظ العملية
+                                        <span className="relative z-10">حفظ عملية البيع</span>
                                     </motion.button>
                                 </div>
 
@@ -474,40 +477,47 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                     transition={{ delay: 0.2 }}
                     className="lg:col-span-3 lg:sticky lg:top-6"
                 >
-                    <div className="bg-white/60 dark:bg-gradient-to-br dark:from-indigo-900/40 dark:to-purple-900/40 backdrop-blur-xl rounded-2xl shadow-xl border border-white/40 dark:border-white/10 p-6 relative overflow-hidden min-h-[400px] flex flex-col">
+                    <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-white/5 p-6 relative overflow-hidden min-h-[400px] flex flex-col">
+                        {/* Glass Shine */}
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                        
                          {/* Decorative Background */}
                          <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
                          <div className="relative z-10 flex flex-col h-full">
-                            <h3 className="text-sm font-bold text-slate-500 dark:text-indigo-200 uppercase tracking-widest mb-6 border-b border-slate-200 dark:border-white/10 pb-4">ملخص الفاتورة</h3>
+                            <h3 className="text-xs font-bold text-slate-500 dark:text-indigo-200 uppercase tracking-widest mb-6 border-b border-slate-200 dark:border-white/10 pb-4 flex items-center gap-2">
+                                <Wallet className="w-4 h-4" /> ملخص الفاتورة
+                            </h3>
                             
-                            <div className="flex-1 space-y-6">
+                            <div className="flex-1 space-y-8">
                                 <div>
-                                    <span className="text-xs text-slate-400 dark:text-indigo-300 block mb-1">الكمية المباعة</span>
-                                    <div className="text-3xl font-black font-mono text-slate-800 dark:text-white flex items-baseline gap-1">
-                                        {formatNumber(formData.volume_sold)}
-                                        <span className="text-sm text-slate-400 font-bold">L</span>
+                                    <span className="text-xs font-bold text-slate-400 dark:text-indigo-300 block mb-2">الكمية المباعة</span>
+                                    <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
+                                        <div className="text-4xl font-black font-mono text-indigo-600 dark:text-indigo-400 flex items-baseline gap-1">
+                                            {formatNumber(formData.volume_sold)}
+                                            <span className="text-sm text-indigo-400/70 font-bold">L</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <div className="flex justify-between text-sm text-slate-600 dark:text-indigo-100">
-                                        <span>سعر الوحدة</span>
-                                        <span className="font-mono font-bold">{formatNumber(formData.unit_price)}</span>
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                        <span className="text-sm font-bold text-slate-500 dark:text-slate-400">سعر الوحدة</span>
+                                        <span className="font-mono font-bold text-slate-700 dark:text-white">{formatNumber(formData.unit_price)}</span>
                                     </div>
-                                    <div className="flex justify-between text-sm text-slate-600 dark:text-indigo-100">
-                                        <span>عدد الوحدات</span>
-                                        <span className="font-mono font-bold">{formData.volume_sold}</span>
+                                    <div className="flex justify-between items-center p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                                        <span className="text-sm font-bold text-slate-500 dark:text-slate-400">عدد الوحدات</span>
+                                        <span className="font-mono font-bold text-slate-700 dark:text-white">{formData.volume_sold}</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="mt-auto pt-6 border-t border-slate-200 dark:border-white/10">
-                                <span className="text-xs text-slate-400 dark:text-indigo-300 block mb-1">الإجمالي النهائي</span>
-                                <div className="text-4xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-white dark:to-indigo-100">
+                                <span className="text-xs font-bold text-slate-400 dark:text-slate-400 block mb-2">الإجمالي النهائي</span>
+                                <div className="text-5xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-white dark:to-indigo-200 tracking-tighter">
                                     {formatNumber(formData.total_amount)}
                                 </div>
-                                <div className="text-xs font-bold text-slate-400 mt-2 text-right">SDG</div>
+                                <div className="text-xs font-bold text-slate-400 mt-2 text-right">جنيه سوداني</div>
                             </div>
                          </div>
                     </div>

@@ -115,6 +115,9 @@ class Pump
 
     public function getPumpsWithCounters($stationId)
     {
+        // Ensure connection is alive before executing query
+        $this->db = Database::ping();
+
         // 1. Get Pumps (Active Only)
         $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type 
                 FROM pumps p 

@@ -79,13 +79,20 @@ class Database
             self::loadConfig(); // Load config from .env or file
 
             try {
+                $options = [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_PERSISTENT => false, // Disable persistent connections to avoid timeout issues
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4",
+                    PDO::ATTR_TIMEOUT => 5 // Connection timeout
+                ];
+
                 self::$conn = new PDO(
                     "mysql:host=" . self::$host . ";dbname=" . self::$db_name . ";charset=utf8mb4",
                     self::$username,
-                    self::$password
+                    self::$password,
+                    $options
                 );
-                self::$conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-                self::$conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             } catch (PDOException $e) {
                 // On production, hide detailed errors
                 // die("Database Connection Error");
@@ -99,5 +106,25 @@ class Database
     {
         self::$conn = null;
         return self::connect();
+    }
+
+    /**
+     * Check if connection is alive and reconnect if needed
+     * Prevents "MySQL server has gone away" errors
+     */
+    public static function ping()
+    {
+        try {
+            if (self::$conn === null) {
+                return self::connect();
+            }
+
+            // Try a simple query to check if connection is alive
+            self::$conn->query('SELECT 1');
+            return self::$conn;
+        } catch (PDOException $e) {
+            // Connection is dead, reconnect
+            return self::reconnect();
+        }
     }
 }

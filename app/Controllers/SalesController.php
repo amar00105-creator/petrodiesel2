@@ -174,6 +174,17 @@ class SalesController extends Controller
         $banks = $stmt->fetchAll();
 
 
+        // Fetch allStations for Header (super_admin station switcher)
+        $allStations = [];
+        if ($user['role'] === 'super_admin') {
+            $stmtStations = $db->query("SELECT id, name FROM stations ORDER BY name ASC");
+            $allStations = $stmtStations->fetchAll(\PDO::FETCH_ASSOC);
+        }
+
+        // Fetch active users count for header stats
+        $stmtActive = $db->query("SELECT COUNT(*) FROM users WHERE last_activity >= DATE_SUB(NOW(), INTERVAL 5 MINUTE)");
+        $activeUsers = $stmtActive->fetchColumn();
+
         // Manual Render to ensure data integrity
         $data = [
             'pumps' => $pumps,
@@ -182,6 +193,9 @@ class SalesController extends Controller
             'safes' => $safes,
             'banks' => $banks,
             'sale' => $sale,
+            'user' => $user,
+            'allStations' => $allStations,
+            'stats' => ['activeUsers' => $activeUsers],
             'hide_topbar' => true, // Hide the default PHP topbar as React handles its own header
             'additional_js' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>' . \App\Helpers\ViteHelper::load('resources/js/main.jsx'),
             'additional_css' => '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">'

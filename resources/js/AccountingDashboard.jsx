@@ -273,7 +273,6 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                 className={`
                     relative overflow-hidden rounded-2xl p-6
                     bg-white/80 dark:bg-[#1e293b]/80 backdrop-blur-xl
-                    ${currentStyle.border} ${currentStyle.hoverBorder}
                     shadow-lg shadow-slate-200/50 dark:shadow-black/50
                     group transition-all duration-300
                 `}
@@ -291,7 +290,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                     </div>
                     <div className={`
                         p-3.5 rounded-xl 
-                        bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 
+                        bg-slate-100 dark:bg-white/5 
                         text-${color}-400 
                         shadow-[0_0_15px_-3px_rgba(0,0,0,0.5)]
                         group-hover:text-${color}-300 group-hover:scale-110 group-hover:shadow-[0_0_25px_-5px_${glowColor}] transition-all duration-300
@@ -407,7 +406,6 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                             relative group overflow-hidden
                             bg-white/60 dark:bg-[#1e293b]/60 backdrop-blur-md
                             p-3 rounded-2xl
-                            border border-${item.color}-500/30 hover:border-${item.color}-500
                             shadow-lg shadow-slate-200/50 dark:shadow-black/20 hover:shadow-[0_0_20px_rgba(var(--color-${item.color}-500),0.4)]
                             flex flex-col items-center justify-center gap-2 cursor-pointer
                             transition-all duration-300
@@ -419,7 +417,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
 
                         <div className={`
                             relative z-10 p-2 rounded-full 
-                            bg-slate-100 dark:bg-slate-900/50 border border-${item.color}-500/20
+                            bg-slate-100 dark:bg-slate-900/50
                             text-${item.color}-400 
                             group-hover:text-${item.color}-300 group-hover:scale-110 group-hover:shadow-[0_0_15px_${item.color}]
                             transition-all duration-300
@@ -437,8 +435,8 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
             <div className="w-full">
                 
                 {/* Recent Operations Table (Full Width) */}
-                <motion.div variants={itemVariants} className="bg-white/70 dark:bg-[#1e293b]/70 backdrop-blur-xl rounded-3xl shadow-2xl border border-slate-200 dark:border-white/5 overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-slate-200 dark:border-white/5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/40 dark:bg-slate-900/40">
+                <motion.div variants={itemVariants} className="bg-white/70 dark:bg-[#1e293b]/70 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+                    <div className="p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/40 dark:bg-slate-900/40">
                         <div>
                             <h3 className="font-bold text-lg text-slate-800 dark:text-white flex items-center gap-2">
                                 <FileText className="w-5 h-5 text-indigo-400" />
@@ -462,7 +460,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                             </div>
                         )}
                         <table className="w-full text-right border-collapse">
-                            <thead className="bg-slate-50/50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 text-xs font-bold border-b border-slate-200 dark:border-white/5 uppercase tracking-wider backdrop-blur-sm">
+                            <thead className="bg-slate-50/50 dark:bg-slate-900/30 text-slate-600 dark:text-slate-400 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
                                 <tr>
                                     <th className="p-5 text-right">التاريخ</th>
                                     <th className="p-5 text-right w-1/3">الوصف</th>
@@ -473,7 +471,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                     <th className="p-5 text-center">الإجراء</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-slate-700 dark:text-slate-300">
+                            <tbody className="text-slate-700 dark:text-slate-300">
                                 {filteredTransactions.map((transaction, index) => (
                                     <tr key={index} className="hover:bg-slate-50 dark:hover:bg-white/[0.02] transition-colors group">
                                         <td className="p-5 font-mono text-sm text-slate-400 font-medium">
@@ -482,7 +480,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                         <td className="p-5 font-medium text-slate-800 dark:text-slate-200">
                                             <div className="line-clamp-2">{transaction.description}</div>
                                             {transaction.reference_number && (
-                                                <div className="text-[10px] text-blue-300 font-bold mt-1 px-2 py-0.5 bg-blue-500/10 rounded-full inline-block border border-blue-500/20">
+                                                <div className="text-[10px] text-blue-300 font-bold mt-1 px-2 py-0.5 bg-blue-500/10 rounded-full inline-block">
                                                     #{transaction.reference_number}
                                                 </div>
                                             )}
@@ -505,14 +503,14 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                         <td className="p-5 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                             <button 
                                                 onClick={() => handleEditClick(transaction)}
-                                                className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors border border-transparent hover:border-blue-500/20"
+                                                className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
                                                 title="تعديل"
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button 
                                                 onClick={() => handleDeleteClick(transaction)}
-                                                className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors border border-transparent hover:border-rose-500/20"
+                                                className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
                                                 title="حذف"
                                             >
                                                 <Trash2 className="w-4 h-4" />
@@ -524,7 +522,7 @@ export default function AccountingDashboard({ safes = [], banks = [], transactio
                                     <tr>
                                         <td colSpan="7" className="px-6 py-24 text-center">
                                             <div className="flex flex-col items-center justify-center gap-4">
-                                                <div className="p-5 rounded-full bg-white/5 border border-white/5 text-slate-600">
+                                                <div className="p-5 rounded-full bg-white/5 text-slate-600">
                                                     <FileText className="w-10 h-10 opacity-50" />
                                                 </div>
                                                 <p className="text-slate-500 font-medium text-sm">لا توجد عمليات مسجلة</p>

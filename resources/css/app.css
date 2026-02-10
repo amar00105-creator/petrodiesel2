@@ -6,6 +6,127 @@
   body {
     @apply bg-slate-50 text-slate-900 font-cairo dark:bg-[#0F172A] dark:text-white transition-colors duration-300;
   }
+  
+  /* Dark mode styling for native select dropdowns */
+  .dark select {
+    background-color: #1e293b !important; /* slate-800 */
+    color: #e2e8f0 !important; /* slate-200 */
+  }
+  
+  .dark select option {
+    background-color: #1e293b !important; /* slate-800 */
+    color: #ffffff !important;
+    padding: 8px;
+  }
+  
+  .dark select option:hover,
+  .dark select option:focus,
+  .dark select option:checked {
+    background-color: #334155 !important; /* slate-700 */
+    color: #ffffff !important;
+  }
+  
+  /* ========================================
+     GLASSMORPHISM BORDERS FOR DARK MODE
+     ======================================== */
+  
+  /* Main Glass Container */
+  .dark .glass-container {
+    background: rgba(15, 23, 42, 0.6); /* More transparent background */
+    backdrop-filter: blur(20px); /* Stronger blur */
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08); /* Ultra subtle border */
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.12), /* Very subtle outer shadow */
+      0 2px 8px rgba(0, 0, 0, 0.08), /* Close subtle shadow */
+      inset 0 1px 1px rgba(255, 255, 255, 0.1), /* Top inner highlight */
+      inset 0 -1px 1px rgba(0, 0, 0, 0.1); /* Bottom inner shadow */
+  }
+  
+  /* Glass Edge Glow Effect */
+  .dark .glass-edge-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  }
+  
+  .dark .glass-edge-left {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  }
+  
+  .dark .glass-edge-right {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  }
+  
+  /* Glass Section/Card */
+  .dark .glass-section {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08); /* Transparent border */
+    box-shadow: 
+      0 4px 6px rgba(0, 0, 0, 0.1),
+      inset 0 0 15px rgba(255, 255, 255, 0.03); /* Inner glow */
+  }
+  
+  /* Glass Input - Subtle */
+  .dark .glass-input {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.06); /* More subtle border */
+    backdrop-filter: blur(5px);
+    box-shadow: 
+      inset 0 2px 4px rgba(0, 0, 0, 0.2),
+      0 1px 2px rgba(0, 0, 0, 0.05); /* Subtle external shadow */
+    transition: all 0.3s ease;
+  }
+  
+  .dark .glass-input:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 
+      0 4px 12px rgba(0, 0, 0, 0.08),
+      inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  }
+  
+  /* Glass Input - Active/Focus */
+  .dark .glass-input-active {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(16, 185, 129, 0.3); /* Emerald tint for active */
+    box-shadow: 
+      0 4px 16px rgba(16, 185, 129, 0.08), /* Soft emerald glow */
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      inset 0 1px 1px rgba(16, 185, 129, 0.1); /* Inner highlight */
+  }
+  
+  /* Glass Summary Card */
+  .dark .glass-summary {
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+      0 10px 30px rgba(0, 0, 0, 0.3),
+      inset 0 0 20px rgba(255, 255, 255, 0.05);
+  }
+  
+  /* General dark border override */
+  /* General dark border override - REMOVED to fix persistent white lines */
+  /* .dark [class*="rounded-"] {
+    border-color: rgba(71, 85, 105, 0.3);
+  } */
 }
 
 @layer utilities {
@@ -298,4 +419,22 @@
 
 .custom-btn.btn span:hover:after {
  width: 100%;
+}
+
+/* Remove borders from Tremor Button components in dark mode */
+.dark button[class*="tremor-"],
+.dark button[class*="Button"] {
+  border: none !important;
+}
+
+/* Ensure glassmorphism buttons have no borders */
+.dark button.backdrop-blur-xl,
+.dark button[class*="bg-white/"] {
+  border: none !important;
+  outline: none !important;
+}
+
+/* Remove borders from all tremor components in dark mode */
+.dark [class*="tremor-Button"] {
+  border: none !important;
 }

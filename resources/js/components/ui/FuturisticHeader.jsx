@@ -131,8 +131,8 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
       icon: ShoppingCart,
       color: "from-emerald-600 to-teal-500",
       glow: "shadow-emerald-500/50",
-      border: "border-emerald-500/50",
-      headerBg: "bg-gradient-to-r from-emerald-900/95 to-teal-900/95",
+      border: "border-white/10",
+      headerBg: "bg-gradient-to-r from-slate-900/90 to-emerald-900/90",
       textColor: "text-white",
       subtitleColor: "text-emerald-100",
     },
@@ -313,7 +313,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
       icon: ShoppingCart,
       color: "from-emerald-600 to-teal-500",
       glow: "shadow-emerald-500/50",
-      border: "border-emerald-500/50",
+      border: "border-white/10",
       headerBg: "bg-gradient-to-r from-emerald-900/95 to-teal-900/95",
       textColor: "text-white",
       subtitleColor: "text-emerald-100",
@@ -359,9 +359,17 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
         initial={{ opacity: 0, scale: 0.94, filter: "blur(12px)" }}
         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} // "Luxury" Easing
-        className={`relative z-10 px-6 py-7 ${headerBg} backdrop-blur-2xl border-x border-t border-b-4 ${activeConfig.border} rounded-2xl shadow-2xl ${activeConfig.glow} overflow-hidden flex items-center justify-between transition-all duration-500`}
+        className={`relative z-10 px-6 py-7 ${headerBg} backdrop-blur-2xl rounded-2xl shadow-2xl ${activeConfig.glow} overflow-hidden flex items-center justify-between transition-all duration-500`}
         style={{
-          boxShadow: `inset 0 0 20px rgba(255,255,255,0.1)`,
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          boxShadow: `
+            0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+            0 8px 32px rgba(0, 0, 0, 0.2),
+            0 2px 8px rgba(0, 0, 0, 0.15),
+            0 20px 60px rgba(0, 0, 0, 0.1),
+            inset 0 1px 1px rgba(255, 255, 255, 0.15),
+            inset 0 -1px 1px rgba(0, 0, 0, 0.1)
+          `,
         }}
       >
         {/* CSS Variable for Glow Color - defaulting to a generic blueish if not set, but Tailwind class 'shadow-blue-500/50' handles the main color. 
@@ -371,6 +379,30 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
                    For simplicity and robustness, removing the confusing manual boxShadow and relying on Tailwind's generous shadows + the new border style.
                 */}
 
+
+        {/* Glass Edge Effects - Professional Glowing Borders */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] pointer-events-none z-20">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent blur-sm"></div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-[1px] pointer-events-none z-20">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent"></div>
+        </div>
+        <div className="absolute top-0 bottom-0 left-0 w-[1px] pointer-events-none z-20">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+        </div>
+        <div className="absolute top-0 bottom-0 right-0 w-[1px] pointer-events-none z-20">
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+        </div>
+
+        {/* Corner Highlights */}
+        <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none z-20">
+          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white/30 via-transparent to-transparent rounded-tl-2xl blur-md"></div>
+        </div>
+        <div className="absolute top-0 right-0 w-20 h-20 pointer-events-none z-20">
+          <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-white/30 via-transparent to-transparent rounded-tr-2xl blur-md"></div>
+        </div>
+
         {/* 4. Light Sweep Effect (Very Slow & Subtle) */}
         <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
           <div className="absolute top-0 bottom-0 left-[-100%] w-[50%] bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] animate-[shimmer_12s_infinite]" />
@@ -378,11 +410,30 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
 
         {/* Content */}
         <div className="flex items-center gap-4 z-10">
-          {/* Icon Container with Glass Effect */}
+          {/* Icon Container with Enhanced Glass Effect & Dynamic Neon Glow */}
           <div
-            className={`p-3 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 shadow-lg ${activeConfig.glow} text-white`}
+            className={`relative p-3 rounded-xl bg-white/5 backdrop-blur-md text-white transition-all duration-300 group`}
+            style={{
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: `
+                0 0 20px ${activeConfig.color.includes('emerald') ? 'rgba(16, 185, 129, 0.4)' : 
+                          activeConfig.color.includes('blue') ? 'rgba(59, 130, 246, 0.4)' :
+                          activeConfig.color.includes('amber') || activeConfig.color.includes('orange') ? 'rgba(251, 146, 60, 0.4)' :
+                          activeConfig.color.includes('purple') || activeConfig.color.includes('violet') ? 'rgba(139, 92, 246, 0.4)' :
+                          activeConfig.color.includes('pink') || activeConfig.color.includes('rose') ? 'rgba(236, 72, 153, 0.4)' :
+                          activeConfig.color.includes('teal') ? 'rgba(20, 184, 166, 0.4)' :
+                          activeConfig.color.includes('indigo') ? 'rgba(99, 102, 241, 0.4)' :
+                          activeConfig.color.includes('yellow') || activeConfig.color.includes('slate') ? 'rgba(234, 179, 8, 0.4)' :
+                          'rgba(59, 130, 246, 0.4)'},
+                0 4px 12px rgba(0, 0, 0, 0.2),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.1)
+              `,
+            }}
           >
-            <Icon size={24} strokeWidth={2} />
+            {/* Inner glow effect */}
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+            <Icon size={24} strokeWidth={2} className="relative z-10 drop-shadow-lg" />
           </div>
 
           {/* Text */}
@@ -410,13 +461,44 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
           {/* Station Name - Large (Moved Next to Widgets) */}
             {allStations && allStations.length > 0 ? (
               <div className="relative group">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10 bg-white/5 shadow-inner">
-                  <Globe size={18} className="text-emerald-400 animate-pulse" />
+                <div 
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 backdrop-blur-md relative transition-all duration-300"
+                  style={{
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    boxShadow: `
+                      0 0 20px ${activeConfig.color.includes('emerald') ? 'rgba(16, 185, 129, 0.4)' : 
+                                activeConfig.color.includes('blue') ? 'rgba(59, 130, 246, 0.4)' :
+                                activeConfig.color.includes('amber') || activeConfig.color.includes('orange') ? 'rgba(251, 146, 60, 0.4)' :
+                                activeConfig.color.includes('purple') || activeConfig.color.includes('violet') ? 'rgba(139, 92, 246, 0.4)' :
+                                activeConfig.color.includes('pink') || activeConfig.color.includes('rose') ? 'rgba(236, 72, 153, 0.4)' :
+                                activeConfig.color.includes('teal') ? 'rgba(20, 184, 166, 0.4)' :
+                                activeConfig.color.includes('indigo') ? 'rgba(99, 102, 241, 0.4)' :
+                                activeConfig.color.includes('yellow') || activeConfig.color.includes('slate') ? 'rgba(234, 179, 8, 0.4)' :
+                                'rgba(59, 130, 246, 0.4)'},
+                      0 4px 12px rgba(0, 0, 0, 0.2),
+                      inset 0 1px 1px rgba(255, 255, 255, 0.2),
+                      inset 0 -1px 1px rgba(0, 0, 0, 0.1)
+                    `,
+                  }}
+                >
+                  {/* Inner glow effect */}
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+                  
+                  <Globe size={18} className="text-emerald-400 animate-pulse pointer-events-none relative z-10" />
+                  
+                  {/* Visible Text - Pure Glass Style */}
+                  <span className="text-white text-lg font-black tracking-wide pointer-events-none relative z-10 drop-shadow-lg">
+                    {user?.station_id === 'all' || !user?.station_id 
+                        ? "Global View" 
+                        : allStations.find(s => s.id == user.station_id)?.name || "Select Station"}
+                  </span>
+
+                  {/* Invisible Overlay Select for Interaction */}
                   <select
                     onChange={handleStationSwitch}
                     value={user?.station_id || ""}
-                    className="bg-transparent text-white text-lg font-black tracking-wide outline-none cursor-pointer appearance-none text-center"
-                    style={{ backgroundImage: "none", minWidth: "120px" }}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
+                    style={{ appearance: 'none' }}
                   >
                     <option className="text-slate-900" value="all">
                       Global View
@@ -430,9 +512,23 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
                 </div>
               </div>
             ) : (
-             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10 bg-white/5 shadow-inner">
-                <Globe size={18} className="text-emerald-400 animate-pulse" />
-                <span className="text-lg font-black text-white tracking-wide shadow-black drop-shadow-md">
+             <div 
+               className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5 backdrop-blur-md relative"
+               style={{
+                 border: '1px solid rgba(255, 255, 255, 0.15)',
+                 boxShadow: `
+                   0 0 20px ${activeConfig.color.includes('emerald') ? 'rgba(16, 185, 129, 0.4)' : 
+                             activeConfig.color.includes('blue') ? 'rgba(59, 130, 246, 0.4)' :
+                             'rgba(59, 130, 246, 0.4)'},
+                   0 4px 12px rgba(0, 0, 0, 0.2),
+                   inset 0 1px 1px rgba(255, 255, 255, 0.2)
+                 `,
+               }}
+             >
+                {/* Inner glow */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+                <Globe size={18} className="text-emerald-400 animate-pulse relative z-10" />
+                <span className="text-lg font-black text-white tracking-wide drop-shadow-md relative z-10">
                   {user?.station_id
                     ? user.station_name || "Station #" + user.station_id
                     : "Global Access"}
@@ -445,7 +541,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
             <div className="flex items-center gap-3">
               {/* User Info */}
               {user && (
-                <div className="flex items-center gap-2 bg-white/5 px-2 py-1 rounded-lg border border-white/10">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-lg">
                   <User size={12} className="text-slate-200" /> 
                   <div className="flex flex-col items-end leading-none">
                     <span className="font-bold text-xs text-white">
@@ -456,7 +552,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
               )}
 
               {/* Time & Date - Compact */}
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-2 py-1 rounded-lg">
                 <div className="flex items-center gap-2 text-base font-mono font-bold text-white">
                   <span>
                     {currentTime.toLocaleDateString("en-GB", {
@@ -479,7 +575,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
             {/* BOTTOM ROW: Status, Metrics, Actions */}
             <div className="flex items-center gap-3">
               {/* Status */}
-              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/5 rounded-full border border-white/10">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 bg-white/5 rounded-full">
                 <span className="relative flex h-1.5 w-1.5">
                   <span className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-gradient-to-r ${activeConfig.color} opacity-75`}></span>
                   <span className={`relative inline-flex rounded-full h-1.5 w-1.5 bg-gradient-to-r ${activeConfig.color}`}></span>
@@ -501,15 +597,15 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
               {/* Action Group */}
               <div className="flex items-center gap-2">
                 {/* Bell */}
-                <div className="relative p-1.5 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all cursor-pointer group">
+                <div className="relative p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all cursor-pointer group">
                   <Bell size={18} />
-                  <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full border border-white/20"></span>
+                  <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
                 </div>
 
                 {/* Theme */}
                 <button 
                   onClick={() => setIsDark(!isDark)}
-                  className="p-1.5 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                  className="p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
                   title="Theme"
                 >
                   {isDark ? <Sun size={18} /> : <Moon size={18} />}
@@ -518,7 +614,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
                 {/* Fullscreen */}
                 <button 
                   onClick={toggleFullScreen}
-                  className="p-1.5 rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-all"
+                  className="p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
                   title="Fullscreen"
                 >
                   <Maximize size={18} />

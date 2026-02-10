@@ -6,8 +6,15 @@ import {
 } from 'lucide-react';
 import { Card, Title, Text, Metric } from '@tremor/react';
 import { toast } from 'sonner';
+import { useTheme } from './components/ThemeProvider';
 
 export default function AddSale({ pumps = [], safes = [], banks = [], customers = [], initialSale = null }) {
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
+    
+    // DEBUG: Log theme value
+    console.log('🎨 AddSale Theme:', theme, 'isDark:', isDark);
+    
     // --- State ---
     const [formData, setFormData] = useState({
         sale_date: '', // Will be set from server
@@ -220,8 +227,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
     };
 
     return (
-        <div className="min-h-screen bg-slate-50/50 dark:bg-[#0F172A] p-4" style={{ direction: 'rtl' }}>
-             <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="h-screen bg-slate-50/50 dark:bg-[#0F172A] p-2 overflow-hidden" style={{ direction: 'rtl' }}>
+             <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 items-start h-full">
                 
                 {/* Main Form Area */}
                 <motion.div 
@@ -229,27 +236,31 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                     animate={{ opacity: 1, y: 0 }}
                     className="lg:col-span-9"
                 >
-                    {/* Dark Mode: Deep Glass with Subtle Edge */}
-                    <div className="relative rounded-3xl bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl border border-white/20 dark:border-white/5 shadow-2xl dark:shadow-black/50 overflow-hidden transition-all duration-300">
+                    {/* Dark Mode: Tiered Glass - Level 2 (Glassy Container) */}
+                    {/* Dark Mode: Tiered Glass - Level 2 (Glassy Container) */}
+                    <div className="glass-container relative rounded-3xl overflow-hidden transition-all duration-300">
                         
-                        {/* Glass Shine Effect (Top Edge) */}
-                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-50 dark:opacity-100"></div>
+                        {/* Glass Edge Glow Effects */}
+                        <div className="glass-edge-top"></div>
+                        <div className="glass-edge-left"></div>
+                        <div className="glass-edge-right"></div>
 
-                        <div className="p-8 relative">
-                             {/* Decorative Top Light Effect for Dark Mode */}
-                             <div className="absolute -top-20 -left-20 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl hidden dark:block pointer-events-none"></div>
-                             <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl hidden dark:block pointer-events-none"></div>
+                        <div className="p-4 relative">
+                             {/* Decorative Top Light Effect - Level 3 (Ultra Transparent) */}
+                             <div className="absolute -top-32 -left-32 w-80 h-80 bg-blue-500/5 rounded-full blur-3xl hidden dark:block pointer-events-none"></div>
+                             <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-indigo-500/5 rounded-full blur-3xl hidden dark:block pointer-events-none"></div>
+                             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-purple-500/3 rounded-full blur-3xl hidden dark:block pointer-events-none"></div>
 
                             {/* Header Row */}
-                            <div className="flex justify-between items-center mb-8 relative z-10">
+                            <div className="flex justify-between items-center mb-4 relative z-10">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 border border-blue-500/30 flex items-center justify-center text-blue-500 dark:text-blue-400 shadow-lg shadow-blue-500/10">
+                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 dark:from-slate-700/50 dark:to-slate-600/50 border border-blue-500/30 dark:border-slate-500/30 flex items-center justify-center text-blue-500 dark:text-slate-300 shadow-lg shadow-blue-500/10 dark:shadow-slate-500/20">
                                         <Calculator className="w-6 h-6" />
                                     </div>
                                     <div>
                                         <h1 className="text-2xl font-bold text-slate-800 dark:text-white leading-none tracking-tight">تسجيل مبيعات</h1>
                                         <div className="flex items-center gap-2 mt-2">
-                                            <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-mono font-bold">#{invoiceNumber}</span>
+                                            <span className="glass-input px-2 py-0.5 rounded-md text-emerald-500 text-xs font-mono font-bold">#{invoiceNumber}</span>
                                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                         </div>
                                     </div>
@@ -260,17 +271,18 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                         type="date" 
                                         value={formData.sale_date}
                                         onChange={(e) => setFormData(prev => ({...prev, sale_date: e.target.value}))}
-                                        className="bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:border-blue-500/50 transition-all cursor-pointer hover:bg-white dark:hover:bg-white/10"
+                                        className="glass-input w-full text-slate-700 dark:text-slate-200 text-sm font-bold rounded-xl px-4 py-2 outline-none focus:ring-2 focus:ring-blue-500/50 dark:focus:border-blue-500/50 transition-all cursor-pointer"
                                     />
-                                    <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/10 pointer-events-none"></div>
+
                                 </div>
                             </div>
 
                             {/* Form Grid */}
-                            <div className="space-y-8 relative z-10">
+                            <div className="space-y-4 relative z-10">
                                 
-                                {/* 1. Pump & Counter Section */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-1 rounded-2xl bg-slate-100/50 dark:bg-black/20 border border-slate-200/50 dark:border-white/5">
+                                {/* 1. Pump & Counter Section - Glassy Border */}
+                                {/* 1. Pump & Counter Section - Glassy Border */}
+                                <div className="glass-section grid grid-cols-1 md:grid-cols-2 gap-4 p-1 rounded-xl">
                                     {/* Pump Select */}
                                     <div className="relative group p-4">
                                         <label className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider mb-2 block flex items-center gap-2">
@@ -279,7 +291,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                         <select 
                                             value={formData.pump_id} 
                                             onChange={handlePumpChange}
-                                            className="w-full bg-transparent border-b border-slate-300 dark:border-white/10 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all appearance-none cursor-pointer hover:border-slate-400 dark:hover:border-white/30"
+                                            className="w-full bg-transparent dark:bg-slate-800 border-b border-slate-300 dark:border-slate-600/30 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-all appearance-none cursor-pointer hover:border-slate-400 dark:hover:border-white/30"
                                         >
                                             <option value="" className="text-slate-500 bg-white dark:bg-slate-900 dark:text-slate-300">اختر الماكينة...</option>
                                             {pumps.map(pump => (
@@ -289,7 +301,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                     </div>
 
                                     {/* Counter Select */}
-                                    <div className="relative group p-4 border-t md:border-t-0 md:border-r border-slate-200 dark:border-white/5 md:pr-6">
+                                    <div className="relative group p-4 border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-600/25 md:pr-6">
                                         <label className="text-xs font-bold text-purple-500 dark:text-purple-400 uppercase tracking-wider mb-2 block flex items-center gap-2">
                                             <Calculator className="w-3 h-3" /> العداد
                                         </label>
@@ -297,7 +309,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                             value={formData.counter_id} 
                                             onChange={handleCounterChange}
                                             disabled={!formData.pump_id}
-                                            className="w-full bg-transparent border-b border-slate-300 dark:border-white/10 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-purple-500 dark:focus:border-purple-400 transition-all appearance-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:border-slate-400 dark:hover:border-white/30"
+                                            className="w-full bg-transparent dark:bg-slate-800 border-b border-slate-300 dark:border-slate-600/30 py-2 text-slate-700 dark:text-slate-200 font-bold outline-none focus:border-purple-500 dark:focus:border-purple-400 transition-all appearance-none cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed hover:border-slate-400 dark:hover:border-white/30"
                                         >
                                             <option value="" className="bg-white dark:bg-slate-900 dark:text-slate-300">اختر العداد...</option>
                                             {pumps.find(p => p.id == formData.pump_id)?.counters?.map(c => (
@@ -322,12 +334,12 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                     <Droplets className="w-3.5 h-3.5" />
                                                     <span className="text-xs font-bold">{selectedCounter.fuel_type}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/5">
+                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 dark:border-0">
                                                     <User className="w-3.5 h-3.5" />
                                                     <span className="text-xs font-bold">{selectedCounter.worker_name}</span>
                                                 </div>
                                                 {selectedCounter.tank_name && (
-                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-500/20">
+                                                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 dark:border-0">
                                                         <Database className="w-3.5 h-3.5" />
                                                         <span className="text-xs font-bold">{selectedCounter.tank_name}</span>
                                                         <span className="text-[10px] font-mono bg-blue-100 dark:bg-blue-500/20 px-1.5 py-0.5 rounded ml-1">
@@ -337,7 +349,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                 )}
                                                 <div className="mr-auto flex items-center gap-2">
                                                     <span className="text-xs text-slate-500 dark:text-slate-400">سعر الوحدة:</span>
-                                                    <span className="text-sm font-bold font-mono text-slate-800 dark:text-white px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded border border-slate-200 dark:border-white/10">{formatCurrency(formData.unit_price)}</span>
+                                                    <span className="text-sm font-bold font-mono text-slate-800 dark:text-white px-2 py-0.5 bg-slate-100 dark:bg-white/5 rounded dark:border-0">{formatCurrency(formData.unit_price)}</span>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -345,51 +357,51 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                 </AnimatePresence>
 
                                 {/* 2. Readings Inputs - Transparent Glass Fields */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    {/* Opening Reading */}
-                                    <div className="relative p-5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 group transition-all hover:bg-slate-100 dark:hover:bg-white/[0.07]">
-                                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest mb-1 block">القراءة السابقة</label>
-                                        <div className="text-2xl font-mono font-bold text-slate-600 dark:text-slate-300 tracking-wider">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {/* Opening Reading - Glassy Border */}
+                                    <div className="glass-input relative p-2.5 rounded-2xl group transition-all flex items-center justify-center gap-3">
+                                        <label className="text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-widest">القراءة السابقة</label>
+                                        <div className="text-lg font-mono font-bold text-slate-600 dark:text-slate-300 tracking-wider">
                                             {formatNumber(formData.opening_reading) || '---'}
                                         </div>
-                                        <div className="absolute top-5 left-5 opacity-20 group-hover:opacity-40 transition-opacity">
-                                            <Calculator className="w-6 h-6 text-slate-400 dark:text-white" />
+                                        <div className="absolute left-2.5 opacity-20 group-hover:opacity-40 transition-opacity">
+                                            <Calculator className="w-4 h-4 text-slate-400 dark:text-white" />
                                         </div>
                                     </div>
 
                                     {/* Closing Reading */}
-                                    <div className="relative p-5 rounded-2xl bg-white dark:bg-emerald-900/10 border border-emerald-500/20 dark:border-emerald-500/20 group focus-within:ring-2 focus-within:ring-emerald-500/30 transition-all shadow-sm">
-                                        <label className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1 block">القراءة الحالية</label>
+                                    <div className="glass-input-active relative p-2.5 rounded-2xl group transition-all flex items-center justify-center gap-3">
+                                        <label className={`text-[10px] font-bold uppercase tracking-widest ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>القراءة الحالية</label>
                                         <input 
                                             type="number" 
                                             value={formData.closing_reading} 
                                             onChange={handleReadingChange}
                                             disabled={!selectedCounter}
-                                            className="w-full bg-transparent text-3xl font-mono font-black text-slate-800 dark:text-white outline-none placeholder:text-slate-300 dark:placeholder:text-white/10"
+                                            className={`w-auto bg-transparent text-xl font-mono font-black outline-none text-center min-w-[120px] ${isDark ? 'text-white placeholder:text-white/10' : 'text-slate-800 placeholder:text-slate-300'}`}
                                             placeholder="000000"
                                         />
-                                        <div className="absolute top-5 left-5 opacity-50 group-focus-within:opacity-100 transition-opacity">
-                                             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/20 px-2 py-1 rounded">LITERS</span>
+                                        <div className="absolute left-2.5 opacity-50 group-focus-within:opacity-100 transition-opacity">
+                                             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${isDark ? 'text-emerald-400 bg-emerald-500/20' : 'text-emerald-600 bg-emerald-100'}`}>LITERS</span>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* 3. Payment Section */}
-                                <div className="pt-6 border-t border-slate-200/60 dark:border-white/5">
+                                <div className="pt-4 border-t border-slate-200/60 dark:border-slate-600/25">
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {/* Method Toggle */}
                                         <div>
                                             <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3 block">طريقة الدفع</label>
-                                            <div className="flex bg-slate-100 dark:bg-black/40 p-1 rounded-xl border border-slate-200 dark:border-white/5">
+                                            <div className="glass-section flex p-1 rounded-xl">
                                                 <button 
                                                     onClick={() => setFormData(p => ({...p, payment_method: 'cash'}))}
-                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'cash' ? 'bg-white dark:bg-white/10 text-emerald-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'cash' ? 'bg-white dark:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 shadow-sm dark:shadow-emerald-500/20' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                                                 >
                                                     نقدي
                                                 </button>
                                                 <button 
                                                     onClick={() => setFormData(p => ({...p, payment_method: 'credit'}))}
-                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'credit' ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                                                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${formData.payment_method === 'credit' ? 'bg-white dark:bg-amber-600/20 text-amber-600 dark:text-amber-400 shadow-sm dark:shadow-amber-500/20' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                                                 >
                                                     آجل
                                                 </button>
@@ -405,7 +417,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                          <select 
                                                             value={formData.account_type}
                                                             onChange={(e) => setFormData(p => ({...p, account_type: e.target.value, account_id: ''}))}
-                                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
+                                                            className="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                         >
                                                             <option value="safe" className="bg-white dark:bg-slate-900 dark:text-white">خزنة</option>
                                                             <option value="bank" className="bg-white dark:bg-slate-900 dark:text-white">بنك</option>
@@ -416,7 +428,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                          <select 
                                                             value={formData.account_id}
                                                             onChange={(e) => setFormData(p => ({...p, account_id: e.target.value}))}
-                                                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
+                                                            className="glass-input w-full rounded-xl px-3 py-2.5 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                         >
                                                             <option value="" className="bg-white dark:bg-slate-900 dark:text-slate-300">اختر...</option>
                                                             {formData.account_type === 'safe' 
@@ -432,7 +444,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                                     <select 
                                                         value={formData.customer_id}
                                                         onChange={(e) => setFormData(p => ({...p, customer_id: e.target.value}))}
-                                                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
+                                                        className="glass-input w-full rounded-xl px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500 dark:focus:border-white/30 transition-all"
                                                     >
                                                         <option value="" className="bg-white dark:bg-slate-900 dark:text-slate-300">اختر العميل...</option>
                                                         {customers.map(c => (
@@ -446,7 +458,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                 </div>
 
                                 {/* Submit Button */}
-                                <div className="pt-6 flex justify-end">
+                                <div className="pt-4 flex justify-end">
                                     <motion.button
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
@@ -455,8 +467,8 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                         className={`
                                             px-8 py-4 rounded-xl font-bold text-white shadow-lg flex items-center gap-2 transition-all relative overflow-hidden group
                                             disabled:opacity-50 disabled:cursor-not-allowed
-                                            bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500
-                                            dark:from-blue-600 dark:via-indigo-600 dark:to-purple-600
+                                            bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500
+                                            dark:from-emerald-600/90 dark:to-green-600/90 hover:shadow-emerald-500/50
                                         `}
                                     >
                                         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
@@ -477,22 +489,24 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                     transition={{ delay: 0.2 }}
                     className="lg:col-span-3 lg:sticky lg:top-6"
                 >
-                    <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 dark:border-white/5 p-6 relative overflow-hidden min-h-[400px] flex flex-col">
-                        {/* Glass Shine */}
-                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                    {/* Summary Card - Glassy Border */}
+                    <div className="glass-summary rounded-3xl p-5 relative overflow-hidden flex flex-col">
+                        {/* Glass Edge Glow */}
+                        <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"></div>
                         
-                         {/* Decorative Background */}
-                         <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                         {/* Decorative Background - Level 3 (Ultra Transparent) */}
+                         <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                         <div className="absolute bottom-0 left-0 w-36 h-36 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
 
                          <div className="relative z-10 flex flex-col h-full">
-                            <h3 className="text-xs font-bold text-slate-500 dark:text-indigo-200 uppercase tracking-widest mb-6 border-b border-slate-200 dark:border-white/10 pb-4 flex items-center gap-2">
+                            <h3 className="text-xs font-bold text-slate-500 dark:text-indigo-200 uppercase tracking-widest mb-6 border-b border-slate-200 dark:border-slate-600/30 pb-4 flex items-center gap-2">
                                 <Wallet className="w-4 h-4" /> ملخص الفاتورة
                             </h3>
                             
                             <div className="flex-1 space-y-8">
                                 <div>
                                     <span className="text-xs font-bold text-slate-400 dark:text-indigo-300 block mb-2">الكمية المباعة</span>
-                                    <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
+                                    <div className="glass-input p-4 rounded-2xl">
                                         <div className="text-4xl font-black font-mono text-indigo-600 dark:text-indigo-400 flex items-baseline gap-1">
                                             {formatNumber(formData.volume_sold)}
                                             <span className="text-sm text-indigo-400/70 font-bold">L</span>
@@ -512,7 +526,7 @@ export default function AddSale({ pumps = [], safes = [], banks = [], customers 
                                 </div>
                             </div>
 
-                            <div className="mt-auto pt-6 border-t border-slate-200 dark:border-white/10">
+                            <div className="mt-auto pt-6 border-t border-slate-200 dark:border-slate-600/30">
                                 <span className="text-xs font-bold text-slate-400 dark:text-slate-400 block mb-2">الإجمالي النهائي</span>
                                 <div className="text-5xl font-black font-mono text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-white dark:to-indigo-200 tracking-tighter">
                                     {formatNumber(formData.total_amount)}

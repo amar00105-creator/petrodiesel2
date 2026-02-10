@@ -188,13 +188,13 @@ export default function SalesList({ sales = [] }) {
                             ></path>
                         </svg>
                     </button>
-                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold">تصدير Excel</Button>
-                    <Button variant="primary" icon={FileText} className="rounded-xl font-bold bg-navy-900 hover:bg-navy-800">تقرير يومي</Button>
+                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold bg-white/5 backdrop-blur-xl text-white hover:bg-white/10 transition-all shadow-sm">تصدير Excel</Button>
+                    <Button variant="primary" icon={FileText} className="rounded-xl font-bold bg-navy-900 hover:bg-navy-800 bg-white/5 backdrop-blur-xl text-white shadow-sm">تقرير يومي</Button>
                 </div>
             </div>
 
             {/* Filters Bar */}
-            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
+            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:backdrop-blur-xl dark:border-0 dark:ring-0 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
                     {/* Search - Spans 3 columns */}
                     <div className="md:col-span-3 relative">
@@ -203,7 +203,7 @@ export default function SalesList({ sales = [] }) {
                             <Search className="absolute right-3 top-2.5 text-slate-400 w-5 h-5"/>
                             <TextInput 
                                 placeholder="بحث برقم العملية..." 
-                                className="pl-4 pr-10 py-2 rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20 w-full transition-all focus:ring-2 focus:ring-blue-100 dark:focus:ring-white/10"
+                                className="pl-4 pr-10 py-2 rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white w-full transition-all focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-400 shadow-sm"
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
@@ -217,7 +217,7 @@ export default function SalesList({ sales = [] }) {
                             placeholder="اختر نوع الفلترة" 
                             value={filterType} 
                             onValueChange={(val) => { setFilterType(val); setFilterValue(''); }} 
-                            className="rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20"
+                            className="rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white shadow-sm"
                         >
                             <SelectItem value="pump" icon={Fuel}>الماكينة (Pump)</SelectItem>
                             <SelectItem value="fuel" icon={Droplets}>نوع الوقود (Fuel)</SelectItem>
@@ -236,7 +236,7 @@ export default function SalesList({ sales = [] }) {
                             value={filterValue} 
                             onValueChange={setFilterValue} 
                             disabled={!filterType}
-                            className="rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20 disabled:opacity-50"
+                            className="rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white shadow-sm disabled:opacity-50"
                         >
                             {getFilterOptions().map((opt, idx) => (
                                 <SelectItem key={idx} value={opt} icon={Database}>
@@ -251,7 +251,7 @@ export default function SalesList({ sales = [] }) {
                         <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">التاريخ</label>
                         <div className="relative w-full">
                             <Calendar className="absolute right-3 top-2.5 text-slate-400 w-5 h-5"/>
-                            <TextInput type="date" className="pl-4 pr-10 py-2 rounded-xl dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 dark:text-white dark:focus:ring-white/20 dark:focus:border-white/20 w-full transition-all focus:ring-2 focus:ring-blue-100" />
+                            <TextInput type="date" className="pl-4 pr-10 py-2 rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white w-full transition-all focus:ring-2 focus:ring-blue-500/50 shadow-sm" />
                         </div>
                     </div>
 
@@ -269,7 +269,7 @@ export default function SalesList({ sales = [] }) {
             </Card>
 
             {/* Data Table */}
-            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
+            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-xl dark:border dark:border-white/5 dark:ring-0 dark:shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-right">
                         <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-slate-300">

@@ -109,14 +109,17 @@ const FuelPumpCard = ({
                     {/* Subtle gradient line on left of row */}
                     <div className={`absolute inset-y-0 left-0 w-0.5 bg-${theme.primary}-500 opacity-50`}></div>
                     
-                    {/* Worker Name (NOW LEFT) - Large */}
-                    <div className="text-left flex-1 border-r border-white/10 pr-2 mr-2">
-                         <span className="text-lg font-bold text-gray-200 block leading-tight">{counter.worker_name || "عامل غير مخصص"}</span>
+                    {/* Worker Name (LEFT SIDE) */}
+                    <div className="flex flex-col items-start justify-center flex-shrink-0 max-w-[45%]">
+                         <span className="text-lg font-bold text-gray-200 leading-tight truncate w-full">{counter.worker_name || "عامل غير مخصص"}</span>
                          <span className="text-[9px] text-gray-500">اسم العامل</span>
                     </div>
 
-                    {/* Meter Reading (NOW RIGHT) */}
-                    <div className="font-mono text-xl text-white tracking-wider drop-shadow-sm flex flex-col items-end leading-none">
+                    {/* Vertical Divider */}
+                    <div className="h-10 w-px bg-white/10 mx-3 flex-shrink-0"></div>
+
+                    {/* Meter Reading (RIGHT SIDE) */}
+                    <div className="font-mono text-xl text-white tracking-wider drop-shadow-sm flex flex-col items-end leading-none flex-shrink-0">
                         <span>{parseFloat(counter.current_reading || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                         <span className="text-[10px] text-gray-500 font-sans mt-0.5">Liters</span>
                     </div>

@@ -1,6 +1,6 @@
 {
-  "_AddSupplierModal-D3TCThUq.js": {
-    "file": "assets/AddSupplierModal-D3TCThUq.js",
+  "_AddSupplierModal-Cu2WHanH.js": {
+    "file": "assets/AddSupplierModal-Cu2WHanH.js",
     "name": "AddSupplierModal",
     "imports": [
       "_ui-DtuMUTb1.js",
@@ -24,15 +24,15 @@
       "_vendor-BdFMDtQB.js"
     ]
   },
-  "_SupplierList-D9HOS3OH.js": {
-    "file": "assets/SupplierList-D9HOS3OH.js",
+  "_SupplierList-CrY-TTnZ.js": {
+    "file": "assets/SupplierList-CrY-TTnZ.js",
     "name": "SupplierList",
     "isDynamicEntry": true,
     "imports": [
       "_ui-DtuMUTb1.js",
       "_vendor-BdFMDtQB.js",
       "resources/js/main.jsx",
-      "_AddSupplierModal-D3TCThUq.js"
+      "_AddSupplierModal-Cu2WHanH.js"
     ]
   },
   "_ui-DtuMUTb1.js": {
@@ -47,7 +47,7 @@
     "name": "vendor"
   },
   "resources/js/AddPump.jsx": {
-    "file": "assets/AddPump-DAik7Unz.js",
+    "file": "assets/AddPump-B6UpA-Su.js",
     "name": "AddPump",
     "src": "resources/js/AddPump.jsx",
     "isDynamicEntry": true,
@@ -58,7 +58,7 @@
     ]
   },
   "resources/js/AddSale.jsx": {
-    "file": "assets/AddSale-DNMOgAEF.js",
+    "file": "assets/AddSale-D_yXR2Ie.js",
     "name": "AddSale",
     "src": "resources/js/AddSale.jsx",
     "isDynamicEntry": true,
@@ -72,7 +72,7 @@
     ]
   },
   "resources/js/BanksPage.jsx": {
-    "file": "assets/BanksPage-BCVHzgrS.js",
+    "file": "assets/BanksPage-pF_J5TWA.js",
     "name": "BanksPage",
     "src": "resources/js/BanksPage.jsx",
     "isDynamicEntry": true,
@@ -83,7 +83,7 @@
     ]
   },
   "resources/js/CreatePurchase.jsx": {
-    "file": "assets/CreatePurchase-1zP2bttp.js",
+    "file": "assets/CreatePurchase-Br1Fesnm.js",
     "name": "CreatePurchase",
     "src": "resources/js/CreatePurchase.jsx",
     "isDynamicEntry": true,
@@ -91,14 +91,14 @@
       "resources/js/main.jsx",
       "_ui-DtuMUTb1.js",
       "_vendor-BdFMDtQB.js",
-      "_AddSupplierModal-D3TCThUq.js"
+      "_AddSupplierModal-Cu2WHanH.js"
     ],
     "dynamicImports": [
       "resources/js/utils/serverTime.js"
     ]
   },
   "resources/js/CustomerReport.jsx": {
-    "file": "assets/CustomerReport-Cg2U1BzW.js",
+    "file": "assets/CustomerReport-rds84Sp-.js",
     "name": "CustomerReport",
     "src": "resources/js/CustomerReport.jsx",
     "isDynamicEntry": true,
@@ -109,7 +109,7 @@
     ]
   },
   "resources/js/Dashboard.jsx": {
-    "file": "assets/Dashboard-ud1bsslN.js",
+    "file": "assets/Dashboard-CwkAalnV.js",
     "name": "Dashboard",
     "src": "resources/js/Dashboard.jsx",
     "isDynamicEntry": true,
@@ -120,7 +120,7 @@
     ]
   },
   "resources/js/EditPurchase.jsx": {
-    "file": "assets/EditPurchase-BqAfU2or.js",
+    "file": "assets/EditPurchase-D5Y07CyD.js",
     "name": "EditPurchase",
     "src": "resources/js/EditPurchase.jsx",
     "isDynamicEntry": true,
@@ -131,7 +131,7 @@
     ]
   },
   "resources/js/ExpenseList.jsx": {
-    "file": "assets/ExpenseList-BgyQQVC_.js",
+    "file": "assets/ExpenseList-BZxWRO_z.js",
     "name": "ExpenseList",
     "src": "resources/js/ExpenseList.jsx",
     "isDynamicEntry": true,
@@ -152,7 +152,7 @@
     ]
   },
   "resources/js/HumanResources.jsx": {
-    "file": "assets/HumanResources-CTCg0LNr.js",
+    "file": "assets/HumanResources-kJpmBofS.js",
     "name": "HumanResources",
     "src": "resources/js/HumanResources.jsx",
     "isDynamicEntry": true,
@@ -164,7 +164,7 @@
     ]
   },
   "resources/js/ManagePump.jsx": {
-    "file": "assets/ManagePump-BcIsFQxx.js",
+    "file": "assets/ManagePump-e4Mm4R2M.js",
     "name": "ManagePump",
     "src": "resources/js/ManagePump.jsx",
     "isDynamicEntry": true,
@@ -175,7 +175,7 @@
     ]
   },
   "resources/js/Partners.jsx": {
-    "file": "assets/Partners-DLbTzlJf.js",
+    "file": "assets/Partners-TJ1-kdaJ.js",
     "name": "Partners",
     "src": "resources/js/Partners.jsx",
     "isDynamicEntry": true,
@@ -183,12 +183,12 @@
       "_ui-DtuMUTb1.js",
       "_vendor-BdFMDtQB.js",
       "resources/js/main.jsx",
-      "_SupplierList-D9HOS3OH.js",
-      "_AddSupplierModal-D3TCThUq.js"
+      "_SupplierList-CrY-TTnZ.js",
+      "_AddSupplierModal-Cu2WHanH.js"
     ]
   },
   "resources/js/PumpList.jsx": {
-    "file": "assets/PumpList-C7AVh3HM.js",
+    "file": "assets/PumpList-CIF11QRW.js",
     "name": "PumpList",
     "src": "resources/js/PumpList.jsx",
     "isDynamicEntry": true,
@@ -200,7 +200,7 @@
     ]
   },
   "resources/js/PurchaseList.jsx": {
-    "file": "assets/PurchaseList-Cub55Hb4.js",
+    "file": "assets/PurchaseList-C0WvlpLs.js",
     "name": "PurchaseList",
     "src": "resources/js/PurchaseList.jsx",
     "isDynamicEntry": true,
@@ -212,7 +212,7 @@
     ]
   },
   "resources/js/Reports.jsx": {
-    "file": "assets/Reports-CbOVNWVn.js",
+    "file": "assets/Reports-B57i31wF.js",
     "name": "Reports",
     "src": "resources/js/Reports.jsx",
     "isDynamicEntry": true,
@@ -224,7 +224,7 @@
     ]
   },
   "resources/js/SalesList.jsx": {
-    "file": "assets/SalesList-BbLtfXPk.js",
+    "file": "assets/SalesList-BJpN6PAg.js",
     "name": "SalesList",
     "src": "resources/js/SalesList.jsx",
     "isDynamicEntry": true,
@@ -235,7 +235,7 @@
     ]
   },
   "resources/js/Settings.jsx": {
-    "file": "assets/Settings-BlvqU1Wi.js",
+    "file": "assets/Settings-CwHcBEDQ.js",
     "name": "Settings",
     "src": "resources/js/Settings.jsx",
     "isDynamicEntry": true,
@@ -247,7 +247,7 @@
     ]
   },
   "resources/js/StationList.jsx": {
-    "file": "assets/StationList-CNJb5tr5.js",
+    "file": "assets/StationList-C1Gsts5-.js",
     "name": "StationList",
     "src": "resources/js/StationList.jsx",
     "isDynamicEntry": true,
@@ -258,7 +258,7 @@
     ]
   },
   "resources/js/TankList.jsx": {
-    "file": "assets/TankList-BgnIBx8d.js",
+    "file": "assets/TankList-CRroe9R6.js",
     "name": "TankList",
     "src": "resources/js/TankList.jsx",
     "isDynamicEntry": true,
@@ -271,7 +271,7 @@
     ]
   },
   "resources/js/WorkerList.jsx": {
-    "file": "assets/WorkerList-DV0GYdrR.js",
+    "file": "assets/WorkerList-RQyyyy50.js",
     "name": "WorkerList",
     "src": "resources/js/WorkerList.jsx",
     "isDynamicEntry": true,
@@ -282,7 +282,7 @@
     ]
   },
   "resources/js/main.jsx": {
-    "file": "assets/main-C6xJmeb8.js",
+    "file": "assets/main-DR2DsOBY.js",
     "name": "main",
     "src": "resources/js/main.jsx",
     "isEntry": true,
@@ -296,7 +296,7 @@
       "resources/js/ManagePump.jsx",
       "resources/js/AddSale.jsx",
       "resources/js/WorkerList.jsx",
-      "_SupplierList-D9HOS3OH.js",
+      "_SupplierList-CrY-TTnZ.js",
       "resources/js/PurchaseList.jsx",
       "resources/js/TankList.jsx",
       "resources/js/BanksPage.jsx",
@@ -314,7 +314,7 @@
       "resources/js/CustomerReport.jsx"
     ],
     "css": [
-      "assets/main-DWKu9BqH.css"
+      "assets/main-CFuhisvJ.css"
     ]
   },
   "resources/js/utils/serverTime.js": {

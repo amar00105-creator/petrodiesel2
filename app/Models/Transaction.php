@@ -36,7 +36,7 @@ class Transaction extends Model
         return $this->db->lastInsertId();
     }
 
-    public function getTotalsByPeriod($start, $end, $stationId = 'all')
+    public function getTotalsByPeriod($start, $end, $stationId = 'all', $categoryId = null)
     {
         $sql = "SELECT type, SUM(amount) as total FROM transactions WHERE date BETWEEN ? AND ?";
         $params = [$start, $end];
@@ -44,6 +44,11 @@ class Transaction extends Model
         if ($stationId !== 'all') {
             $sql .= " AND station_id = ?";
             $params[] = $stationId;
+        }
+
+        if ($categoryId) {
+            $sql .= " AND category_id = ?";
+            $params[] = $categoryId;
         }
 
         $sql .= " GROUP BY type";
@@ -118,6 +123,11 @@ class Transaction extends Model
             $params[] = $filters['type'];
         }
 
+        if (!empty($filters['category_id'])) {
+            $sql .= " AND t.category_id = ?";
+            $params[] = $filters['category_id'];
+        }
+
         $sql .= " ORDER BY t.date DESC";
 
         $stmt = $this->db->prepare($sql);
@@ -125,7 +135,7 @@ class Transaction extends Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getByAccount($type, $id, $limit = 500, $startDate = null, $endDate = null)
+    public function getByAccount($type, $id, $limit = 500, $startDate = null, $endDate = null, $categoryId = null)
     {
         $sql = "SELECT t.*, 
                        c.name as category_name, 
@@ -145,11 +155,17 @@ class Transaction extends Model
 
         $params = [$type, $id, $type, $id];
 
-        // Add date filtering if provided - use date column for business logic accuracy
+        // Add date filtering
         if ($startDate && $endDate) {
             $sql .= " AND t.date BETWEEN ? AND ?";
             $params[] = $startDate;
             $params[] = $endDate;
+        }
+
+        // Add category filtering
+        if ($categoryId) {
+            $sql .= " AND t.category_id = ?";
+            $params[] = $categoryId;
         }
 
         $sql .= " ORDER BY t.created_at DESC, t.id DESC LIMIT $limit";

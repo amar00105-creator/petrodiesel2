@@ -20,6 +20,13 @@ class TransactionCategory extends Model
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function findByName($name, $type)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM transaction_categories WHERE name = ? AND type = ?");
+        $stmt->execute([$name, $type]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function create($name, $type)
     {
         $stmt = $this->db->prepare("INSERT INTO transaction_categories (name, type) VALUES (?, ?)");

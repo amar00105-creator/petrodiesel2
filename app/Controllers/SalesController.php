@@ -374,6 +374,15 @@ class SalesController extends Controller
                     // Update Customer Balance (Debtor)
                     $stmt = $db->prepare("UPDATE customers SET balance = balance + ? WHERE id = ?");
                     $stmt->execute([$data['total_amount'], $data['customer_id']]);
+
+                    // --- NEW: Create Transaction for Credit Sale (Accrual) ---
+                    $transactionData['type'] = 'income';
+                    $transactionData['amount'] = $data['total_amount'];
+                    $transactionData['description'] = "مبيعات آجل - عملية " . $data['invoice_number'];
+                    $transactionData['to_type'] = 'customer';
+                    $transactionData['to_id'] = $data['customer_id'];
+                    $transactionModel->create($transactionData);
+                    // ---------------------------------------------------------
                 }
 
                 // ========== COMMIT TRANSACTION ==========

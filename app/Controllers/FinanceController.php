@@ -542,11 +542,12 @@ class FinanceController extends Controller
             exit;
         }
 
-        // Get date filters
+        // Get filters
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
+        $categoryId = !empty($_GET['category_id']) ? $_GET['category_id'] : null;
 
-        $transactions = $this->transactionModel->getByAccount('bank', $id, 500, $startDate, $endDate);
+        $transactions = $this->transactionModel->getByAccount('bank', $id, 500, $startDate, $endDate, $categoryId);
 
         header('Content-Type: application/json');
         echo json_encode([
@@ -573,11 +574,12 @@ class FinanceController extends Controller
             exit;
         }
 
-        // Get date filters
+        // Get filters
         $startDate = $_GET['start_date'] ?? null;
         $endDate = $_GET['end_date'] ?? null;
+        $categoryId = !empty($_GET['category_id']) ? $_GET['category_id'] : null;
 
-        $transactions = $this->transactionModel->getByAccount('safe', $id, 500, $startDate, $endDate);
+        $transactions = $this->transactionModel->getByAccount('safe', $id, 500, $startDate, $endDate, $categoryId);
 
         header('Content-Type: application/json');
         echo json_encode([

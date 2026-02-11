@@ -99,14 +99,41 @@ class ExpensesController extends Controller
             // We need source_id, assuming it's sent. IDK why previous code had it but let's be safe
             if (!empty($data['source_id'])) {
                 $stmt->execute([$data['amount'], $data['source_id']]);
-            } else {
-                // Fallback or default? For now, if no source, we can't deduct.
-                // But let's assume one must be picked.
-                // In React form below, we need to ensure we send source_type/id.
-                // The React form currently sends payment_method (cash/bank), but DOES NOT select specific safe/bank.
-                // It defaults. The previous React code didn't pick ID.
-                // We should probably handle that.
             }
+
+            // --- NEW: Handle Categories ---
+            $categoryId = null;
+            if (!empty($data['category'])) {
+                $categoryModel = new \App\Models\TransactionCategory();
+                $existingCategory = $categoryModel->findByName($data['category'], 'expense');
+
+                if ($existingCategory) {
+                    $categoryId = $existingCategory['id'];
+                } else {
+                    // Create new category if not found
+                    $categoryModel->create($data['category'], 'expense');
+                    $categoryId = $db->lastInsertId();
+                }
+            }
+
+            // --- NEW: Create Transaction Record for Reporting ---
+            $transactionModel = new \App\Models\Transaction();
+            $transactionModel->create([
+                'station_id' => $data['station_id'],
+                'type' => 'expense',
+                'amount' => $data['amount'],
+                'category_id' => $categoryId, // Save ID
+                'from_type' => $data['source_type'],
+                'from_id' => $data['source_id'],
+                'to_type' => null,
+                'to_id' => null,
+                'description' => $data['category'] . ' - ' . ($data['description'] ?? ''),
+                'related_entity_type' => $data['related_entity_type'],
+                'related_entity_id' => $data['related_entity_id'],
+                'date' => $data['expense_date'] ?? date('Y-m-d'),
+                'created_by' => $data['user_id']
+            ]);
+            // ----------------------------------------------------
 
             if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                 header('Content-Type: application/json');

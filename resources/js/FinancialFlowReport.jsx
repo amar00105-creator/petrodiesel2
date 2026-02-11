@@ -14,11 +14,13 @@ export default function FinancialFlowReport({ initialGroup }) {
         source_id: '',
         start_date: null,
         end_date: null,
-        group_sales: initialGroup || 'none'
+        group_sales: initialGroup || 'none',
+        category_id: ''
     });
 
     const [period, setPeriod] = useState('month'); // Default to month
     const [sources, setSources] = useState({ safes: [], banks: [] });
+    const [categories, setCategories] = useState([]);
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -35,7 +37,7 @@ export default function FinancialFlowReport({ initialGroup }) {
             }
             fetchReport();
         }
-    }, [filters.source_id, filters.source_type, filters.start_date, filters.end_date, filters.group_sales]);
+    }, [filters.source_id, filters.source_type, filters.start_date, filters.end_date, filters.group_sales, filters.category_id]);
 
     const fetchSources = async () => {
         try {
@@ -53,6 +55,14 @@ export default function FinancialFlowReport({ initialGroup }) {
                     }
                 }
             }
+
+            // Fetch Categories
+            const catResponse = await fetch(`${window.BASE_URL || ''}/reports?action=get_categories`);
+            const catResult = await catResponse.json();
+            if (catResult.success) {
+                setCategories(catResult.categories || []);
+            }
+
         } catch (e) {
             console.error('Failed to fetch sources:', e);
             toast.error('فشل تحميل قائمة الحسابات');
@@ -67,7 +77,8 @@ export default function FinancialFlowReport({ initialGroup }) {
             const params = new URLSearchParams({
                 id: filters.source_id,
                 start_date: filters.start_date,
-                end_date: filters.end_date
+                end_date: filters.end_date,
+                category_id: filters.category_id || ''
             });
             
             const endpoint = filters.source_type === 'safe' 
@@ -375,8 +386,23 @@ export default function FinancialFlowReport({ initialGroup }) {
                         </select>
                     </div>
 
+                    {/* Category Filter */}
+                    <div className="md:col-span-2 space-y-2">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">التصنيف</label>
+                        <select 
+                            value={filters.category_id || ''}
+                            onChange={(e) => handleFilterChange('category_id', e.target.value)}
+                            className="w-full h-10 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                        >
+                            <option value="">الكل</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     {/* Period Selection Buttons */}
-                    <div className="md:col-span-5 space-y-2">
+                    <div className="md:col-span-3 space-y-2">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">الفترة</label>
                         <div className="flex gap-2">
                             <button

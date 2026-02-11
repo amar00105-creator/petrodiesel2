@@ -215,6 +215,26 @@ class PurchasesController extends Controller
                 $supplierModel = new Supplier();
                 $supplierModel->updateBalance($data['supplier_id'], $balanceChange);
 
+                // --- NEW: Create Transaction if Paid Immediately ---
+                if (($data['paid_amount'] ?? 0) > 0) {
+                    $transactionModel = new \App\Models\Transaction();
+                    $transactionModel->create([
+                        'station_id' => $data['station_id'],
+                        'type' => 'expense',
+                        'amount' => $data['paid_amount'],
+                        'from_type' => $data['payment_source_type'] ?? null,
+                        'from_id' => $data['payment_source_id'] ?? null,
+                        'to_type' => null,
+                        'to_id' => null,
+                        'description' => 'سداد فاتورة مشتريات #' . $purchaseModel->db->lastInsertId(),
+                        'related_entity_type' => 'supplier',
+                        'related_entity_id' => $data['supplier_id'],
+                        'date' => date('Y-m-d'),
+                        'created_by' => $user['id']
+                    ]);
+                }
+                // --------------------------------------------------
+
                 if ($this->isAjax()) {
                     header('Content-Type: application/json');
                     echo json_encode(['success' => true, 'message' => 'تم حفظ الفاتورة بنجاح']);
@@ -672,6 +692,26 @@ class PurchasesController extends Controller
             // 3. Update Supplier Balance
             $supplierModel = new Supplier();
             $supplierModel->updateBalance($purchaseData['supplier_id'], $purchaseData['total_cost']);
+
+            // --- NEW: Create Transaction if Paid Immediately ---
+            if (($purchaseData['paid_amount'] ?? 0) > 0) {
+                $transactionModel = new \App\Models\Transaction();
+                $transactionModel->create([
+                    'station_id' => $purchaseData['station_id'],
+                    'type' => 'expense',
+                    'amount' => $purchaseData['paid_amount'],
+                    'from_type' => $purchaseData['payment_source_type'] ?? null,
+                    'from_id' => $purchaseData['payment_source_id'] ?? null,
+                    'to_type' => null,
+                    'to_id' => null,
+                    'description' => 'سداد فاتورة تفريغ #' . $purchaseId,
+                    'related_entity_type' => 'supplier',
+                    'related_entity_id' => $purchaseData['supplier_id'],
+                    'date' => date('Y-m-d'),
+                    'created_by' => $user['id']
+                ]);
+            }
+            // --------------------------------------------------
 
             $db->commit();
 

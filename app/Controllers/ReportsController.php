@@ -67,6 +67,12 @@ class ReportsController extends Controller
             return;
         }
 
+        if (isset($_GET['action']) && $_GET['action'] === 'get_categories') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getCategories();
+            return;
+        }
+
 
         if (isset($_GET['action']) && $_GET['action'] === 'financial_flow') {
             while (ob_get_level()) ob_end_clean();
@@ -148,6 +154,7 @@ class ReportsController extends Controller
             $stationId = $_GET['station_id'] ?? 'all';
             $startDate = $_GET['start_date'] ?? date('Y-m-01');
             $endDate = $_GET['end_date'] ?? date('Y-m-d');
+            $categoryId = !empty($_GET['category_id']) ? $_GET['category_id'] : null;
 
             // 2. Financial Stats
             // Inventory Value: Sum(current_volume * current_price) of all tanks
@@ -248,14 +255,15 @@ class ReportsController extends Controller
                     WHERE t.type = 'expense' 
                     AND t.date BETWEEN ? AND ?
                     " . ($stationId !== 'all' ? "AND t.station_id = ?" : "") . "
+                    " . ($categoryId ? "AND t.category_id = ?" : "") . "
                     GROUP BY tc.id, tc.name
                     ORDER BY total_amount DESC
                 ");
-                if ($stationId !== 'all') {
-                    $stmt->execute([$startDate, $endDate, $stationId]);
-                } else {
-                    $stmt->execute([$startDate, $endDate]);
-                }
+                $params = [$startDate, $endDate];
+                if ($stationId !== 'all') $params[] = $stationId;
+                if ($categoryId) $params[] = $categoryId;
+
+                $stmt->execute($params);
                 $expenseBreakdown = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             } catch (\Exception $e) {
                 // Ignore if tables don't exist
@@ -263,7 +271,7 @@ class ReportsController extends Controller
 
             // Income/Expense from Transactions (General P&L) for the period
             // We need a helper in Transaction model to get aggregated totals by type and date
-            $financials = $this->transactionModel->getTotalsByPeriod($startDate, $endDate, $stationId);
+            $financials = $this->transactionModel->getTotalsByPeriod($startDate, $endDate, $stationId, $categoryId);
 
             // 3. Sales Stats
             $salesStats = method_exists($this->saleModel, 'getStatsByPeriod')
@@ -2230,5 +2238,41 @@ class ReportsController extends Controller
             ]);
         }
         exit;
+    }
+
+    private function getCategories()
+    {
+        while (ob_get_level()) ob_end_clean();
+        header('Content-Type: application/json');
+
+        try {
+            $categoryModel = new \App\Models\TransactionCategory();
+            // We want 'expense' categories primarily, but 'income' might be useful too. 
+            // Let's return all or filter by type if passed.
+            $type = $_GET['type'] ?? null;
+
+            if ($type) {
+                // TransactionCategory::getAll() returns all. Filter manually.
+                $all = $categoryModel->getAll();
+                $categories = array_filter($all, function ($c) use ($type) {
+                    return $c['type'] === $type;
+                });
+                $categories = array_values($categories);
+            } else {
+                $categories = $categoryModel->getAll();
+            }
+
+            echo json_encode([
+                'success' => true,
+                'categories' => $categories
+            ]);
+            exit;
+        } catch (\Throwable $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+            exit;
+        }
     }
 }

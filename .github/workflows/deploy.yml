@@ -21,7 +21,7 @@ jobs:
       - name: 📂 Sync files (Clean Deploy)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
-          server: ${{ secrets.FTP_SERVER }}
+          server: 162.0.215.16
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           dangerous-clean-slate: true

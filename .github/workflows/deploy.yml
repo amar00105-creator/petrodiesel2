@@ -24,7 +24,6 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          # server-dir: public_html/
           dangerous-clean-slate: true
           protocol: ftp
           port: 21
@@ -33,3 +32,4 @@ jobs:
             **/.git*/**
             **/node_modules/**
             .env
+            public/uploads/**

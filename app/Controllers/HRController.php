@@ -108,13 +108,13 @@ class HRController extends Controller
         $permPrefix = $permissionMap[$entity] ?? $entity;
 
         if ($action === 'delete') {
-            if (!AuthHelper::can($permPrefix . '_delete')) {
-                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '_delete permission']);
+            if (!AuthHelper::can($permPrefix . '.delete')) {
+                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '.delete permission']);
                 exit;
             }
         } elseif (in_array($action, ['store', 'update', 'set_salary', 'add_entry'])) {
-            if (!AuthHelper::can($permPrefix . '_edit')) { // Assume _edit covers create/update
-                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '_edit permission']);
+            if (!AuthHelper::can($permPrefix . '.edit')) { // Assume .edit covers create/update
+                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '.edit permission']);
                 exit;
             }
         }
@@ -185,8 +185,10 @@ class HRController extends Controller
                         $postData['email'] = strtolower(str_replace(' ', '.', $postData['name'])) . rand(100, 999) . '@petrodiesel.net';
                     }
                 } elseif ($entity === 'driver') {
-                    if ($model->findByName($postData['name'])) {
-                        echo json_encode(['success' => false, 'message' => 'هذا السائق مسجل بالفعل']);
+                    $found = $model->findByName($postData['name']);
+                    if ($found) {
+                        // If found, return success with the existing ID so the frontend adds it to the list
+                        echo json_encode(['success' => true, 'message' => 'تم استرجاع بيانات السائق الموجود مسبقاً', 'id' => $found['id']]);
                         exit;
                     }
                 } elseif ($entity === 'worker') {
@@ -232,6 +234,11 @@ class HRController extends Controller
                 if (!$id) throw new \Exception("Missing ID");
                 $data = $model->find($id);
                 echo json_encode(['success' => true, 'data' => $data]);
+            } elseif ($action === 'fix_ghost_driver') {
+                // Temporary fix for ID 2
+                $sql = "UPDATE drivers SET name = 'Mustafa Haroun Fixed' WHERE id = 2";
+                $this->models['driver']->db->query($sql);
+                echo json_encode(['success' => true, 'message' => 'Driver name fixed']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Invalid action']);
             }

@@ -22,8 +22,11 @@ class SalesController extends Controller
     {
         $this->checkAndFixDatabase();
         $user = AuthHelper::user();
+        // Get all assigned stations for the current user
+        $stationIds = AuthHelper::getUserStationIds();
+
         $saleModel = new Sale();
-        $sales = $saleModel->getAll($user['station_id']);
+        $sales = $saleModel->getAll($stationIds);
 
         $this->view('sales/index', [
             'sales' => $sales,
@@ -47,13 +50,15 @@ class SalesController extends Controller
         $month = date('m'); // 02
 
         // Count existing invoices in current month for this station
-        $prefix = 'S' . $year . $month;
+        // New Format: S{StationID}{YY}{MM}{Sequence} (e.g. S126020001)
+        $prefix = 'S' . $stationId . $year . $month;
+
         $stmt = $db->prepare("SELECT COUNT(*) as count FROM sales WHERE invoice_number LIKE ? AND station_id = ?");
         $stmt->execute([$prefix . '%', $stationId]);
         $row = $stmt->fetch();
         $sequence = ($row['count'] ?? 0) + 1;
 
-        // Format: S2602001, S2602002, etc.
+        // Pad sequence to 4 digits (e.g. 0001)
         return $prefix . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 
@@ -83,6 +88,16 @@ class SalesController extends Controller
             error_log("Sale edit: Sale with ID $id not found.");
             $this->redirect('/sales');
             return;
+        }
+
+        // Check if this sale is part of a batch (same invoice number)
+        if (!empty($sale['invoice_number'])) {
+            $batchSales = $saleModel->getByInvoiceNumber($sale['invoice_number']);
+            if (count($batchSales) > 1) {
+                // Pass the whole batch
+                $this->loadCreateView($batchSales);
+                return;
+            }
         }
 
         $this->loadCreateView($sale);
@@ -131,13 +146,59 @@ class SalesController extends Controller
             LEFT JOIN transactions tr ON (tr.related_entity_id = s.id AND tr.related_entity_type = 'sales')
             LEFT JOIN safes sf ON (tr.to_type = 'safe' AND tr.to_id = sf.id)
             LEFT JOIN banks b ON (tr.to_type = 'bank' AND tr.to_id = b.id)
-            WHERE s.id = ?
+            WHERE s.invoice_number = ?
         ");
-        $stmt->execute([$id]);
-        $saleDetails = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        // Use invoice number if possible to get all items in invoice
+        $invoiceNum = $sale['invoice_number'] ?? null;
+
+        if ($invoiceNum) {
+            $stmt->execute([$invoiceNum]);
+            $items = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            // Fallback to ID
+            $stmt = $db->prepare("
+                SELECT 
+                    s.*, 
+                    w.name as worker_name,
+                    p.name as pump_name,
+                    ft.name as fuel_type,
+                    c.name as customer_name,
+                    sf.name as safe_name,
+                    b.bank_name as bank_name -- Corrected to bank_name
+                FROM sales s
+                LEFT JOIN workers w ON s.worker_id = w.id
+                LEFT JOIN counters cnt ON s.counter_id = cnt.id
+                LEFT JOIN pumps p ON cnt.pump_id = p.id
+                LEFT JOIN tanks t ON p.tank_id = t.id
+                LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
+                LEFT JOIN customers c ON s.customer_id = c.id
+                -- Link via transactions
+                LEFT JOIN transactions tr ON (tr.related_entity_id = s.id AND tr.related_entity_type = 'sales')
+                LEFT JOIN safes sf ON (tr.to_type = 'safe' AND tr.to_id = sf.id)
+                LEFT JOIN banks b ON (tr.to_type = 'bank' AND tr.to_id = b.id)
+                WHERE s.id = ?
+            ");
+            $stmt->execute([$id]);
+            $item = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $items = $item ? [$item] : [];
+        }
+
+        if (empty($items)) {
+            $this->redirect('/sales');
+            return;
+        }
+
+        // Calculate Grand Total
+        $grandTotal = 0;
+        foreach ($items as $item) {
+            $grandTotal += $item['total_amount'];
+        }
 
         $this->view('sales/invoice', [
-            'sale' => $saleDetails ?: $sale,
+            'sale' => $items[0], // Use first item for header info
+            'items' => $items,   // Pass all items for the table
+            'grandTotal' => $grandTotal,
             'hide_sidebar' => true,
             'hide_topbar' => true
         ]);
@@ -174,11 +235,19 @@ class SalesController extends Controller
         $banks = $stmt->fetchAll();
 
 
-        // Fetch allStations for Header (super_admin station switcher)
+        // Fetch allStations for Header (all roles with assigned stations)
         $allStations = [];
         if ($user['role'] === 'super_admin') {
             $stmtStations = $db->query("SELECT id, name FROM stations ORDER BY name ASC");
             $allStations = $stmtStations->fetchAll(\PDO::FETCH_ASSOC);
+        } else {
+            $assignedStationIds = \App\Helpers\AuthHelper::getUserStationIds();
+            if (!empty($assignedStationIds)) {
+                $ph = implode(',', array_fill(0, count($assignedStationIds), '?'));
+                $stmtStations = $db->prepare("SELECT id, name FROM stations WHERE id IN ($ph) ORDER BY name ASC");
+                $stmtStations->execute($assignedStationIds);
+                $allStations = $stmtStations->fetchAll(\PDO::FETCH_ASSOC);
+            }
         }
 
         // Fetch active users count for header stats
@@ -255,17 +324,23 @@ class SalesController extends Controller
 
     public function store()
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $db = \App\Config\Database::connect();
 
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
+                $db = \App\Config\Database::connect();
                 $user = AuthHelper::user();
+                // ... rest of logic ...
+
                 $data = $_POST;
                 $data['station_id'] = $user['station_id'];
                 $data['user_id'] = $user['id'];
 
-                // Generate Invoice Number
-                $data['invoice_number'] = $this->getNewInvoiceNumber($data['station_id']);
+                // Generate Invoice Number if not provided
+                if (!empty($data['invoice_number'])) {
+                    // Use provided invoice number (for batch saves)
+                } else {
+                    $data['invoice_number'] = $this->getNewInvoiceNumber($data['station_id']);
+                }
 
                 if (empty($data['station_id'])) {
                     if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -328,27 +403,29 @@ class SalesController extends Controller
                     'category_id' => null
                 ];
 
-                // Handle Payments (Cash vs Credit)
-                if (($data['payment_method'] ?? 'cash') === 'cash') {
+                // Handle Payments (Cash/Bank vs Credit)
+                // Normalize: 'bank' is treated as cash payment directed to a bank account
+                $paymentMethod = $data['payment_method'] ?? 'cash';
+                $accountType = $data['account_type'] ?? 'safe';
+                if ($paymentMethod === 'bank') {
+                    $accountType = 'bank'; // Force account_type when method is 'bank'
+                }
+
+                if ($paymentMethod === 'cash' || $paymentMethod === 'bank') {
                     $transactionData['type'] = 'income';
                     $transactionData['amount'] = $data['total_amount'];
-                    // Update description to use invoice number
                     $transactionData['description'] = "مبيعات محروقات - عملية " . $data['invoice_number'];
 
-                    // Add to selected Safe or Bank
-                    $accountType = $data['account_type'] ?? null;
                     $accountId = !empty($data['account_id']) ? $data['account_id'] : null;
 
                     if ($accountType === 'safe' && $accountId) {
                         $stmt = $db->prepare("UPDATE safes SET balance = balance + ? WHERE id = ?");
                         $stmt->execute([$data['total_amount'], $accountId]);
-
                         $transactionData['to_type'] = 'safe';
                         $transactionData['to_id'] = $accountId;
                     } elseif ($accountType === 'bank' && $accountId) {
                         $stmt = $db->prepare("UPDATE banks SET balance = balance + ? WHERE id = ?");
                         $stmt->execute([$data['total_amount'], $accountId]);
-
                         $transactionData['to_type'] = 'bank';
                         $transactionData['to_id'] = $accountId;
                     } else {
@@ -356,11 +433,9 @@ class SalesController extends Controller
                         $stmt = $db->prepare("SELECT id FROM safes WHERE station_id = ? ORDER BY id ASC LIMIT 1");
                         $stmt->execute([$data['station_id']]);
                         $fallbackSafe = $stmt->fetch();
-
                         if ($fallbackSafe) {
                             $stmt = $db->prepare("UPDATE safes SET balance = balance + ? WHERE id = ?");
                             $stmt->execute([$data['total_amount'], $fallbackSafe['id']]);
-
                             $transactionData['to_type'] = 'safe';
                             $transactionData['to_id'] = $fallbackSafe['id'];
                         }
@@ -386,6 +461,7 @@ class SalesController extends Controller
                 }
 
                 // ========== COMMIT TRANSACTION ==========
+
                 $db->commit();
 
                 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
@@ -394,20 +470,20 @@ class SalesController extends Controller
                     exit;
                 }
                 $this->redirect('/sales');
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 // ========== ROLLBACK ON ERROR ==========
-                if ($db->inTransaction()) {
+                if (isset($db) && $db->inTransaction()) {
                     $db->rollBack();
                 }
 
+                error_log("Sales Store Error: " . $e->getMessage() . "\nStack: " . $e->getTraceAsString());
+
                 if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
                     header('Content-Type: application/json');
-                    // Return the specific error message to help debugging
-                    echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+                    echo json_encode(['success' => false, 'message' => 'حدث خطأ أثناء حفظ الفاتورة']);
                     exit;
                 }
-                // Fallback for non-AJAX
-                die("An error occurred: " . $e->getMessage());
+                $this->redirect('/sales?error=' . urlencode('حدث خطأ أثناء حفظ الفاتورة'));
             }
         }
     }
@@ -417,7 +493,7 @@ class SalesController extends Controller
         header('Content-Type: application/json');
 
         // Check permission if needed
-        if (!AuthHelper::can('sales_delete')) {
+        if (!AuthHelper::can('sales.delete')) {
             echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             return;
         }
@@ -496,14 +572,12 @@ class SalesController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        if (!AuthHelper::can('sales_edit')) {
-            // Assuming a permission exists, otherwise simplify or remove check
-            // For now, I'll proceed.
+        if (!AuthHelper::can('sales.edit')) {
+            echo json_encode(['success' => false, 'message' => 'غير مصرح']);
+            return;
         }
 
-        $data = $_POST;
-        $id = $data['id'] ?? null;
-
+        $id = $_POST['id'] ?? null;
         if (!$id) {
             echo json_encode(['success' => false, 'message' => 'ID required']);
             return;
@@ -512,33 +586,196 @@ class SalesController extends Controller
         $db = \App\Config\Database::connect();
 
         try {
-            // Basic fields to update. 
-            // Note: Updating amounts/volumes here implies manual correction. 
-            // Does not auto-adjust inventory/counters to avoid complexity unless requested.
+            $db->beginTransaction();
+
+            // 1. Fetch Existing Sale
+            $stmt = $db->prepare("SELECT * FROM sales WHERE id = ?");
+            $stmt->execute([$id]);
+            $oldSale = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$oldSale) {
+                throw new \Exception("Sale not found with ID: " . $id);
+            }
+
+            // 2. Reverse Old Effects
+            // 2a. Reverse Transaction
+            $stmt = $db->prepare("SELECT * FROM transactions WHERE related_entity_type = 'sales' AND related_entity_id = ?");
+            $stmt->execute([$id]);
+            $oldTrans = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if ($oldTrans) {
+                // Deduct from Safe/Bank/Customer based on old Transaction
+                if ($oldTrans['to_type'] === 'safe' && $oldTrans['to_id']) {
+                    $stmt = $db->prepare("UPDATE safes SET balance = balance - ? WHERE id = ?");
+                    $stmt->execute([$oldTrans['amount'], $oldTrans['to_id']]);
+                } elseif ($oldTrans['to_type'] === 'bank' && $oldTrans['to_id']) {
+                    $stmt = $db->prepare("UPDATE banks SET balance = balance - ? WHERE id = ?");
+                    $stmt->execute([$oldTrans['amount'], $oldTrans['to_id']]);
+                } elseif ($oldTrans['to_type'] === 'customer') {
+                    // Reverse Customer Balance
+                    $stmt = $db->prepare("UPDATE customers SET balance = balance - ? WHERE id = ?");
+                    $stmt->execute([$oldTrans['amount'], $oldTrans['to_id']]);
+                }
+
+                // Delete old transaction
+                $db->prepare("DELETE FROM transactions WHERE id = ?")->execute([$oldTrans['id']]);
+            }
+
+            // 2b. Restore Tank Volume
+            if (!empty($oldSale['counter_id'])) {
+                // Find tank via counter
+                $stmt = $db->prepare("
+                    SELECT t.id 
+                    FROM tanks t 
+                    JOIN pumps p ON p.tank_id = t.id 
+                    JOIN counters c ON c.pump_id = p.id 
+                    WHERE c.id = ?
+                ");
+                $stmt->execute([$oldSale['counter_id']]);
+                $tank = $stmt->fetch();
+                if ($tank) {
+                    // Add back the sold volume
+                    $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume + ? WHERE id = ?");
+                    $stmt->execute([$oldSale['volume_sold'], $tank['id']]);
+                }
+            }
+
+            // 3. Prepare New Data
+            $data = $_POST;
+            $data['volume_sold'] = $data['closing_reading'] - $data['opening_reading'];
+            $data['total_amount'] = $data['volume_sold'] * $data['unit_price'];
+
+            // Validation
+            if ($data['closing_reading'] < $data['opening_reading']) {
+                throw new \Exception("New closing reading (" . $data['closing_reading'] . ") cannot be less than opening (" . $data['opening_reading'] . ")");
+            }
+
+            // 4. Update Sale Record
             $sql = "UPDATE sales SET 
+                    closing_reading = ?,
                     volume_sold = ?, 
                     total_amount = ?, 
+                    unit_price = ?,
                     payment_method = ?,
-                    unit_price = ?
+                    sale_date = ?
                     WHERE id = ?";
 
+            $accountType = $data['account_type'] ?? 'safe';
+            if ($data['payment_method'] === 'bank') {
+                $accountType = 'bank';
+            }
+
             $stmt = $db->prepare($sql);
-            $success = $stmt->execute([
-                $data['liters'],
-                $data['amount'],
-                $data['method'],
-                $data['price'],
+            $stmt->execute([
+                $data['closing_reading'],
+                $data['volume_sold'],
+                $data['total_amount'],
+                $data['unit_price'],
+                $data['payment_method'],
+                $data['sale_date'] ?? $oldSale['sale_date'], // Use new date or keep old
                 $id
             ]);
 
-            if ($success) {
-                echo json_encode(['success' => true]);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Update failed']);
+            // 5. Apply New Effects
+            // 5a. Update Counter Reading (to new closing)
+            $counterModel = new Counter();
+            $targetCounterId = $data['counter_id'] ?? $oldSale['counter_id'];
+            $counterModel->updateReading($targetCounterId, $data['closing_reading']);
+
+            // 5b. Deduct from Tank (New Volume)
+            // Re-fetch tank in case counter changed (though usually counter doesn't change on edit here)
+            $stmt = $db->prepare("
+                SELECT t.id 
+                FROM tanks t 
+                JOIN pumps p ON p.tank_id = t.id 
+                JOIN counters c ON c.pump_id = p.id 
+                WHERE c.id = ?
+            ");
+            $stmt->execute([$oldSale['counter_id']]);
+            $tank = $stmt->fetch();
+
+            if ($tank) {
+                $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume - ? WHERE id = ?");
+                $stmt->execute([$data['volume_sold'], $tank['id']]);
             }
+
+            // 5c. Create Transaction
+            $transactionModel = new Transaction();
+            $notes = $data['notes'] ?? ($data['note'] ?? '');
+
+            $saleDate = $data['sale_date'] ?? null;
+            if (empty($saleDate) || $saleDate === 'undefined') {
+                $saleDate = $oldSale['sale_date'];
+            }
+
+            $transactionData = [
+                'station_id' => $oldSale['station_id'],
+                'created_by' => $oldSale['user_id'],
+                'date' => $saleDate,
+                'related_entity_type' => 'sales',
+                'related_entity_id' => $id,
+                'category_id' => null,
+                'type' => 'income',
+                'amount' => $data['total_amount'],
+                'description' => "مبيعات محروقات (معدلة) - عملية " . ($oldSale['invoice_number'] ?? $id) . ($notes ? " - " . $notes : "")
+            ];
+
+            // Normalize: 'bank' is treated as cash payment directed to a bank account
+            $paymentMethod = $data['payment_method'] ?? 'cash';
+            if ($paymentMethod === 'bank') {
+                $accountType = 'bank';
+            }
+
+            if ($paymentMethod === 'cash' || $paymentMethod === 'bank') {
+                $accountId = !empty($data['account_id']) ? $data['account_id'] : null;
+
+                if ($accountType === 'safe' && $accountId) {
+                    $stmt = $db->prepare("UPDATE safes SET balance = balance + ? WHERE id = ?");
+                    $stmt->execute([$data['total_amount'], $accountId]);
+                    $transactionData['to_type'] = 'safe';
+                    $transactionData['to_id'] = $accountId;
+                } elseif ($accountType === 'bank' && $accountId) {
+                    $stmt = $db->prepare("UPDATE banks SET balance = balance + ? WHERE id = ?");
+                    $stmt->execute([$data['total_amount'], $accountId]);
+                    $transactionData['to_type'] = 'bank';
+                    $transactionData['to_id'] = $accountId;
+                } else {
+                    // Fallback: Add to first safe
+                    $stmt = $db->prepare("SELECT id FROM safes WHERE station_id = ? ORDER BY id ASC LIMIT 1");
+                    $stmt->execute([$oldSale['station_id']]);
+                    $fallbackSafe = $stmt->fetch();
+                    if ($fallbackSafe) {
+                        $stmt = $db->prepare("UPDATE safes SET balance = balance + ? WHERE id = ?");
+                        $stmt->execute([$data['total_amount'], $fallbackSafe['id']]);
+                        $transactionData['to_type'] = 'safe';
+                        $transactionData['to_id'] = $fallbackSafe['id'];
+                    }
+                }
+            } elseif ($paymentMethod === 'credit' && !empty($data['customer_id'])) {
+                // Update Customer Balance
+                $stmt = $db->prepare("UPDATE customers SET balance = balance + ? WHERE id = ?");
+                $stmt->execute([$data['total_amount'], $data['customer_id']]);
+
+                $transactionData['description'] = "مبيعات آجل (معدلة) - عملية " . ($oldSale['invoice_number'] ?? $id);
+                $transactionData['to_type'] = 'customer';
+                $transactionData['to_id'] = $data['customer_id'];
+            }
+
+            // Save Transaction
+            if (!empty($transactionData['to_type'])) {
+                $transactionModel->create($transactionData);
+            }
+
+            $db->commit();
+            echo json_encode(['success' => true, 'message' => 'Sale updated successfully']);
         } catch (\Exception $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            error_log("Update Error: " . $e->getMessage()); // Log error
+            echo json_encode(['success' => false, 'message' => 'Update Error: ' . $e->getMessage()]);
         }
+        exit;
     }
     private function checkAndFixDatabase()
     {

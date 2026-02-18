@@ -13,10 +13,22 @@ class Controller
 
         // Fetch common data if logged in
         if ($data['user']['id']) {
-            if (!isset($data['allStations']) && $data['user']['role'] === 'super_admin') {
-                $db = \App\Config\Database::connect();
-                $stmt = $db->query("SELECT id, name FROM stations ORDER BY name ASC");
-                $data['allStations'] = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            if (!isset($data['allStations'])) {
+                if (\App\Helpers\AuthHelper::isSuperAdmin()) {
+                    $db = \App\Config\Database::connect();
+                    $stmt = $db->query("SELECT id, name FROM stations ORDER BY name ASC");
+                    $data['allStations'] = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                } else {
+                    // For non-admin users, provide only their assigned stations
+                    $stationIds = \App\Helpers\AuthHelper::getUserStationIds();
+                    if (!empty($stationIds)) {
+                        $db = \App\Config\Database::connect();
+                        $placeholders = implode(',', array_fill(0, count($stationIds), '?'));
+                        $stmt = $db->prepare("SELECT id, name FROM stations WHERE id IN ($placeholders) ORDER BY name ASC");
+                        $stmt->execute($stationIds);
+                        $data['allStations'] = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                    }
+                }
             }
             if (!isset($data['stats'])) {
                 $db = \App\Config\Database::connect();
@@ -32,6 +44,17 @@ class Controller
                 $stmt->execute();
                 $val = $stmt->fetchColumn();
                 $data['autoLockMinutes'] = $val ? (int)$val : 0;
+            }
+
+            // Consume just_logged_in flag (one-time after login)
+            if (!empty($_SESSION['just_logged_in'])) {
+                $data['justLoggedIn'] = true;
+                unset($_SESSION['just_logged_in']);
+            }
+            // Consume just_switched_station flag (one-time after station switch)
+            if (!empty($_SESSION['just_switched_station'])) {
+                $data['justSwitchedStation'] = true;
+                unset($_SESSION['just_switched_station']);
             }
         }
 

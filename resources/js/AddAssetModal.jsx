@@ -8,7 +8,7 @@ export default function AddAssetModal({ isOpen, onClose, type }) { // type: 'saf
         name: '',
         balance: '0',
         account_number: '', // For bank
-        bank_name: '', // For bank display name if separate from internal name? usually just 'name' is enough.
+        bank_name: '',
         account_scope: 'local' // local or global
     });
 
@@ -64,36 +64,52 @@ export default function AddAssetModal({ isOpen, onClose, type }) { // type: 'saf
         }
     };
 
+    // Color config
+    const colors = isSafe 
+        ? { gradient: 'from-blue-500 to-cyan-600', glow: 'shadow-blue-500/30', ring: 'focus:ring-blue-500/30', headerBg: 'from-blue-50 to-cyan-50 dark:from-blue-500/10 dark:to-cyan-500/10', accent: 'blue' }
+        : { gradient: 'from-indigo-500 to-purple-600', glow: 'shadow-indigo-500/30', ring: 'focus:ring-indigo-500/30', headerBg: 'from-indigo-50 to-purple-50 dark:from-indigo-500/10 dark:to-purple-500/10', accent: 'indigo' };
+
+    const inputClasses = `w-full p-3 bg-white/80 dark:bg-white/5 border border-slate-200/40 dark:border-white/[0.06] rounded-xl outline-none 
+        focus:ring-2 ${colors.ring} focus:border-transparent dark:text-white dark:placeholder-slate-500
+        backdrop-blur-sm transition-all`;
+
+    const labelClasses = "block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2";
+
     if (!isOpen) return null;
     
     return (
         <>
             {/* Backdrop */}
-            <div 
+            <motion.div 
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={onClose}
-                className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 transition-opacity"
+                className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-md z-50"
             />
 
             {/* Modal Content */}
-            <div 
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
             >
-                <div className="bg-white pointer-events-auto rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-up">
+                <div className="bg-white/95 dark:bg-[#1e293b]/90 dark:backdrop-blur-2xl pointer-events-auto rounded-2xl shadow-2xl dark:shadow-black/50 w-full max-w-md overflow-hidden flex flex-col ring-1 ring-black/[0.05] dark:ring-white/[0.06]">
                     
-                    {/* Header */}
-                    <div className={`p-6 border-b flex justify-between items-center ${isSafe ? 'bg-blue-50' : 'bg-indigo-50'}`}>
+                    {/* Header - Gradient */}
+                    <div className={`p-6 flex justify-between items-center bg-gradient-to-r ${colors.headerBg}`}>
                         <div className="flex items-center gap-3">
-                            <div className={`p-2 rounded-lg ${isSafe ? 'bg-blue-100 text-blue-600' : 'bg-indigo-100 text-indigo-600'}`}>
-                                {isSafe ? <Vault className="w-6 h-6" /> : <Landmark className="w-6 h-6" />}
+                            <div className={`p-2.5 rounded-xl bg-gradient-to-br ${colors.gradient} shadow-lg ${colors.glow}`}>
+                                {isSafe ? <Vault className="w-6 h-6 text-white" /> : <Landmark className="w-6 h-6 text-white" />}
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-slate-800">
+                                <h2 className={`text-xl font-black ${isSafe ? 'text-blue-800 dark:text-blue-300' : 'text-indigo-800 dark:text-indigo-300'}`}>
                                     {isSafe ? 'إضافة خزينة جديدة' : 'إضافة حساب بنكي'}
                                 </h2>
                             </div>
                         </div>
-                        <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors">
-                            <X className="w-5 h-5 text-slate-500" />
+                        <button onClick={onClose} className="p-2 hover:bg-white/50 dark:hover:bg-white/10 rounded-xl transition-colors">
+                            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                         </button>
                     </div>
 
@@ -103,14 +119,14 @@ export default function AddAssetModal({ isOpen, onClose, type }) { // type: 'saf
                             
                             {/* Name */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">
+                                <label className={labelClasses}>
                                     {isSafe ? 'اسم الخزينة' : 'اسم البنك / الحساب'}
                                 </label>
                                 <input
                                     type="text"
                                     name="name"
                                     value={formData.name} onChange={handleChange}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className={inputClasses}
                                     placeholder={isSafe ? 'مثال: الخزينة الرئيسية' : 'مثال: بنك الراجحي - فرع الرياض'}
                                     required
                                 />
@@ -118,43 +134,43 @@ export default function AddAssetModal({ isOpen, onClose, type }) { // type: 'saf
 
                             {/* Account Number (Bank Only) */}
                             {!isSafe && (
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">رقم الحساب / الآيبان</label>
+                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                                    <label className={labelClasses}>رقم الحساب / الآيبان</label>
                                     <input
                                         type="text"
                                         name="account_number"
                                         value={formData.account_number} onChange={handleChange}
-                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                        className={inputClasses + ' font-mono'}
                                         placeholder="SA000000..."
                                     />
-                                </div>
+                                </motion.div>
                             )}
 
                             {/* Initial Balance */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">الرصيد الافتتاحي</label>
+                                <label className={labelClasses}>الرصيد الافتتاحي</label>
                                 <input
                                     type="number" step="0.01"
                                     name="balance"
                                     value={formData.balance} onChange={handleChange}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className={inputClasses + ' font-mono text-lg font-bold'}
                                     required
                                 />
                             </div>
 
                             {/* Account Scope */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">نطاق الحساب</label>
+                                <label className={labelClasses}>نطاق الحساب</label>
                                 <select
                                     name="account_scope"
                                     value={formData.account_scope}
                                     onChange={handleChange}
-                                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                                    className={inputClasses}
                                 >
-                                    <option value="local">محلي - خاص بالمحطة</option>
-                                    <option value="global">عام - لجميع المحطات</option>
+                                    <option value="local" className="dark:bg-slate-800">محلي - خاص بالمحطة</option>
+                                    <option value="global" className="dark:bg-slate-800">عام - لجميع المحطات</option>
                                 </select>
-                                <p className="text-xs text-slate-500 mt-1">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
                                     الحساب المحلي يظهر فقط للمحطة الحالية، والحساب العام يظهر لجميع المحطات
                                 </p>
                             </div>
@@ -162,26 +178,24 @@ export default function AddAssetModal({ isOpen, onClose, type }) { // type: 'saf
                     </div>
 
                     {/* Footer */}
-                    <div className="p-5 border-t bg-slate-50 flex gap-3">
+                    <div className="p-5 bg-slate-50/80 dark:bg-white/5 flex gap-3 backdrop-blur-sm">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition-colors"
+                            className="flex-1 px-4 py-2.5 bg-white/80 dark:bg-white/10 ring-1 ring-black/[0.04] dark:ring-white/[0.06] text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-white/15 transition-all"
                         >
                             إلغاء
                         </button>
                         <button
                             type="submit"
                             form="asset-form"
-                            className={`flex-1 px-4 py-2.5 text-white rounded-xl font-bold shadow-lg transition-all flex items-center justify-center gap-2 ${
-                                isSafe ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/30'
-                            }`}
+                            className={`flex-1 px-4 py-2.5 text-white rounded-xl font-bold shadow-lg ${colors.glow} hover:-translate-y-0.5 hover:shadow-xl transition-all flex items-center justify-center gap-2 bg-gradient-to-r ${colors.gradient}`}
                         >
                             <Save className="w-5 h-5" /> حفظ
                         </button>
                     </div>
 
                 </div>
-            </div>
+            </motion.div>
         </>
     );
 }

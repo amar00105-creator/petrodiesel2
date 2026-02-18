@@ -289,24 +289,34 @@
                 </tr>
             </thead>
             <tbody>
-                <tr>
-                    <td><?= htmlspecialchars($sale['fuel_type'] ?? 'محروقات') ?></td>
-                    <td style="text-align: center;">
-                        <?= number_format($sale['volume_sold'], 2) ?> لتر
-                    </td>
-                    <td style="text-align: center;">
-                        <?= number_format($sale['unit_price'], 2) ?> SDG
-                    </td>
-                    <td style="text-align: left; font-weight: bold">
-                        <?= number_format($sale['total_amount'], 2) ?> SDG
-                    </td>
-                </tr>
+                <?php foreach ($items as $item): ?>
+                    <tr>
+                        <td>
+                            <div style="font-weight: bold;"><?= htmlspecialchars($item['fuel_type'] ?? 'محروقات') ?></div>
+                            <div style="font-size: 12px; color: #64748b;">
+                                ماكينة: <?= htmlspecialchars($item['pump_name'] ?? '-') ?> | عامل: <?= htmlspecialchars($item['worker_name'] ?? '-') ?>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <?= number_format($item['volume_sold'], 2) ?> لتر
+                            <div style="font-size: 12px; color: #64748b;">
+                                (<?= number_format($item['opening_reading']) ?> - <?= number_format($item['closing_reading']) ?>)
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <?= number_format($item['unit_price'], 2) ?> SDG
+                        </td>
+                        <td style="text-align: left; font-weight: bold">
+                            <?= number_format($item['total_amount'], 2) ?> SDG
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
             </tbody>
             <tfoot>
                 <tr>
                     <td colspan="3" style="text-align: right">المبلغ الإجمالي:</td>
                     <td style="text-align: left" class="total-amount">
-                        <?= number_format($sale['total_amount'], 2) ?> SDG
+                        <?= number_format($grandTotal, 2) ?> SDG
                     </td>
                 </tr>
             </tfoot>

@@ -13,7 +13,7 @@ const SuccessPopup = ({ message, onClose }) => (
             animate={{ opacity: 1, scale: 1, y: 0 }} 
             exit={{ opacity: 0, scale: 0.5, y: -50 }}
             transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center gap-4 relative z-10 min-w-[300px] border-4 border-emerald-50"
+            className="bg-white dark:bg-slate-900 border-4 border-emerald-50 dark:border-emerald-500/20 rounded-3xl p-8 shadow-2xl flex flex-col items-center gap-4 relative z-10 min-w-[300px]"
         >
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
                  <motion.div
@@ -24,7 +24,7 @@ const SuccessPopup = ({ message, onClose }) => (
                     <CheckCircle className="w-10 h-10 text-emerald-600" strokeWidth={3} />
                  </motion.div>
             </div>
-            <h3 className="text-2xl font-bold text-navy-900 font-cairo">تمت العملية بنجاح</h3>
+            <h3 className="text-2xl font-bold text-navy-900 dark:text-white font-cairo">تمت العملية بنجاح</h3>
             <p className="text-slate-500 font-medium text-lg">{message}</p>
         </motion.div>
     </div>
@@ -163,7 +163,7 @@ export default function StationList({ stations = [], users = [] }) {
                 <Button 
                     icon={Plus} 
                     onClick={() => { setEditingStation(null); setIsCreateOpen(true); }}
-                    className="bg-navy-900 hover:bg-navy-800 text-white font-bold py-2 px-4 rounded-xl shadow-lg shadow-navy-200"
+                    className="bg-navy-900 dark:bg-blue-600 hover:bg-navy-800 dark:hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-xl shadow-lg shadow-navy-200 dark:shadow-blue-900/20"
                 >
                     إضافة محطة
                 </Button>
@@ -177,7 +177,7 @@ export default function StationList({ stations = [], users = [] }) {
                     placeholder="بحث عن محطة..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pr-10 pl-4 py-2 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none"
+                    className="w-full pr-10 pl-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 focus:ring-2 focus:ring-blue-500 outline-none text-slate-800 dark:text-white placeholder:text-slate-400"
                 />
             </div>
 
@@ -195,7 +195,7 @@ export default function StationList({ stations = [], users = [] }) {
                         <motion.div 
                             key={station.id}
                             initial={{ scale: 0.95 }} animate={{ scale: 1 }}
-                            className="bg-white rounded-3xl p-6 shadow-sm ring-1 ring-slate-100 hover:shadow-lg transition-shadow relative group"
+                            className="bg-white dark:bg-slate-800/50 dark:backdrop-blur-md rounded-3xl p-6 shadow-sm ring-1 ring-slate-100 dark:ring-white/5 hover:shadow-lg transition-shadow relative group"
                         >
                             <div className="flex justify-between items-start mb-4">
                                 <div className="p-3 bg-blue-50 rounded-2xl">
@@ -207,7 +207,7 @@ export default function StationList({ stations = [], users = [] }) {
                                 </div>
                             </div>
 
-                            <h3 className="text-xl font-bold text-navy-900 mb-2">{station.name}</h3>
+                            <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">{station.name}</h3>
                             
                             <div className="space-y-2 text-sm text-slate-500 mb-6">
                                 <div className="flex items-center gap-2">
@@ -246,21 +246,21 @@ export default function StationList({ stations = [], users = [] }) {
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl"
+                            className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md p-6 shadow-2xl dark:shadow-black/50 border dark:border-white/10"
                         >
-                            <h3 className="text-xl font-bold text-navy-900 mb-4">{editingStation ? 'تعديل المحطة' : 'إضافة محطة جديدة'}</h3>
+                            <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-4">{editingStation ? 'تعديل المحطة' : 'إضافة محطة جديدة'}</h3>
                             <form onSubmit={handleSave} className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">اسم المحطة</label>
-                                    <input name="name" defaultValue={editingStation?.name} className="w-full p-2 border rounded-xl" required />
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">اسم المحطة</label>
+                                    <input name="name" defaultValue={editingStation?.name} className="w-full p-2 border dark:border-white/10 rounded-xl bg-transparent dark:text-white" required />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">العنوان</label>
-                                    <input name="address" defaultValue={editingStation?.address} className="w-full p-2 border rounded-xl" />
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">العنوان</label>
+                                    <input name="address" defaultValue={editingStation?.address} className="w-full p-2 border dark:border-white/10 rounded-xl bg-transparent dark:text-white" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-bold text-slate-700 mb-1">الهاتف</label>
-                                    <input name="phone" defaultValue={editingStation?.phone} className="w-full p-2 border rounded-xl" />
+                                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1">الهاتف</label>
+                                    <input name="phone" defaultValue={editingStation?.phone} className="w-full p-2 border dark:border-white/10 rounded-xl bg-transparent dark:text-white" />
                                 </div>
                                 <div className="flex justify-end gap-2 pt-4">
                                     <Button variant="secondary" onClick={() => setIsCreateOpen(false)}>إلغاء</Button>
@@ -278,11 +278,11 @@ export default function StationList({ stations = [], users = [] }) {
                      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                         <motion.div 
                             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
-                            className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl h-[600px] flex flex-col"
+                            className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-lg p-6 shadow-2xl h-[600px] flex flex-col border dark:border-white/10"
                         >
                             <div className="flex justify-between items-center mb-4">
                                 <div>
-                                    <h3 className="text-xl font-bold text-navy-900">مستخدمي {managingStation.name}</h3>
+                                    <h3 className="text-xl font-bold text-navy-900 dark:text-white">مستخدمي {managingStation.name}</h3>
                                     <p className="text-sm text-slate-500">تعيين أو إلغاء تعيين المستخدمين لهذه المحطة</p>
                                 </div>
                                 <button onClick={() => setManagingStation(null)}><XCircle className="w-6 h-6 text-slate-300 hover:text-red-500"/></button>
@@ -291,7 +291,7 @@ export default function StationList({ stations = [], users = [] }) {
                             <input 
                                 placeholder="بحث عن مستخدم..." 
                                 value={assignSearch} onChange={e => setAssignSearch(e.target.value)}
-                                className="w-full p-2 border rounded-xl mb-4"
+                                className="w-full p-2 border dark:border-white/10 rounded-xl mb-4 bg-transparent dark:text-white"
                             />
 
                             <div className="flex-1 overflow-y-auto space-y-2 pr-2">
@@ -313,9 +313,9 @@ export default function StationList({ stations = [], users = [] }) {
                                         : null;
 
                                     return (
-                                        <div key={user.id} className={`flex justify-between items-center p-3 rounded-xl border ${isAssigned ? 'border-emerald-200 bg-emerald-50' : 'border-slate-100'}`}>
+                                        <div key={user.id} className={`flex justify-between items-center p-3 rounded-xl border ${isAssigned ? 'border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30' : 'border-slate-100 dark:border-white/5'}`}>
                                             <div>
-                                                <div className="font-bold text-slate-800">{user.name}</div>
+                                                <div className="font-bold text-slate-800 dark:text-slate-200">{user.name}</div>
                                                 <div className="text-xs text-slate-500">{user.email} - {user.role}</div>
                                                 {isAssignedElsewhere && <div className="text-xs text-amber-600 mt-1">{otherStationText}</div>}
                                             </div>

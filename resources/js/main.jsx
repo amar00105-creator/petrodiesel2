@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import FuturisticHeader from './components/ui/FuturisticHeader';
+import WelcomeOverlay from './components/ui/WelcomeOverlay';
 import AutoLock from './components/AutoLock';
 import { Toaster } from 'sonner';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -88,6 +89,33 @@ try {
     const allStations = getData('allStations');
     const stats = getStats(); // Now contains activeUsers from view
     const settings = getData('settings') || {};
+
+    // Welcome Overlay Logic: show on login or station switch
+    let showWelcome = false;
+    const hasCookie = document.cookie.split(';').some(c => c.trim().startsWith('just_logged_in='));
+    const hasLocalStorage = localStorage.getItem('just_logged_in') === 'true';
+    const hasWindow = window.justLoggedIn === true || window.justLoggedIn === 'true';
+    const justLoggedIn = hasCookie || hasLocalStorage || hasWindow;
+    const stationSwitched = localStorage.getItem('station_just_switched') === 'true';
+    
+    if (justLoggedIn) {
+        showWelcome = true;
+        // Consume all flags
+        document.cookie = 'just_logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        localStorage.removeItem('just_logged_in');
+        window.justLoggedIn = false;
+    } else if (stationSwitched) {
+        showWelcome = true;
+        localStorage.removeItem('station_just_switched');
+    }
+
+    // Save current station to localStorage for persistence across logout/login
+    if (user && user.station_id) {
+        localStorage.setItem('last_station_id', user.station_id);
+        if (user.station_name) {
+            localStorage.setItem('last_station_name', user.station_name);
+        }
+    }
 
     // Determine Currency
     // settings is usually { base_currency: "SAR", ... } if associating array or object
@@ -292,7 +320,9 @@ try {
                 roles: getData('roles'),
                 fuelTypes: getData('fuelTypes'),
                 stations: getData('stations'),
-                users: getData('users')
+                users: getData('users'),
+                isSuperAdmin: getData('isSuperAdmin'),
+                userPermissions: getData('userPermissions')
             };
             break;
         case 'reports':
@@ -352,6 +382,9 @@ try {
 
     root.render(
         <ThemeProvider>
+            {/* Welcome Overlay - OUTSIDE ErrorBoundary so Dashboard errors don't kill it */}
+            {showWelcome && <WelcomeOverlay user={user} show={true} />}
+
             <ErrorBoundary>
                 <Toaster 
                     position="top-left" 
@@ -361,6 +394,7 @@ try {
                         style: { fontFamily: 'Cairo, sans-serif' }
                     }}
                 />
+
                 <FuturisticHeader 
                     page={page} 
                     user={user} 

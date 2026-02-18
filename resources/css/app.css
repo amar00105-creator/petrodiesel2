@@ -32,51 +32,24 @@
   
   /* Main Glass Container */
   .dark .glass-container {
-    background: rgba(15, 23, 42, 0.6); /* More transparent background */
-    backdrop-filter: blur(20px); /* Stronger blur */
+    background: rgba(15, 23, 42, 0.6);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08); /* Ultra subtle border */
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.15);
     box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.12), /* Very subtle outer shadow */
-      0 2px 8px rgba(0, 0, 0, 0.08), /* Close subtle shadow */
-      inset 0 1px 1px rgba(255, 255, 255, 0.1), /* Top inner highlight */
-      inset 0 -1px 1px rgba(0, 0, 0, 0.1); /* Bottom inner shadow */
+      0 8px 32px rgba(0, 0, 0, 0.12),
+      0 2px 8px rgba(0, 0, 0, 0.08),
+      inset 0 1px 1px rgba(59, 130, 246, 0.08),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.1);
   }
   
-  /* Glass Edge Glow Effect */
-  .dark .glass-edge-top {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  }
-  
-  .dark .glass-edge-left {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  }
-  
-  .dark .glass-edge-right {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  }
+  /* Glass Edge Glow Effect - Now handled inline with colored gradients */
   
   /* Glass Section/Card */
   .dark .glass-section {
     background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.08); /* Transparent border */
     box-shadow: 
       0 4px 6px rgba(0, 0, 0, 0.1),
@@ -116,17 +89,112 @@
   .dark .glass-summary {
     background: rgba(30, 41, 59, 0.6);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.15);
     box-shadow: 
       0 10px 30px rgba(0, 0, 0, 0.3),
-      inset 0 0 20px rgba(255, 255, 255, 0.05);
+      0 0 20px rgba(99, 102, 241, 0.05),
+      inset 0 0 20px rgba(99, 102, 241, 0.03);
   }
   
-  /* General dark border override */
+  /* ========================================
+     COLORED GLASS BORDER VARIANTS
+     ======================================== */
+  
+  /* Blue Glass Border - Selections */
+  .glass-border-blue {
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.05);
+  }
+  .dark .glass-border-blue {
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    box-shadow: 
+      0 4px 20px rgba(59, 130, 246, 0.08),
+      0 0 0 1px rgba(59, 130, 246, 0.1),
+      inset 0 1px 1px rgba(59, 130, 246, 0.05);
+  }
+  
+  /* Emerald Glass Border - Active/Reading */
+  .glass-border-emerald {
+    border: 1px solid rgba(16, 185, 129, 0.15);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.05);
+  }
+  .dark .glass-border-emerald {
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: 
+      0 4px 20px rgba(16, 185, 129, 0.1),
+      0 0 0 1px rgba(16, 185, 129, 0.1),
+      inset 0 1px 1px rgba(16, 185, 129, 0.05);
+  }
+  
+  /* Purple Glass Border - Counter/Calculator */
+  .glass-border-purple {
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.05);
+  }
+  .dark .glass-border-purple {
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    box-shadow: 
+      0 4px 20px rgba(139, 92, 246, 0.08),
+      0 0 0 1px rgba(139, 92, 246, 0.1),
+      inset 0 1px 1px rgba(139, 92, 246, 0.05);
+  }
+  
+  /* Amber Glass Border - Payment */
+  .glass-border-amber {
+    border: 1px solid rgba(245, 158, 11, 0.15);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.05);
+  }
+  .dark .glass-border-amber {
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    box-shadow: 
+      0 4px 20px rgba(245, 158, 11, 0.08),
+      0 0 0 1px rgba(245, 158, 11, 0.1),
+      inset 0 1px 1px rgba(245, 158, 11, 0.05);
+  }
+  
+  /* Cyan Glass Border - Info */
+  .glass-border-cyan {
+    border: 1px solid rgba(6, 182, 212, 0.15);
+    box-shadow: 0 4px 15px rgba(6, 182, 212, 0.05);
+  }
+  .dark .glass-border-cyan {
+    border: 1px solid rgba(6, 182, 212, 0.25);
+    box-shadow: 
+      0 4px 20px rgba(6, 182, 212, 0.08),
+      0 0 0 1px rgba(6, 182, 212, 0.1),
+      inset 0 1px 1px rgba(6, 182, 212, 0.05);
+  }
+  
+  /* Rose Glass Border */
+  .glass-border-rose {
+    border: 1px solid rgba(244, 63, 94, 0.15);
+    box-shadow: 0 4px 15px rgba(244, 63, 94, 0.05);
+  }
+  .dark .glass-border-rose {
+    border: 1px solid rgba(244, 63, 94, 0.25);
+    box-shadow: 
+      0 4px 20px rgba(244, 63, 94, 0.08),
+      0 0 0 1px rgba(244, 63, 94, 0.1),
+      inset 0 1px 1px rgba(244, 63, 94, 0.05);
+  }
+  
+  /* Premium Glass Card with gradient overlay */
+  .glass-card-premium {
+    background: rgba(255, 255, 255, 0.7);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  }
+  .dark .glass-card-premium {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.2),
+      inset 0 1px 1px rgba(255, 255, 255, 0.06);
+  }
+  
   /* General dark border override - REMOVED to fix persistent white lines */
-  /* .dark [class*="rounded-"] {
-    border-color: rgba(71, 85, 105, 0.3);
-  } */
 }
 
 @layer utilities {
@@ -437,4 +505,49 @@
 /* Remove borders from all tremor components in dark mode */
 .dark [class*="tremor-Button"] {
   border: none !important;
+}
+
+/* ========================================
+   TREMOR COMPONENTS DARK MODE OVERRIDES
+   ======================================== */
+
+/* Tremor Select trigger button - dark mode */
+.dark [class*="tremor-SelectTrigger"],
+.dark [class*="tremor-Select"] > button,
+.dark [data-tremor-id="tremor-Select"] > button {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Tremor Select dropdown/popover - dark mode */
+.dark [class*="tremor-SelectContent"],
+.dark [class*="tremor-Select"] ul,
+.dark [role="listbox"] {
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Tremor SelectItem - dark mode */
+.dark [class*="tremor-SelectItem"],
+.dark [role="option"] {
+  color: #e2e8f0 !important;
+}
+
+.dark [class*="tremor-SelectItem"]:hover,
+.dark [role="option"]:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Tremor TextInput - dark mode */
+.dark [class*="tremor-TextInput"],
+.dark input[class*="tremor-"] {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+  color: #e2e8f0 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark [class*="tremor-TextInput"]::placeholder,
+.dark input[class*="tremor-"]::placeholder {
+  color: #64748b !important;
 }

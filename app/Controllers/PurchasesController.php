@@ -28,14 +28,17 @@ class PurchasesController extends Controller
     public function index()
     {
         $user = AuthHelper::user();
+        // Filter by current station for everyone (including Super Admin to respect switcher)
         $stationId = $user['station_id'];
 
         $purchaseModel = new Purchase();
-        $purchases = $purchaseModel->getAll($stationId);
 
-        // Fetch Tanks for Discharge Modal
+        // Global View: Fetch ALL purchases regardless of station or role
+        $purchases = $purchaseModel->getAll('all');
+
+        // Fetch Tanks for Discharge Modal (only local tanks if station is set)
         $tankModel = new Tank();
-        $tanks = $tankModel->getAll($stationId);
+        $tanks = ($user['station_id']) ? $tankModel->getAll($user['station_id']) : [];
 
         $settings = $this->getSettings();
 
@@ -51,27 +54,33 @@ class PurchasesController extends Controller
     public function create()
     {
         $user = AuthHelper::user();
-        $stationId = $user['station_id'];
+        $stationId = $user['station_id']; // For creating local purchase
 
         $supplierModel = new Supplier();
-        $suppliers = $supplierModel->getAll($stationId);
+        $suppliers = $supplierModel->getAll(); // Global suppliers
 
         $db = \App\Config\Database::connect();
 
-        // Get Tanks
-        $stmt = $db->prepare("SELECT * FROM tanks WHERE station_id = ?");
-        $stmt->execute([$stationId]);
-        $tanks = $stmt->fetchAll();
+        $tanks = [];
+        $safes = [];
+        $banks = [];
 
-        // Get Safes
-        $stmt = $db->prepare("SELECT * FROM safes WHERE station_id = ?");
-        $stmt->execute([$stationId]);
-        $safes = $stmt->fetchAll();
+        if ($stationId) {
+            // Get Tanks
+            $stmt = $db->prepare("SELECT * FROM tanks WHERE station_id = ?");
+            $stmt->execute([$stationId]);
+            $tanks = $stmt->fetchAll();
 
-        // Get Banks
-        $stmt = $db->prepare("SELECT * FROM banks WHERE station_id = ?");
-        $stmt->execute([$stationId]);
-        $banks = $stmt->fetchAll();
+            // Get Safes
+            $stmt = $db->prepare("SELECT * FROM safes WHERE station_id = ?");
+            $stmt->execute([$stationId]);
+            $safes = $stmt->fetchAll();
+
+            // Get Banks
+            $stmt = $db->prepare("SELECT * FROM banks WHERE station_id = ?");
+            $stmt->execute([$stationId]);
+            $banks = $stmt->fetchAll();
+        }
 
         // Get Drivers for datalist
         $driverModel = new Driver();
@@ -82,25 +91,16 @@ class PurchasesController extends Controller
         $fuelTypes = $fuelTypeModel->getAll();
 
         // Generate Invoice Number
-        $prefix = date('ym'); // e.g. 2601
+        $prefix = date('ym');
         $db = \App\Config\Database::connect();
-
-        // Find the max invoice number starting with this prefix
-        // We look for numbers that look like '2601%' 
-        // Assuming invoice_number is a string, we might need to cast or carefully select
         $stmt = $db->prepare("SELECT invoice_number FROM purchases WHERE invoice_number LIKE ? ORDER BY LENGTH(invoice_number) DESC, invoice_number DESC LIMIT 1");
         $stmt->execute([$prefix . '%']);
         $lastInvoice = $stmt->fetchColumn();
 
         if ($lastInvoice) {
-            // Extract the sequence
-            // If 26011, then we increment to 26012
-            // If user has formatted it differently before, this might break, but we assume the standard format from now on.
-            // Let's just strip non-numeric or assume it's numeric.
             $sequence = intval($lastInvoice) + 1;
             $invoiceNumber = (string)$sequence;
         } else {
-            // First one for this month: 26011 (YYMM + 1)
             $invoiceNumber = $prefix . '1';
         }
 
@@ -110,7 +110,7 @@ class PurchasesController extends Controller
             'drivers' => $drivers,
             'safes' => $safes,
             'banks' => $banks,
-            'status' => 'success', // Add status to prevent undefined index if used
+            'status' => 'success',
             'invoiceNumber' => $invoiceNumber,
             'fuelTypes' => $fuelTypes,
             'hide_topbar' => true
@@ -122,7 +122,25 @@ class PurchasesController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = AuthHelper::user();
             $data = $_POST;
-            $data['station_id'] = $user['station_id'] ?? 1; // Fallback to 1 if superadmin/null
+
+            // Central Purchase Logic:
+            // If Super Admin AND no station_id passed (or explicitly null), treat as Central.
+            // But currently form doesn't send station_id.
+            // We assume if logged in user has station_id, it's local. 
+            // If Super Admin wants central, they shouldn't select a tank?
+
+            if (AuthHelper::isSuperAdmin()) {
+                // If they provided station_id (future), use it.
+                // If NO TANK selected -> Central Purchase. 
+                // DB integrity requires station_id not null.
+                if (empty($data['tank_id'])) {
+                    $data['station_id'] = $user['station_id'] ?? 1; // Default to user station or 1
+                } else {
+                    $data['station_id'] = $user['station_id'] ?? 1; // Fallback to current user station
+                }
+            } else {
+                $data['station_id'] = $user['station_id'] ?? 1;
+            }
 
             try {
                 // Validation
@@ -135,7 +153,9 @@ class PurchasesController extends Controller
                 if (empty($data['driver_name']) && empty($data['driver_id'])) $missingFields[] = 'السائق';
                 if (empty($data['truck_number'])) $missingFields[] = 'رقم الشاحنة';
 
-                if (empty($data['fuel_type_id']) && empty($data['tank_id'])) {
+                // Modified: Tank is OPTIONAL for Central Purchase
+                // Fuel Type is MANDATORY if no tank
+                if (empty($data['tank_id']) && empty($data['fuel_type_id'])) {
                     $missingFields[] = 'نوع الوقود';
                 }
 
@@ -269,26 +289,36 @@ class PurchasesController extends Controller
             $user = AuthHelper::user();
             $stationId = $user['station_id'] ?? 1;
 
-            $db = \App\Config\Database::connect();
-            // Fetch purchases that are not 'completed' (or 'discharged')
-            $stmt = $db->prepare("
-                SELECT p.*, s.name as supplier_name, d.name as driver_name, ft.name as fuel_type
-                FROM purchases p 
-                LEFT JOIN suppliers s ON p.supplier_id = s.id 
-                LEFT JOIN drivers d ON p.driver_id = d.id
-                LEFT JOIN fuel_types ft ON p.fuel_type_id = ft.id
-                WHERE p.station_id = ? AND p.status = 'ordered'
-                ORDER BY p.created_at DESC
-            ");
-            $stmt->execute([$stationId]);
-            $purchases = $stmt->fetchAll();
+            $purchaseModel = new \App\Models\Purchase();
 
-            echo json_encode(['success' => true, 'data' => $purchases]);
+            // Use the model's getPending method which properly JOINs fuel_types
+            // to get fuel_type name and fuel_color_hex
+            $pendingPurchases = $purchaseModel->getPending($stationId);
+
+            // Map field names to match frontend expectations
+            $pendingPurchases = array_map(function ($p) {
+                // Ensure fuel_type field exists (model returns it from JOIN)
+                if (empty($p['fuel_type']) && !empty($p['fuel_type_name'])) {
+                    $p['fuel_type'] = $p['fuel_type_name'];
+                }
+                // Map fuel_color to fuel_color_hex for frontend
+                if (!empty($p['fuel_color'])) {
+                    $p['fuel_color_hex'] = $p['fuel_color'];
+                }
+                // Use resolved driver name if available
+                if (!empty($p['driver_name_resolved'])) {
+                    $p['driver_name'] = $p['driver_name_resolved'];
+                }
+                return $p;
+            }, $pendingPurchases);
+
+            echo json_encode(['success' => true, 'data' => $pendingPurchases]);
         } catch (\Exception $e) {
             echo json_encode(['success' => false, 'message' => $e->getMessage()]);
         }
         exit;
     }
+
 
     // API: Process Discharge (From Modal)
     public function processDischarge()
@@ -304,10 +334,26 @@ class PurchasesController extends Controller
 
             $purchaseId = $data['purchase_id'];
             $tanks = $data['tanks']; // Array of {id, quantity}
+            $supplierInvoiceNo = $data['supplier_invoice_no'] ?? null;
 
-            // 1. Update Purchase Status
-            $stmt = $db->prepare("UPDATE purchases SET status = 'completed', offloading_end = NOW() WHERE id = ?");
-            $stmt->execute([$purchaseId]);
+            // Ensure supplier_invoice_no column exists
+            try {
+                $db->exec("ALTER TABLE purchases ADD COLUMN supplier_invoice_no VARCHAR(100) NULL");
+            } catch (\Exception $e) {
+                // Column already exists, ignore
+            }
+
+            // 1. Update Purchase Status + optional supplier invoice number
+            $sql = "UPDATE purchases SET status = 'completed', offloading_end = NOW()";
+            $params = [];
+            if ($supplierInvoiceNo) {
+                $sql .= ", supplier_invoice_no = ?";
+                $params[] = $supplierInvoiceNo;
+            }
+            $sql .= " WHERE id = ?";
+            $params[] = $purchaseId;
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
 
             // 2. Distribute to Tanks
             $tankModel = new Tank();
@@ -329,7 +375,48 @@ class PurchasesController extends Controller
                 }
             }
 
-            // 3. Transactions? (Inventory In) - Optional for now as Tank Volume is updated.
+            // 3. Transactions (Inventory In / Expense Recognition for Station)
+            // The Supplier Liability was already recorded at "Order" time (Global).
+            // Now we record the "Station Expense" for P&L reporting.
+            // This transaction should be:
+            // Type: Expense
+            // Amount: value of discharged fuel
+            // Description: Purchase Discharge
+            // To: Null (or internal clearing account if we had double-entry, but for now just expense record)
+
+            $transactionModel = new \App\Models\Transaction();
+
+            // Calculate value of discharged fuel
+            // We need price_per_liter from purchase
+            $stmt = $db->prepare("SELECT price_per_liter, supplier_id, invoice_number FROM purchases WHERE id = ?");
+            $stmt->execute([$purchaseId]);
+            $purchaseInfo = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $price = $purchaseInfo['price_per_liter'] ?? 0;
+
+            foreach ($tanks as $dist) {
+                if ($dist['quantity'] > 0) {
+                    $amount = $dist['quantity'] * $price;
+
+                    // Get station_id from Tank
+                    $stmt = $db->prepare("SELECT station_id FROM tanks WHERE id = ?");
+                    $stmt->execute([$dist['id']]);
+                    $tankStationId = $stmt->fetchColumn();
+
+                    $transactionModel->create([
+                        'station_id' => $tankStationId, // The station receiving the fuel
+                        'type' => 'expense',
+                        'amount' => $amount,
+                        'category_id' => null, // Or a specific "Fuel Purchase" category if exists
+                        'description' => "تفريغ وقود - فاتورة #" . ($purchaseInfo['invoice_number'] ?? $purchaseId),
+                        'date' => date('Y-m-d'),
+                        'created_by' => $user['id'],
+                        // Important: We do NOT set to_type/to_id as Supplier, because that would double-count the liability.
+                        // This is purely for the Station's Expense Report.
+                        'related_entity_type' => 'purchase_discharge', // continuous tracking
+                        'related_entity_id' => $purchaseId
+                    ]);
+                }
+            }
 
             $db->commit();
             echo json_encode(['success' => true]);
@@ -439,34 +526,85 @@ class PurchasesController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        // Check permission if needed
-        if (!AuthHelper::can('purchases_delete')) {
-            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+        // Check permission
+        if (!AuthHelper::can('purchases.delete')) {
+            echo json_encode(['success' => false, 'message' => 'غير مصرح']);
             return;
         }
 
         $id = $_POST['id'];
-        $purchaseModel = new Purchase();
+        $db = \App\Config\Database::connect();
 
         try {
-            // Check if delete method exists in Purchase model, if not, use direct DB
-            // Assuming direct DB or Model->delete()
-            $db = \App\Config\Database::connect();
-            $stmt = $db->prepare("DELETE FROM purchases WHERE id = ?");
-            if ($stmt->execute([$id])) {
-                echo json_encode(['success' => true]);
-            } else {
-                echo json_encode(['success' => false, 'message' => 'Delete failed']);
+            $db->beginTransaction();
+
+            // 1. Get purchase details before deleting
+            $stmt = $db->prepare("SELECT * FROM purchases WHERE id = ?");
+            $stmt->execute([$id]);
+            $purchase = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$purchase) {
+                echo json_encode(['success' => false, 'message' => 'الفاتورة غير موجودة']);
+                return;
             }
+
+            // 2. Reverse Supplier Balance
+            if (!empty($purchase['supplier_id'])) {
+                $balanceToReverse = $purchase['total_cost'] - ($purchase['paid_amount'] ?? 0);
+                if ($balanceToReverse != 0) {
+                    $stmt = $db->prepare("UPDATE suppliers SET balance = balance - ? WHERE id = ?");
+                    $stmt->execute([$balanceToReverse, $purchase['supplier_id']]);
+                }
+            }
+
+            // 3. Delete related transactions
+            $stmt = $db->prepare("DELETE FROM transactions WHERE related_entity_type = 'supplier' AND related_entity_id = ? AND description LIKE ?");
+            $stmt->execute([$purchase['supplier_id'], '%#' . $id . '%']);
+
+            // Also delete discharge transactions
+            $stmt = $db->prepare("DELETE FROM transactions WHERE related_entity_type = 'purchase_discharge' AND related_entity_id = ?");
+            $stmt->execute([$id]);
+
+            // 4. Restore tank volume if purchase was completed (discharged)
+            if ($purchase['status'] === 'completed') {
+                // Check purchase_offloads table for distributed quantities
+                try {
+                    $stmt = $db->prepare("SELECT tank_id, quantity FROM purchase_offloads WHERE purchase_id = ?");
+                    $stmt->execute([$id]);
+                    $offloads = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                    foreach ($offloads as $offload) {
+                        $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume - ? WHERE id = ?");
+                        $stmt->execute([$offload['quantity'], $offload['tank_id']]);
+                    }
+
+                    // Delete offload records
+                    $stmt = $db->prepare("DELETE FROM purchase_offloads WHERE purchase_id = ?");
+                    $stmt->execute([$id]);
+                } catch (\Exception $e) {
+                    // purchase_offloads table might not exist, ignore
+                }
+            }
+
+            // 5. Delete the purchase record
+            $stmt = $db->prepare("DELETE FROM purchases WHERE id = ?");
+            $stmt->execute([$id]);
+
+            $db->commit();
+            echo json_encode(['success' => true, 'message' => 'تم حذف الفاتورة وعكس جميع الحركات المالية']);
         } catch (\Exception $e) {
-            echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            echo json_encode(['success' => false, 'message' => 'خطأ: ' . $e->getMessage()]);
         }
+        exit;
     }
 
     public function delete()
     {
         // Check permission
-        if (!AuthHelper::can('purchases_delete')) {
+        if (!AuthHelper::can('purchases.delete')) {
             $this->redirect('/purchases?error=access_denied');
             return;
         }
@@ -477,26 +615,74 @@ class PurchasesController extends Controller
             return;
         }
 
-        $purchaseModel = new Purchase();
-        $purchase = $purchaseModel->find($id);
-
-        if (!$purchase) {
-            $this->redirect('/purchases?error=not_found');
-            return;
-        }
-
-        // Delete the purchase
         $db = \App\Config\Database::connect();
-        $stmt = $db->prepare("DELETE FROM purchases WHERE id = ?");
-        $stmt->execute([$id]);
 
-        $this->redirect('/purchases?success=deleted');
+        try {
+            $db->beginTransaction();
+
+            // 1. Get purchase details
+            $stmt = $db->prepare("SELECT * FROM purchases WHERE id = ?");
+            $stmt->execute([$id]);
+            $purchase = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$purchase) {
+                $this->redirect('/purchases?error=not_found');
+                return;
+            }
+
+            // 2. Reverse Supplier Balance
+            if (!empty($purchase['supplier_id'])) {
+                $balanceToReverse = $purchase['total_cost'] - ($purchase['paid_amount'] ?? 0);
+                if ($balanceToReverse != 0) {
+                    $stmt = $db->prepare("UPDATE suppliers SET balance = balance - ? WHERE id = ?");
+                    $stmt->execute([$balanceToReverse, $purchase['supplier_id']]);
+                }
+            }
+
+            // 3. Delete related transactions
+            $stmt = $db->prepare("DELETE FROM transactions WHERE related_entity_type = 'supplier' AND related_entity_id = ? AND description LIKE ?");
+            $stmt->execute([$purchase['supplier_id'], '%#' . $id . '%']);
+
+            $stmt = $db->prepare("DELETE FROM transactions WHERE related_entity_type = 'purchase_discharge' AND related_entity_id = ?");
+            $stmt->execute([$id]);
+
+            // 4. Restore tank volume if completed
+            if ($purchase['status'] === 'completed') {
+                try {
+                    $stmt = $db->prepare("SELECT tank_id, quantity FROM purchase_offloads WHERE purchase_id = ?");
+                    $stmt->execute([$id]);
+                    $offloads = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                    foreach ($offloads as $offload) {
+                        $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume - ? WHERE id = ?");
+                        $stmt->execute([$offload['quantity'], $offload['tank_id']]);
+                    }
+
+                    $stmt = $db->prepare("DELETE FROM purchase_offloads WHERE purchase_id = ?");
+                    $stmt->execute([$id]);
+                } catch (\Exception $e) {
+                    // purchase_offloads table might not exist
+                }
+            }
+
+            // 5. Delete the purchase
+            $stmt = $db->prepare("DELETE FROM purchases WHERE id = ?");
+            $stmt->execute([$id]);
+
+            $db->commit();
+            $this->redirect('/purchases?success=deleted');
+        } catch (\Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            $this->redirect('/purchases?error=' . urlencode($e->getMessage()));
+        }
     }
 
     public function edit()
     {
         // Check permission
-        if (!AuthHelper::can('purchases_edit')) {
+        if (!AuthHelper::can('purchases.edit')) {
             $this->redirect('/purchases?error=access_denied');
             return;
         }

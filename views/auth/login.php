@@ -211,6 +211,17 @@
             font-size: 14px;
             text-align: center;
         }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #6ee7b7;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -267,10 +278,16 @@
                 </div>
             <?php endif; ?>
 
-            <form action="<?php echo BASE_URL; ?>/login" method="POST">
+            <?php if (isset($success)): ?>
+                <div class="alert-success">
+                    <i class="fas fa-check-circle"></i> <?php echo $success; ?>
+                </div>
+            <?php endif; ?>
+
+            <form action="<?php echo BASE_URL; ?>/login" method="POST" onsubmit="localStorage.setItem('just_logged_in','true')">
                 <div class="form-group">
-                    <label for="email">البريد الإلكتروني</label>
-                    <input type="email" name="email" id="email" class="form-control" placeholder="name@company.com"
+                    <label for="identifier">البريد الإلكتروني أو اسم المستخدم</label>
+                    <input type="text" name="identifier" id="identifier" class="form-control" placeholder="name@company.com أو اسم المستخدم"
                         required>
                 </div>
 
@@ -293,9 +310,18 @@
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" width="20" alt="G">
                 Google
             </button>
+
+            <div style="text-align:center; margin-top: 16px;">
+                <span style="color: #94a3b8; font-size: 14px;">ليس لديك حساب؟</span>
+                <a href="<?php echo BASE_URL; ?>/register" style="color: #34d399; font-weight: 700; font-size: 14px; text-decoration: none; margin-right: 6px;">إنشاء حساب جديد</a>
+            </div>
         </div>
     </div>
 
+    <script>
+        // Clear welcome flag if we're on the login page (login failed or fresh visit)
+        localStorage.removeItem('just_logged_in');
+    </script>
 </body>
 
 </html>

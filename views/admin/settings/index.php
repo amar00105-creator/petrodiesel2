@@ -10,6 +10,8 @@
     data-roles='<?= json_encode($roles ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
     data-stations='<?= json_encode($stations ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
     data-users='<?= json_encode($users ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+    data-is-super-admin='<?= json_encode($isSuperAdmin ?? false) ?>'
+    data-user-permissions='<?= json_encode($userPermissions ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
     data-user='<?= json_encode($user ?? []) ?>'
     data-stats='<?= json_encode($stats ?? []) ?>'
     data-all-stations='<?= json_encode($allStations ?? []) ?>'

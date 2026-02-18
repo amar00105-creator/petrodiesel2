@@ -16,16 +16,34 @@ class User extends Model
         return $stmt->fetch();
     }
 
+    public function findByUsername($username)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = :username LIMIT 1");
+        $stmt->bindParam(':username', $username);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    public function findByEmailOrUsername($identifier)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :identifier OR username = :identifier2 LIMIT 1");
+        $stmt->bindParam(':identifier', $identifier);
+        $stmt->bindParam(':identifier2', $identifier);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
     public function create($data)
     {
-        $sql = "INSERT INTO users (station_id, name, email, password_hash, google_id, role, role_id, status) 
-                VALUES (:station_id, :name, :email, :password_hash, :google_id, :role, :role_id, :status)";
+        $sql = "INSERT INTO users (station_id, name, username, email, password_hash, google_id, role, role_id, status) 
+                VALUES (:station_id, :name, :username, :email, :password_hash, :google_id, :role, :role_id, :status)";
 
         $stmt = $this->db->prepare($sql);
 
         $stmt->execute([
             ':station_id' => $data['station_id'] ?? null,
             ':name' => $data['name'],
+            ':username' => $data['username'] ?? null,
             ':email' => $data['email'],
             ':password_hash' => $data['password_hash'] ?? null,
             ':google_id' => $data['google_id'] ?? null,
@@ -75,6 +93,10 @@ class User extends Model
         if (!empty($data['email'])) {
             $fields[] = "email = ?";
             $params[] = $data['email'];
+        }
+        if (array_key_exists('username', $data)) {
+            $fields[] = "username = ?";
+            $params[] = $data['username'];
         }
         if (!empty($data['role'])) {
             $fields[] = "role = ?";

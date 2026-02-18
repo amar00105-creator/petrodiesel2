@@ -20,7 +20,7 @@ class CategoryController extends Controller
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
-        $name = $_POST['name'] ?? '';
+        $name = trim($_POST['name'] ?? '');
         $type = $_POST['type'] ?? 'expense';
 
         if (empty($name)) {
@@ -28,12 +28,25 @@ class CategoryController extends Controller
             return;
         }
 
+        // Check for duplicate
+        $existing = $this->categoryModel->findByName($name, $type);
+        if ($existing) {
+            $this->jsonResponse(['success' => false, 'message' => 'هذا التصنيف موجود بالفعل', 'duplicate' => true]);
+            return;
+        }
+
         try {
             $this->categoryModel->create($name, $type);
-            $id = $this->db->lastInsertId();
-            $this->jsonResponse(['success' => true, 'message' => 'Category created successfully', 'id' => $id, 'category' => ['id' => $id, 'name' => $name, 'type' => $type]]);
+            $db = \App\Config\Database::connect();
+            $id = $db->lastInsertId();
+            $this->jsonResponse([
+                'success' => true,
+                'message' => 'تمت إضافة التصنيف بنجاح',
+                'id' => $id,
+                'category' => ['id' => (int)$id, 'name' => $name, 'type' => $type]
+            ]);
         } catch (\Exception $e) {
-            $this->jsonResponse(['success' => false, 'message' => $e->getMessage()]);
+            $this->jsonResponse(['success' => false, 'message' => 'حدث خطأ: ' . $e->getMessage()]);
         }
     }
 
@@ -42,19 +55,26 @@ class CategoryController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $id = $_POST['id'] ?? null;
-        $name = $_POST['name'] ?? '';
+        $name = trim($_POST['name'] ?? '');
         $type = $_POST['type'] ?? 'expense';
 
         if (!$id || empty($name)) {
-            $this->jsonResponse(['success' => false, 'message' => 'Missing required fields']);
+            $this->jsonResponse(['success' => false, 'message' => 'البيانات المطلوبة غير مكتملة']);
+            return;
+        }
+
+        // Check for duplicate (exclude current item)
+        $existing = $this->categoryModel->findByName($name, $type);
+        if ($existing && $existing['id'] != $id) {
+            $this->jsonResponse(['success' => false, 'message' => 'هذا التصنيف موجود بالفعل', 'duplicate' => true]);
             return;
         }
 
         try {
             $this->categoryModel->update($id, $name, $type);
-            $this->jsonResponse(['success' => true, 'message' => 'Category updated successfully']);
+            $this->jsonResponse(['success' => true, 'message' => 'تم تعديل التصنيف بنجاح']);
         } catch (\Exception $e) {
-            $this->jsonResponse(['success' => false, 'message' => $e->getMessage()]);
+            $this->jsonResponse(['success' => false, 'message' => 'حدث خطأ: ' . $e->getMessage()]);
         }
     }
 
@@ -65,15 +85,26 @@ class CategoryController extends Controller
         $id = $_POST['id'] ?? null;
 
         if (!$id) {
-            $this->jsonResponse(['success' => false, 'message' => 'Missing ID']);
+            $this->jsonResponse(['success' => false, 'message' => 'المعرف مطلوب']);
             return;
         }
 
         try {
+            // Check if category is used in transactions
+            $db = \App\Config\Database::connect();
+            $stmt = $db->prepare("SELECT COUNT(*) FROM transactions WHERE category_id = ?");
+            $stmt->execute([$id]);
+            $count = $stmt->fetchColumn();
+
+            if ($count > 0) {
+                $this->jsonResponse(['success' => false, 'message' => "لا يمكن حذف التصنيف لأنه مرتبط بـ {$count} عملية مالية"]);
+                return;
+            }
+
             $this->categoryModel->delete($id);
-            $this->jsonResponse(['success' => true, 'message' => 'Category deleted successfully']);
+            $this->jsonResponse(['success' => true, 'message' => 'تم حذف التصنيف بنجاح']);
         } catch (\Exception $e) {
-            $this->jsonResponse(['success' => false, 'message' => $e->getMessage()]);
+            $this->jsonResponse(['success' => false, 'message' => 'حدث خطأ: ' . $e->getMessage()]);
         }
     }
 

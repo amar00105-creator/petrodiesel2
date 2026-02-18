@@ -12,8 +12,8 @@ class Transaction extends Model
     public function create($data)
     {
         $sql = "INSERT INTO transactions 
-                (station_id, type, amount, category_id, from_type, from_id, to_type, to_id, related_entity_type, related_entity_id, description, reference_number, date, created_by) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                (station_id, type, amount, category_id, from_type, from_id, to_type, to_id, related_entity_type, related_entity_id, description, date, created_by, created_at) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
@@ -28,7 +28,6 @@ class Transaction extends Model
             $data['related_entity_type'] ?? null,
             $data['related_entity_id'] ?? null,
             $data['description'] ?? '',
-            $data['reference_number'] ?? null,
             $data['date'] ?? date('Y-m-d'),
             $data['created_by'] ?? null
         ]);

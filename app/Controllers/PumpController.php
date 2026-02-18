@@ -59,14 +59,6 @@ class PumpController extends \App\Core\Controller
         $stationId = $user['station_id'] ?? 1;
         $pumps = $this->pumpModel->getPumpsWithCounters($stationId);
 
-        // Header Requirements
-        $allStations = [];
-        if (($user['role'] ?? '') === 'super_admin') {
-            $db = \App\Config\Database::connect();
-            $stmt = $db->query("SELECT id, name FROM stations ORDER BY name ASC");
-            $allStations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        }
-
         // Data for Modal
         $tanks = $this->tankModel->getAll($stationId);
         $workers = $this->workerModel->getAllActive($stationId);
@@ -76,7 +68,6 @@ class PumpController extends \App\Core\Controller
             'tanks' => $tanks,
             'workers' => $workers,
             'user' => $user,
-            'allStations' => $allStations,
             'hide_topbar' => true
         ]);
     }
@@ -84,8 +75,10 @@ class PumpController extends \App\Core\Controller
     public function create()
     {
         $user = AuthHelper::user();
-        $tanks = $this->tankModel->getAll(); // Need existing Tanks to bind to
-        $workers = $this->workerModel->getAllActive($user['station_id'] ?? null); // Pass workers to view
+        $stationId = $user['station_id'] ?? null;
+
+        $tanks = $this->tankModel->getAll($stationId); // Filter by Station ID
+        $workers = $this->workerModel->getAllActive($stationId); // Pass workers to view
 
         // Dashboard Stats
         $pumps = $this->pumpModel->getAll();
@@ -151,7 +144,7 @@ class PumpController extends \App\Core\Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        if (!AuthHelper::can('pumps_delete')) {
+        if (!AuthHelper::can('pumps.delete')) {
             echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             return;
         }
@@ -174,8 +167,9 @@ class PumpController extends \App\Core\Controller
     public function delete()
     {
         // ... kept for fallback if any non-js logic uses it, but updated to use permission check ... 
-        if (!AuthHelper::can('pumps_delete')) {
-            die('Access Denied');
+        if (!AuthHelper::can('pumps.delete')) {
+            $this->redirect('/pumps?error=access_denied');
+            return;
         }
 
         $id = $_POST['id'];
@@ -187,14 +181,16 @@ class PumpController extends \App\Core\Controller
     {
         // Only Admin
         if (!AuthHelper::isAdmin()) {
-            die('Access Denied');
+            $this->redirect('/pumps?error=access_denied');
+            return;
         }
 
         $id = $_POST['id'] ?? null;
         $pumpId = $_POST['pump_id'] ?? null;
 
         if (!$id || !$pumpId) {
-            die('Missing required parameters');
+            $this->redirect('/pumps?error=missing_params');
+            return;
         }
 
         $this->counterModel->delete($id);
@@ -215,12 +211,12 @@ class PumpController extends \App\Core\Controller
 
         $pump = $this->pumpModel->find($pumpId);
         $counters = $this->counterModel->getByPumpId($pumpId);
-        $workers = $this->workerModel->getAllActive();
 
-        $pump = $this->pumpModel->find($pumpId);
-        $counters = $this->counterModel->getByPumpId($pumpId);
-        $workers = $this->workerModel->getAllActive();
-        $tanks = $this->tankModel->getAll();
+        // Use Pump's station to filter workers and tanks
+        $stationId = $pump['station_id'] ?? ($user['station_id'] ?? null);
+
+        $workers = $this->workerModel->getAllActive($stationId);
+        $tanks = $this->tankModel->getAll($stationId);
 
         $this->view('pumps/manage', [
             'pump' => $pump,
@@ -234,13 +230,14 @@ class PumpController extends \App\Core\Controller
 
     public function updatePump()
     {
-        if (!AuthHelper::can('pumps_edit')) {
+        if (!AuthHelper::can('pumps.edit')) {
             if ($this->isAjax()) {
                 header('Content-Type: application/json');
                 echo json_encode(['success' => false, 'message' => 'Access Denied']);
                 exit;
             }
-            die('Access Denied');
+            $this->redirect('/pumps?error=access_denied');
+            return;
         }
 
         try {
@@ -266,14 +263,14 @@ class PumpController extends \App\Core\Controller
                 echo json_encode(['success' => false, 'message' => $e->getMessage()]);
                 exit;
             }
-            die('Error: ' . $e->getMessage());
+            error_log('PumpController::updatePump Error: ' . $e->getMessage());
+            $this->redirect('/pumps?error=' . urlencode('حدث خطأ'));
         }
     }
 
     // Ajax or Form Post to update counter details (Reading + Worker)
     public function updateCounter()
     {
-        file_put_contents(__DIR__ . '/../../debug_pump.log', "updateCounter Called\nPOST: " . print_r($_POST, true) . "\n", FILE_APPEND);
         try {
             $counterId = $_POST['counter_id'] ?? null;
             if (!$counterId) throw new \Exception('Counter ID missing');
@@ -287,7 +284,6 @@ class PumpController extends \App\Core\Controller
             }
 
             $result = $this->counterModel->updateDetails($counterId, $updateData);
-            file_put_contents(__DIR__ . '/../../debug_pump.log', "updateDetails Result: " . ($result ? 'TRUE' : 'FALSE') . "\n", FILE_APPEND);
 
             $pumpId = $_POST['pump_id'] ?? null;
 
@@ -301,14 +297,14 @@ class PumpController extends \App\Core\Controller
             // Fallback Redirect
             $this->redirect('/pumps/manage?id=' . $pumpId . '&success=1');
         } catch (\Exception $e) {
-            file_put_contents(__DIR__ . '/../../debug_pump.log', "Exception: " . $e->getMessage() . "\n", FILE_APPEND);
+            error_log('PumpController::updateCounter Error: ' . $e->getMessage());
             if ($this->isAjax()) {
                 http_response_code(500);
                 header('Content-Type: application/json');
-                echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+                echo json_encode(['success' => false, 'message' => 'حدث خطأ']);
                 exit;
             }
-            die('Error: ' . $e->getMessage());
+            $this->redirect('/pumps?error=' . urlencode('حدث خطأ'));
         }
     }
 
@@ -318,14 +314,15 @@ class PumpController extends \App\Core\Controller
         // Support JSON response
         $isJson = $this->isAjax() || strpos($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json') !== false;
 
-        if (!AuthHelper::can('pumps_edit')) {
+        if (!AuthHelper::can('pumps.edit')) {
             if ($isJson) {
                 header('Content-Type: application/json');
                 http_response_code(403);
                 echo json_encode(['success' => false, 'message' => 'Access Denied']);
                 exit;
             }
-            die('Access Denied');
+            $this->redirect('/pumps?error=access_denied');
+            return;
         }
 
         try {
@@ -353,13 +350,14 @@ class PumpController extends \App\Core\Controller
                 echo json_encode(['success' => false, 'message' => $e->getMessage()]);
                 exit;
             }
-            die("Error: " . $e->getMessage());
+            error_log('PumpController::updateCounterName Error: ' . $e->getMessage());
+            $this->redirect('/pumps?error=' . urlencode('حدث خطأ'));
         }
     }
     // Add a new counter to existing pump
     public function addCounter()
     {
-        if (!AuthHelper::can('pumps_edit')) {
+        if (!AuthHelper::can('pumps.edit')) {
             http_response_code(403);
             echo json_encode(['error' => 'Access Denied']);
             exit;
@@ -410,8 +408,11 @@ class PumpController extends \App\Core\Controller
         }
 
         $counters = $this->counterModel->getByPumpId($pumpId);
-        $tanks = $this->tankModel->getAll($user['station_id'] ?? 1);
-        $workers = $this->workerModel->getAllActive($user['station_id'] ?? 1);
+
+        $stationId = $pump['station_id'] ?? ($user['station_id'] ?? null);
+
+        $tanks = $this->tankModel->getAll($stationId);
+        $workers = $this->workerModel->getAllActive($stationId);
 
         // Dashboard Stats (reused for the sidebar)
         $pumps = $this->pumpModel->getAll();
@@ -434,7 +435,7 @@ class PumpController extends \App\Core\Controller
 
     public function updateBulk()
     {
-        if (!AuthHelper::can('pumps_edit')) {
+        if (!AuthHelper::can('pumps.edit')) {
             header('Content-Type: application/json');
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Access Denied']);
@@ -458,7 +459,7 @@ class PumpController extends \App\Core\Controller
             exit;
         }
 
-        file_put_contents(__DIR__ . '/../../debug_pump_update.log', date('Y-m-d H:i:s') . " - Update Request: " . print_r($input, true) . "\n", FILE_APPEND);
+
 
         $db = \App\Config\Database::connect();
         $db->beginTransaction();
@@ -469,7 +470,7 @@ class PumpController extends \App\Core\Controller
                 'name' => $pumpName,
                 'tank_id' => $tankId
             ]);
-            file_put_contents(__DIR__ . '/../../debug_pump_update.log', "Pump Update Result: " . ($pumpUpdateResult ? 'True' : 'False') . "\n", FILE_APPEND);
+
 
             // Fetch existing counters BEFORE adding new ones to establish a baseline for sync
             $existingCounters = $this->counterModel->getByPumpId($pumpId);
@@ -486,7 +487,6 @@ class PumpController extends \App\Core\Controller
                         'current_worker_id' => !empty($c['current_worker_id']) ? $c['current_worker_id'] : null
                     ];
                     $res = $this->counterModel->updateDetails($c['id'], $updateData);
-                    file_put_contents(__DIR__ . '/../../debug_pump_update.log', "Update Counter {$c['id']}: " . ($res ? 'True' : 'False') . "\n", FILE_APPEND);
                 } else {
                     $newId = $this->counterModel->create([
                         'pump_id' => $pumpId,
@@ -494,7 +494,6 @@ class PumpController extends \App\Core\Controller
                         'current_reading' => $c['current_reading'] ?? 0,
                         'current_worker_id' => !empty($c['current_worker_id']) ? $c['current_worker_id'] : null
                     ]);
-                    file_put_contents(__DIR__ . '/../../debug_pump_update.log', "Created Counter: $newId\n", FILE_APPEND);
                 }
             }
 
@@ -504,17 +503,15 @@ class PumpController extends \App\Core\Controller
 
             foreach ($idsToDelete as $deleteId) {
                 $delRes = $this->counterModel->delete($deleteId);
-                file_put_contents(__DIR__ . '/../../debug_pump_update.log', "Sync-Delete Counter $deleteId: " . ($delRes ? 'True' : 'False') . "\n", FILE_APPEND);
             }
 
             $db->commit();
-            file_put_contents(__DIR__ . '/../../debug_pump_update.log', "Transaction Committed\n", FILE_APPEND);
 
             header('Content-Type: application/json');
             echo json_encode(['success' => true]);
         } catch (\Exception $e) {
             $db->rollBack();
-            file_put_contents(__DIR__ . '/../../debug_pump_update.log', "Error: " . $e->getMessage() . "\n", FILE_APPEND);
+            error_log('PumpController::updateBulk Error: ' . $e->getMessage());
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'Update failed: ' . $e->getMessage()]);
         }

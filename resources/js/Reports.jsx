@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Printer, Filter, PieChart, TrendingUp, DollarSign, Droplets, Users, FileText, Briefcase, Activity, Truck, CheckCircle, Wallet, BarChart3, Gauge, Calendar } from 'lucide-react';
+import { Printer, Filter, PieChart, TrendingUp, DollarSign, Droplets, Users, FileText, Briefcase, Activity, Truck, CheckCircle, Wallet, BarChart3, Gauge, Calendar, Brain } from 'lucide-react';
 import { TabGroup, TabList, Tab, Title, Text, Card, Metric, Flex, BadgeDelta, Grid, Badge } from '@tremor/react';
 import { toast } from 'sonner';
 import DailySalesReconciliation from './DailySalesReconciliation';
 import TankSalesReport from './TankSalesReport';
+import TankTransactionReport from './components/reports/TankTransactionReport';
 import SupplierReport from './SupplierReport';
 import CustomerReport from './CustomerReport';
 import FinancialFlowReport from './FinancialFlowReport';
@@ -14,11 +15,15 @@ import PumpPerformanceReport from './PumpPerformanceReport';
 import WorkerPerformanceReport from './WorkerPerformanceReport';
 import MonthlyComparisonReport from './MonthlyComparisonReport';
 import AlertsPanel from './components/AlertsPanel';
+import DailyClosingReport from './DailyClosingReport';
 
 export default function Reports({ user }) {
     // --- State ---
     const [activeTab, setActiveTab] = useState(0); // 0: Financial, 1: Warehouse, 2: Sales, 3: Employees
     
+    // Warehouse Sub-tabs
+    const [warehouseTab, setWarehouseTab] = useState(0); // 0: Overview, 1: Sales Report, 2: Transaction Report
+
     // Check URL params for tab selection
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -183,30 +188,32 @@ export default function Reports({ user }) {
     // Financial Sub-tabs
     const [financialTab, setFinancialTab] = useState(0); // 0: Usage, 1: Statement
 
-    const renderFinancial = () => (
+    const renderFinancial = () => {
+        console.log('[DEBUG-REPORTS] renderFinancial called, financialTab:', financialTab);
+        return (
         <div className="space-y-6 animate-fade-in">
-            {/* Filter Bar */}
-            <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
+            {/* Filter Bar - Glassmorphism */}
+            <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-slate-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-white/10 dark:shadow-lg p-5">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     {/* Period Selection */}
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider dark:text-slate-400">الفترة</label>
-                        <div className="flex bg-slate-100 p-1 rounded-lg dark:bg-slate-800">
+                        <div className="flex bg-white/50 backdrop-blur-sm p-1 rounded-xl border border-slate-200/50 dark:bg-white/5 dark:border-white/10">
                             <button 
                                 onClick={() => handlePeriodChange('month')}
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${filters.period === 'month' ? 'bg-white shadow text-blue-600 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${filters.period === 'month' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'}`}
                             >
                                 شهري
                             </button>
                             <button 
                                 onClick={() => handlePeriodChange('quarter')}
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${filters.period === 'quarter' ? 'bg-white shadow text-blue-600 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${filters.period === 'quarter' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'}`}
                             >
                                 ربع سنوي
                             </button>
                             <button 
                                 onClick={() => handlePeriodChange('year')}
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${filters.period === 'year' ? 'bg-white shadow text-blue-600 dark:bg-slate-700 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400'}`}
+                                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all duration-300 ${filters.period === 'year' ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'}`}
                             >
                                 سنوي
                             </button>
@@ -221,7 +228,7 @@ export default function Reports({ user }) {
                             name="start_date"
                             value={filters.start_date || ''}
                             onChange={handleFilterChange}
-                            className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                            className="w-full h-10 px-3 bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none dark:bg-white/5 dark:border-white/10 dark:text-white"
                         />
                     </div>
                     <div className="space-y-2">
@@ -231,7 +238,7 @@ export default function Reports({ user }) {
                             name="end_date"
                             value={filters.end_date || ''}
                             onChange={handleFilterChange}
-                            className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                            className="w-full h-10 px-3 bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none dark:bg-white/5 dark:border-white/10 dark:text-white"
                         />
                     </div>
 
@@ -242,7 +249,7 @@ export default function Reports({ user }) {
                             name="category_id"
                             value={filters.category_id || ''}
                             onChange={handleFilterChange}
-                            className="w-full h-9 px-3 bg-slate-50 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                            className="w-full h-10 px-3 bg-white/60 backdrop-blur-sm border border-slate-200/50 rounded-xl text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none dark:bg-white/5 dark:border-white/10 dark:text-white"
                         >
                             <option value="">الكل</option>
                             {categories.map(cat => (
@@ -251,22 +258,22 @@ export default function Reports({ user }) {
                         </select>
                     </div>
                 </div>
-            </Card>
+            </div>
 
-            {/* Financial Sub-Navigation */}
-            <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl w-fit dark:bg-white/5">
+            {/* Financial Sub-Navigation - Glassmorphism */}
+            <div className="flex gap-2 p-1.5 bg-white/50 backdrop-blur-xl rounded-xl w-fit border border-slate-200/50 shadow-sm dark:bg-white/5 dark:border-white/10 mb-6">
                 <button
                     onClick={() => setFinancialTab(0)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                        financialTab === 0 ? 'bg-white shadow text-blue-700 dark:bg-blue-600 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        financialTab === 0 ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
                     }`}
                 >
                     نظرة عامة
                 </button>
                 <button
                     onClick={() => setFinancialTab(1)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                        financialTab === 1 ? 'bg-white shadow text-blue-700 dark:bg-blue-600 dark:text-white' : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white'
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        financialTab === 1 ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
                     }`}
                 >
                     كشف حساب (خزنة/بنك)
@@ -275,217 +282,265 @@ export default function Reports({ user }) {
 
             {financialTab === 0 ? (
                 <>
-                {/* Summary Row - 4 Cards */}
+                {/* Summary Row - 4 Cards Glassmorphism */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Net Profit */}
-                    <Card decoration="top" decorationColor="emerald" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-emerald-100 text-emerald-600 rounded-xl dark:bg-emerald-500/20 dark:text-emerald-400">
-                                <TrendingUp className="w-8 h-8" />
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
+                        <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-emerald-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-emerald-500/30 dark:shadow-emerald-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 dark:from-emerald-500/10 dark:to-teal-500/10" />
+                            <div className="relative z-10 flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                                    <TrendingUp className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">صافي الربح / الخسارة</div>
+                                    <div className={`text-2xl font-black ${stats?.financial?.net_profit >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                                        {formatCurrency(stats?.financial?.net_profit)}
+                                    </div>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="dark:text-slate-400">صافي الربح / الخسارة</Text>
-                                <Metric className={stats?.financial?.net_profit >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
-                                    {formatCurrency(stats?.financial?.net_profit)}
-                                </Metric>
-                            </div>
-                        </Flex>
-                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4 dark:border-white/10">
-                            <div>
-                                <Text className="text-xs dark:text-slate-400">الإيرادات</Text>
-                                <div className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.financial?.income)}</div>
-                            </div>
-                            <div>
-                                <Text className="text-xs dark:text-slate-400">المصروفات</Text>
-                                <div className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(stats?.financial?.expense)}</div>
+                            <div className="relative z-10 mt-4 pt-4 border-t border-emerald-100/50 dark:border-emerald-500/20 grid grid-cols-2 gap-4">
+                                <div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">الإيرادات</div>
+                                    <div className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.financial?.income)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">المصروفات</div>
+                                    <div className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(stats?.financial?.expense)}</div>
+                                </div>
                             </div>
                         </div>
-                    </Card>
+                    </motion.div>
 
                     {/* Total Cash (Banks + Safes) */}
-                    <Card decoration="top" decorationColor="indigo" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl dark:bg-indigo-500/20 dark:text-indigo-400">
-                                <Wallet className="w-8 h-8" />
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                        <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-indigo-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-indigo-500/30 dark:shadow-indigo-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-violet-500/5 dark:from-indigo-500/10 dark:to-violet-500/10" />
+                            <div className="relative z-10 flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+                                    <Wallet className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">إجمالي النقد المتاح</div>
+                                    <div className="text-2xl font-black text-indigo-700 dark:text-white">{formatCurrency(stats?.financial?.total_cash)}</div>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="dark:text-slate-400">إجمالي النقد المتاح</Text>
-                                <Metric className="text-indigo-700 dark:text-indigo-400">
-                                    {formatCurrency(stats?.financial?.total_cash)}
-                                </Metric>
-                            </div>
-                        </Flex>
-                        <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-4 dark:border-white/10">
-                            <div>
-                                <Text className="text-xs dark:text-slate-400">الخزائن ({stats?.financial?.safes?.length || 0})</Text>
-                                <div className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats?.financial?.total_safes)}</div>
-                            </div>
-                            <div>
-                                <Text className="text-xs dark:text-slate-400">البنوك ({stats?.financial?.banks?.length || 0})</Text>
-                                <div className="font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(stats?.financial?.total_banks)}</div>
+                            <div className="relative z-10 mt-4 pt-4 border-t border-indigo-100/50 dark:border-indigo-500/20 grid grid-cols-2 gap-4">
+                                <div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">الخزائن ({stats?.financial?.safes?.length || 0})</div>
+                                    <div className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(stats?.financial?.total_safes)}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-slate-500 dark:text-slate-400">البنوك ({stats?.financial?.banks?.length || 0})</div>
+                                    <div className="font-bold text-indigo-600 dark:text-indigo-400">{formatCurrency(stats?.financial?.total_banks)}</div>
+                                </div>
                             </div>
                         </div>
-                    </Card>
+                    </motion.div>
 
                     {/* Inventory Valuation */}
-                    <Card decoration="top" decorationColor="blue" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl dark:bg-blue-500/20 dark:text-blue-400">
-                                <Droplets className="w-8 h-8" />
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                        <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-blue-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-blue-500/30 dark:shadow-blue-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 dark:from-blue-500/10 dark:to-cyan-500/10" />
+                            <div className="relative z-10 flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                                    <Droplets className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">قيمة المخزون اللحظي</div>
+                                    <div className="text-2xl font-black text-slate-800 dark:text-white">{formatCurrency(stats?.financial?.inventory_value)}</div>
+                                    <div className="text-xs text-slate-400 dark:text-slate-500 mt-1">مجموع (حجم الخزان × السعر الحالي)</div>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="dark:text-slate-400">قيمة المخزون اللحظي</Text>
-                                <Metric className="dark:text-white">{formatCurrency(stats?.financial?.inventory_value)}</Metric>
-                            </div>
-                        </Flex>
-                        <Text className="mt-2 text-slate-400 text-xs">مجموع (حجم الخزان × السعر الحالي)</Text>
-                    </Card>
+                        </div>
+                    </motion.div>
 
                     {/* Debts Summary */}
-                    <Card decoration="top" decorationColor="amber" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                         <Flex justifyContent="start" className="space-x-4 space-x-reverse">
-                            <div className="p-3 bg-amber-100 text-amber-600 rounded-xl dark:bg-amber-500/20 dark:text-amber-400">
-                                <Briefcase className="w-8 h-8" />
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                        <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-amber-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-amber-500/30 dark:shadow-amber-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 dark:from-amber-500/10 dark:to-orange-500/10" />
+                            <div className="relative z-10 flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
+                                    <Briefcase className="w-7 h-7 text-white" />
+                                </div>
+                                <div>
+                                    <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-1">الذمم والديون</div>
+                                    <div className="text-2xl font-black text-slate-700 dark:text-white">ملخص الأرصدة</div>
+                                </div>
                             </div>
-                            <div>
-                                <Text className="dark:text-slate-400">الذمم والديون</Text>
-                                <div className="text-2xl font-bold text-slate-700 dark:text-white">ملخص الأرصدة</div>
+                            <div className="relative z-10 mt-4 space-y-3">
+                                <div className="flex justify-between items-center p-2 bg-white/60 backdrop-blur-sm rounded-lg dark:bg-white/5">
+                                    <span className="text-sm text-slate-500 dark:text-slate-400">ديون الشركات (لنا)</span>
+                                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.financial?.corporate_debts)}</span>
+                                </div>
+                                <div className="flex justify-between items-center p-2 bg-white/60 backdrop-blur-sm rounded-lg dark:bg-white/5">
+                                    <span className="text-sm text-slate-500 dark:text-slate-400">التزامات الموردين (علينا)</span>
+                                    <span className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(stats?.financial?.supplier_debts)}</span>
+                                </div>
                             </div>
-                        </Flex>
-                        <div className="mt-4 space-y-3">
-                            <Flex className="justify-between">
-                                <Text className="dark:text-slate-400">ديون الشركات (لنا)</Text>
-                                <Text className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(stats?.financial?.corporate_debts)}</Text>
-                            </Flex>
-                            <Flex className="justify-between">
-                                <Text className="dark:text-slate-400">التزامات الموردين (علينا)</Text>
-                                <Text className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(stats?.financial?.supplier_debts)}</Text>
-                            </Flex>
                         </div>
-                    </Card>
+                    </motion.div>
                 </div>
 
                 {/* Detail Grids */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Banks & Safes Details */}
-                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Title className="text-slate-800 mb-4 dark:text-white">💰 تفاصيل الأرصدة النقدية</Title>
-                        <div className="space-y-4">
-                            {/* Safes */}
-                            <div>
-                                <Text className="font-bold text-blue-600 mb-2 dark:text-blue-400">الخزائن</Text>
-                                <div className="space-y-2">
-                                    {stats?.financial?.safes?.map((safe, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2 bg-blue-50 rounded-lg dark:bg-blue-900/20">
-                                            <span className="font-medium text-slate-700 dark:text-slate-300">{safe.name}</span>
-                                            <span className="font-bold text-blue-700 dark:text-blue-400">{formatCurrency(safe.balance)}</span>
-                                        </div>
-                                    ))}
-                                    {(!stats?.financial?.safes || stats?.financial?.safes.length === 0) && (
-                                        <div className="text-slate-400 text-sm text-center py-2">لا توجد خزائن</div>
-                                    )}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                        <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-blue-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-blue-500/30 dark:shadow-blue-500/10 dark:shadow-lg">
+                            <div className="px-6 py-4 border-b border-blue-100/50 dark:border-blue-500/20 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 dark:from-blue-500/10 dark:to-indigo-500/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                                        <Wallet className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="text-base font-black text-slate-800 dark:text-white">تفاصيل الأرصدة النقدية</div>
                                 </div>
                             </div>
-                            {/* Banks */}
-                            <div>
-                                <Text className="font-bold text-indigo-600 mb-2 dark:text-indigo-400">البنوك</Text>
-                                <div className="space-y-2">
-                                    {stats?.financial?.banks?.map((bank, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-2 bg-indigo-50 rounded-lg dark:bg-indigo-900/20">
-                                            <div>
-                                                <span className="font-medium text-slate-700 dark:text-slate-300">{bank.name}</span>
-                                                {bank.account_number && (
-                                                    <span className="text-xs text-slate-400 mr-2">({bank.account_number})</span>
-                                                )}
+                            <div className="p-5 space-y-4">
+                                {/* Safes */}
+                                <div>
+                                    <div className="font-bold text-blue-600 dark:text-blue-400 text-sm mb-2">الخزائن</div>
+                                    <div className="space-y-2">
+                                        {stats?.financial?.safes?.map((safe, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-blue-100/50 hover:bg-white/90 hover:shadow-md transition-all dark:bg-white/5 dark:border-blue-500/10 dark:hover:bg-white/10">
+                                                <span className="font-medium text-slate-700 dark:text-slate-300">{safe.name}</span>
+                                                <span className="font-bold font-mono text-blue-700 dark:text-blue-400">{formatCurrency(safe.balance)}</span>
                                             </div>
-                                            <span className="font-bold text-indigo-700 dark:text-indigo-400">{formatCurrency(bank.balance)}</span>
-                                        </div>
-                                    ))}
-                                    {(!stats?.financial?.banks || stats?.financial?.banks.length === 0) && (
-                                        <div className="text-slate-400 text-sm text-center py-2">لا توجد حسابات بنكية</div>
-                                    )}
+                                        ))}
+                                        {(!stats?.financial?.safes || stats?.financial?.safes.length === 0) && (
+                                            <div className="text-slate-400 dark:text-slate-500 text-sm text-center py-2">لا توجد خزائن</div>
+                                        )}
+                                    </div>
+                                </div>
+                                {/* Banks */}
+                                <div>
+                                    <div className="font-bold text-indigo-600 dark:text-indigo-400 text-sm mb-2">البنوك</div>
+                                    <div className="space-y-2">
+                                        {stats?.financial?.banks?.map((bank, idx) => (
+                                            <div key={idx} className="flex justify-between items-center p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-indigo-100/50 hover:bg-white/90 hover:shadow-md transition-all dark:bg-white/5 dark:border-indigo-500/10 dark:hover:bg-white/10">
+                                                <div>
+                                                    <span className="font-medium text-slate-700 dark:text-slate-300">{bank.name}</span>
+                                                    {bank.account_number && (
+                                                        <span className="text-xs text-slate-400 dark:text-slate-500 mr-2">({bank.account_number})</span>
+                                                    )}
+                                                </div>
+                                                <span className="font-bold font-mono text-indigo-700 dark:text-indigo-400">{formatCurrency(bank.balance)}</span>
+                                            </div>
+                                        ))}
+                                        {(!stats?.financial?.banks || stats?.financial?.banks.length === 0) && (
+                                            <div className="text-slate-400 dark:text-slate-500 text-sm text-center py-2">لا توجد حسابات بنكية</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </Card>
+                    </motion.div>
 
                     {/* Expense Breakdown */}
-                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Title className="text-slate-800 mb-4 dark:text-white">📊 توزيع المصروفات حسب الفئة</Title>
-                        <div className="space-y-3">
-                            {stats?.financial?.expense_breakdown?.map((cat, idx) => {
-                                const percentage = stats?.financial?.expense > 0 
-                                    ? (cat.total_amount / stats.financial.expense * 100).toFixed(1) 
-                                    : 0;
-                                return (
-                                    <div key={idx} className="space-y-1">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="font-medium text-slate-700 dark:text-slate-300">{cat.category_name}</span>
-                                            <span className="font-bold text-rose-600 dark:text-rose-400">{formatCurrency(cat.total_amount)}</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden dark:bg-slate-700">
-                                            <div 
-                                                className="h-full bg-gradient-to-r from-rose-400 to-rose-600 rounded-full transition-all duration-500"
-                                                style={{ width: `${percentage}%` }}
-                                            />
-                                        </div>
-                                        <div className="flex justify-between text-xs text-slate-400">
-                                            <span>{cat.transaction_count} عملية</span>
-                                            <span>{percentage}%</span>
-                                        </div>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}>
+                        <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-rose-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-rose-500/30 dark:shadow-rose-500/10 dark:shadow-lg">
+                            <div className="px-6 py-4 border-b border-rose-100/50 dark:border-rose-500/20 bg-gradient-to-r from-rose-50/80 to-pink-50/80 dark:from-rose-500/10 dark:to-pink-500/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 flex items-center justify-center shadow-lg shadow-rose-500/30">
+                                        <Activity className="w-5 h-5 text-white" />
                                     </div>
-                                );
-                            })}
-                            {(!stats?.financial?.expense_breakdown || stats?.financial?.expense_breakdown.length === 0) && (
-                                <div className="text-slate-400 text-sm text-center py-4">لا توجد مصروفات في هذه الفترة</div>
-                            )}
+                                    <div className="text-base font-black text-slate-800 dark:text-white">توزيع المصروفات حسب الفئة</div>
+                                </div>
+                            </div>
+                            <div className="p-5 space-y-4">
+                                {stats?.financial?.expense_breakdown?.map((cat, idx) => {
+                                    const percentage = stats?.financial?.expense > 0 
+                                        ? (cat.total_amount / stats.financial.expense * 100).toFixed(1) 
+                                        : 0;
+                                    return (
+                                        <div key={idx} className="p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-100/80 dark:bg-white/5 dark:border-white/10 space-y-2">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="font-bold text-slate-700 dark:text-white">{cat.category_name}</span>
+                                                <span className="font-bold font-mono text-rose-600 dark:text-rose-400">{formatCurrency(cat.total_amount)}</span>
+                                            </div>
+                                            <div className="h-2 bg-slate-200/50 dark:bg-white/10 rounded-full overflow-hidden">
+                                                <motion.div 
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${percentage}%` }}
+                                                    transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.1 }}
+                                                    className="h-full bg-gradient-to-r from-rose-400 to-pink-600 rounded-full shadow-sm"
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500">
+                                                <span>{cat.transaction_count} عملية</span>
+                                                <span className="font-mono">{percentage}%</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                                {(!stats?.financial?.expense_breakdown || stats?.financial?.expense_breakdown.length === 0) && (
+                                    <div className="text-slate-400 dark:text-slate-500 text-sm text-center py-6">لا توجد مصروفات في هذه الفترة</div>
+                                )}
+                            </div>
                         </div>
-                    </Card>
+                    </motion.div>
                 </div>
 
                 {/* Top Customers & Suppliers */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Top Customers (who owe us) */}
-                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Title className="text-slate-800 mb-4 dark:text-white">👥 أكبر العملاء المدينين (لنا)</Title>
-                        <div className="space-y-2">
-                            {stats?.financial?.top_customers?.map((customer, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-3 bg-emerald-50 rounded-lg border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-900/30">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                                            {idx + 1}
-                                        </div>
-                                        <span className="font-medium text-slate-700 dark:text-slate-300">{customer.name}</span>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+                        <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-emerald-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-emerald-500/30 dark:shadow-emerald-500/10 dark:shadow-lg">
+                            <div className="px-6 py-4 border-b border-emerald-100/50 dark:border-emerald-500/20 bg-gradient-to-r from-emerald-50/80 to-green-50/80 dark:from-emerald-500/10 dark:to-green-500/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                                        <Users className="w-5 h-5 text-white" />
                                     </div>
-                                    <span className="font-bold text-emerald-700 dark:text-emerald-400">{formatCurrency(customer.balance)}</span>
+                                    <div className="text-base font-black text-slate-800 dark:text-white">أكبر العملاء المدينين (لنا)</div>
                                 </div>
-                            ))}
-                            {(!stats?.financial?.top_customers || stats?.financial?.top_customers.length === 0) && (
-                                <div className="text-slate-400 text-sm text-center py-4">لا توجد ديون من العملاء</div>
-                            )}
+                            </div>
+                            <div className="p-5 space-y-2">
+                                {stats?.financial?.top_customers?.map((customer, idx) => (
+                                    <div key={idx} className="flex justify-between items-center p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-emerald-100/50 hover:bg-white/90 hover:shadow-md transition-all dark:bg-white/5 dark:border-emerald-500/10 dark:hover:bg-white/10">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg shadow-emerald-500/20">
+                                                {idx + 1}
+                                            </div>
+                                            <span className="font-bold text-slate-700 dark:text-white">{customer.name}</span>
+                                        </div>
+                                        <span className="font-bold font-mono text-emerald-700 dark:text-emerald-400">{formatCurrency(customer.balance)}</span>
+                                    </div>
+                                ))}
+                                {(!stats?.financial?.top_customers || stats?.financial?.top_customers.length === 0) && (
+                                    <div className="text-slate-400 dark:text-slate-500 text-sm text-center py-6">لا توجد ديون من العملاء</div>
+                                )}
+                            </div>
                         </div>
-                    </Card>
+                    </motion.div>
 
                     {/* Top Suppliers (we owe them) */}
-                    <Card className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Title className="text-slate-800 mb-4 dark:text-white">🚛 أكبر الموردين الدائنين (علينا)</Title>
-                        <div className="space-y-2">
-                            {stats?.financial?.top_suppliers?.map((supplier, idx) => (
-                                <div key={idx} className="flex justify-between items-center p-3 bg-rose-50 rounded-lg border border-rose-100 dark:bg-rose-900/20 dark:border-rose-900/30">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-8 h-8 bg-rose-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
-                                            {idx + 1}
-                                        </div>
-                                        <span className="font-medium text-slate-700 dark:text-slate-300">{supplier.name}</span>
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+                        <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-rose-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-rose-500/30 dark:shadow-rose-500/10 dark:shadow-lg">
+                            <div className="px-6 py-4 border-b border-rose-100/50 dark:border-rose-500/20 bg-gradient-to-r from-rose-50/80 to-red-50/80 dark:from-rose-500/10 dark:to-red-500/10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-red-600 flex items-center justify-center shadow-lg shadow-rose-500/30">
+                                        <Truck className="w-5 h-5 text-white" />
                                     </div>
-                                    <span className="font-bold text-rose-700 dark:text-rose-400">{formatCurrency(supplier.balance)}</span>
+                                    <div className="text-base font-black text-slate-800 dark:text-white">أكبر الموردين الدائنين (علينا)</div>
                                 </div>
-                            ))}
-                            {(!stats?.financial?.top_suppliers || stats?.financial?.top_suppliers.length === 0) && (
-                                <div className="text-slate-400 text-sm text-center py-4">لا توجد التزامات للموردين</div>
-                            )}
+                            </div>
+                            <div className="p-5 space-y-2">
+                                {stats?.financial?.top_suppliers?.map((supplier, idx) => (
+                                    <div key={idx} className="flex justify-between items-center p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-rose-100/50 hover:bg-white/90 hover:shadow-md transition-all dark:bg-white/5 dark:border-rose-500/10 dark:hover:bg-white/10">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-gradient-to-br from-rose-500 to-red-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-lg shadow-rose-500/20">
+                                                {idx + 1}
+                                            </div>
+                                            <span className="font-bold text-slate-700 dark:text-white">{supplier.name}</span>
+                                        </div>
+                                        <span className="font-bold font-mono text-rose-700 dark:text-rose-400">{formatCurrency(supplier.balance)}</span>
+                                    </div>
+                                ))}
+                                {(!stats?.financial?.top_suppliers || stats?.financial?.top_suppliers.length === 0) && (
+                                    <div className="text-slate-400 dark:text-slate-500 text-sm text-center py-6">لا توجد التزامات للموردين</div>
+                                )}
+                            </div>
                         </div>
-                    </Card>
+                    </motion.div>
                 </div>
                 </>
             ) : (
@@ -493,29 +548,84 @@ export default function Reports({ user }) {
             )}
         </div>
     );
+    }
 
     // Warehouse Cards
     const renderWarehouse = () => (
         <div className="space-y-6 animate-fade-in">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card decoration="top" decorationColor="blue" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                    <Text className="dark:text-slate-400">قيمة المخزون الحالي</Text>
-                    <Metric className="mt-2 text-blue-700 dark:text-blue-400">{formatCurrency(stats?.financial?.inventory_value)}</Metric>
-                </Card>
-                <Card decoration="top" decorationColor="cyan" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                    <Text className="dark:text-slate-400">الوارد (مشتريات) للفترة</Text>
-                    <Metric className="mt-2 text-cyan-700 dark:text-cyan-400">{formatNumber(stats?.warehouse?.incoming_stock?.total_volume)} <span className="text-sm">لتر</span></Metric>
-                    <Text className="mt-2 text-xs text-slate-400">بتكلفة: {formatCurrency(stats?.warehouse?.incoming_stock?.total_cost)}</Text>
-                </Card>
-                <Card decoration="top" decorationColor="orange" className="bg-white dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                     <Text className="dark:text-slate-400">فاقد التبخر (تقديري)</Text>
-                     <Metric className="mt-2 text-orange-700 dark:text-orange-400">{formatNumber(stats?.financial?.evaporation_loss)} <span className="text-sm">لتر</span></Metric>
-                     <Text className="mt-2 text-xs text-slate-400">حسب التباين بين الأرصدة</Text>
-                </Card>
+            {/* Warehouse Sub-Navigation */}
+            <div className="flex gap-2 p-1.5 bg-white/50 backdrop-blur-xl rounded-xl w-fit border border-slate-200/50 shadow-sm dark:bg-white/5 dark:border-white/10 mb-6">
+                <button
+                    onClick={() => setWarehouseTab(0)}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        warehouseTab === 0 ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
+                    }`}
+                >
+                    نظرة عامة
+                </button>
+                <button
+                    onClick={() => setWarehouseTab(1)}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        warehouseTab === 1 ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
+                    }`}
+                >
+                    تقرير مبيعات يومية
+                </button>
+                <button
+                    onClick={() => setWarehouseTab(2)}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        warehouseTab === 2 ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
+                    }`}
+                >
+                    تقرير حركة تفصيلية
+                </button>
             </div>
 
-            <Title className="text-slate-700 mt-4 mb-2">تفاصيل المستودعات والمعايرة</Title>
+            {warehouseTab === 0 ? (
+                <>
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-blue-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-blue-500/30 dark:shadow-blue-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 dark:from-blue-500/10 dark:to-indigo-500/10" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                            <Droplets className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">قيمة المخزون الحالي</div>
+                            <div className="text-2xl font-black text-slate-800 dark:text-white">{formatCurrency(stats?.financial?.inventory_value)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-cyan-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-cyan-500/30 dark:shadow-cyan-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-teal-500/5 dark:from-cyan-500/10 dark:to-teal-500/10" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-teal-600 flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:scale-110 transition-transform">
+                            <TrendingUp className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider mb-1">الوارد (مشتريات) للفترة</div>
+                            <div className="text-2xl font-black text-slate-800 dark:text-white">{formatNumber(stats?.warehouse?.incoming_stock?.total_volume)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">لتر</span></div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">بتكلفة: {formatCurrency(stats?.warehouse?.incoming_stock?.total_cost)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-orange-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-orange-500/30 dark:shadow-orange-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 dark:from-orange-500/10 dark:to-amber-500/10" />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center shadow-lg shadow-orange-500/30 group-hover:scale-110 transition-transform">
+                            <Activity className="w-7 h-7 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-xs font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1">فاقد التبخر (تقديري)</div>
+                            <div className="text-2xl font-black text-slate-800 dark:text-white">{formatNumber(stats?.financial?.evaporation_loss)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">لتر</span></div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">حسب التباين بين الأرصدة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="text-lg font-black text-slate-700 dark:text-white mt-4 mb-2">تفاصيل المستودعات والمعايرة</div>
             
             {/* Tanks Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -533,12 +643,20 @@ export default function Reports({ user }) {
                         return 'from-blue-400 to-indigo-500';
                     };
 
+                    const getFuelBorderColor = (fuelName) => {
+                        const fuel = (fuelName || '').toLowerCase();
+                        if (fuel.includes('diesel') || fuel.includes('ديزل')) return 'border-amber-300/60 dark:border-amber-500/40 dark:shadow-amber-500/10';
+                        if (fuel.includes('petrol') || fuel.includes('بنزين') || fuel.includes('91') || fuel.includes('95')) return 'border-emerald-300/60 dark:border-emerald-500/40 dark:shadow-emerald-500/10';
+                        if (fuel.includes('gas') || fuel.includes('غاز')) return 'border-purple-300/60 dark:border-purple-500/40 dark:shadow-purple-500/10';
+                        return 'border-blue-300/60 dark:border-blue-500/40 dark:shadow-blue-500/10';
+                    };
+
                     const getFuelBg = (fuelName) => {
                         const fuel = (fuelName || '').toLowerCase();
-                        if (fuel.includes('diesel') || fuel.includes('ديزل')) return 'bg-amber-50';
-                        if (fuel.includes('petrol') || fuel.includes('بنزين') || fuel.includes('91') || fuel.includes('95')) return 'bg-emerald-50';
-                        if (fuel.includes('gas') || fuel.includes('غاز')) return 'bg-purple-50';
-                        return 'bg-blue-50';
+                        if (fuel.includes('diesel') || fuel.includes('ديزل')) return 'bg-amber-50 dark:bg-amber-500/10';
+                        if (fuel.includes('petrol') || fuel.includes('بنزين') || fuel.includes('91') || fuel.includes('95')) return 'bg-emerald-50 dark:bg-emerald-500/10';
+                        if (fuel.includes('gas') || fuel.includes('غاز')) return 'bg-purple-50 dark:bg-purple-500/10';
+                        return 'bg-blue-50 dark:bg-blue-500/10';
                     };
 
                     return (
@@ -548,8 +666,8 @@ export default function Reports({ user }) {
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ delay: idx * 0.1 }}
                         >
-                            <Card className={`relative overflow-hidden group hover:shadow-xl transition-all duration-300 border-2 dark:bg-white/5 dark:backdrop-blur-md dark:border-white/10 ${
-                                isCritical ? 'border-red-300 animate-pulse' : isLow ? 'border-orange-300' : 'border-slate-200'
+                            <div className={`relative overflow-hidden rounded-2xl p-5 bg-white/90 backdrop-blur-xl border-2 shadow-lg transition-all duration-300 hover:shadow-xl group dark:bg-white/5 dark:backdrop-blur-xl dark:shadow-lg ${getFuelBorderColor(tank.fuel)} ${
+                                isCritical ? 'ring-2 ring-red-400/50 animate-pulse' : isLow ? 'ring-2 ring-orange-400/50' : ''
                             }`}>
                                 {/* Animated Fill Background */}
                                 <div 
@@ -568,22 +686,22 @@ export default function Reports({ user }) {
                                 )}
                                 
                                 {/* Header */}
-                                <Flex justifyContent="between" alignItems="start" className="relative z-10">
+                                <div className="flex justify-between items-start relative z-10">
                                     <div>
-                                        <Text className="font-bold text-slate-800 text-lg">{tank.name}</Text>
+                                        <div className="font-bold text-slate-800 text-lg dark:text-white">{tank.name}</div>
                                         <div className="flex items-center gap-2 mt-1">
                                             <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${getFuelGradient(tank.fuel)}`} />
-                                            <Text className="text-xs text-slate-500">{tank.fuel}</Text>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">{tank.fuel}</span>
                                         </div>
                                     </div>
                                     <div className={`px-3 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r ${getFuelGradient(tank.fuel)} text-white shadow-lg`}>
                                         {fillPercentage.toFixed(1)}%
                                     </div>
-                                </Flex>
+                                </div>
                                 
                                 {/* Visual Tank Gauge */}
                                 <div className="mt-6 mb-4 relative z-10">
-                                    <div className="h-3 bg-slate-200 rounded-full overflow-hidden relative">
+                                    <div className="h-3 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden relative">
                                         <motion.div 
                                             initial={{ width: 0 }}
                                             animate={{ width: `${fillPercentage}%` }}
@@ -591,21 +709,21 @@ export default function Reports({ user }) {
                                             className={`h-full bg-gradient-to-r ${getFuelGradient(tank.fuel)} shadow-lg`}
                                         />
                                     </div>
-                                    <div className="flex justify-between text-xs text-slate-400 mt-1.5 font-mono">
+                                    <div className="flex justify-between text-xs text-slate-400 dark:text-slate-500 mt-1.5 font-mono">
                                         <span>0</span>
-                                        <span className="font-bold text-slate-600">{formatNumber(tank.volume)} L</span>
+                                        <span className="font-bold text-slate-600 dark:text-slate-300">{formatNumber(tank.volume)} L</span>
                                         <span>{formatNumber(tank.capacity)}</span>
                                     </div>
                                 </div>
 
                                 {/* Stats Grid */}
                                 <div className="grid grid-cols-2 gap-3 mt-4 relative z-10">
-                                    <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-slate-100 dark:bg-slate-800/80 dark:border-slate-700">
-                                        <Text className="text-xs text-slate-500 mb-1 dark:text-slate-400">القيمة الإجمالية</Text>
-                                        <div className="font-bold text-emerald-600">{formatCurrency(tank.value)}</div>
+                                    <div className="bg-white/60 backdrop-blur-sm p-3 rounded-xl border border-slate-100/80 dark:bg-white/5 dark:border-white/10">
+                                        <div className="text-xs text-slate-500 mb-1 dark:text-slate-400">القيمة الإجمالية</div>
+                                        <div className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(tank.value)}</div>
                                     </div>
-                                    <div className="bg-white/80 backdrop-blur-sm p-3 rounded-xl border border-slate-100 dark:bg-slate-800/80 dark:border-slate-700">
-                                        <Text className="text-xs text-slate-500 mb-1 dark:text-slate-400">آخر معايرة</Text>
+                                    <div className="bg-white/60 backdrop-blur-sm p-3 rounded-xl border border-slate-100/80 dark:bg-white/5 dark:border-white/10">
+                                        <div className="text-xs text-slate-500 mb-1 dark:text-slate-400">آخر معايرة</div>
                                         <div className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                                             {tank.last_calibration === 'N/A' ? 'غير متوفر' : new Date(tank.last_calibration).toLocaleDateString('ar-EG', { month: 'short', day: 'numeric' })}
                                         </div>
@@ -613,14 +731,14 @@ export default function Reports({ user }) {
                                 </div>
 
                                 {/* Variance Indicator */}
-                                <div className={`mt-3 pt-3 border-t border-slate-100 flex justify-between items-center relative z-10 dark:border-white/10`}>
-                                    <Text className="text-xs text-slate-500">التباين (Variance)</Text>
+                                <div className={`mt-3 pt-3 border-t border-slate-100/50 flex justify-between items-center relative z-10 dark:border-white/10`}>
+                                    <span className="text-xs text-slate-500 dark:text-slate-400">التباين (Variance)</span>
                                     <div className="flex items-center gap-2">
                                         <span className={`font-mono font-bold text-sm ${
-                                            tank.variance < -50 ? 'text-red-600' : 
-                                            tank.variance < 0 ? 'text-orange-600' : 
-                                            tank.variance > 50 ? 'text-blue-600' : 
-                                            'text-emerald-600'
+                                            tank.variance < -50 ? 'text-red-600 dark:text-red-400' : 
+                                            tank.variance < 0 ? 'text-orange-600 dark:text-orange-400' : 
+                                            tank.variance > 50 ? 'text-blue-600 dark:text-blue-400' : 
+                                            'text-emerald-600 dark:text-emerald-400'
                                         }`}>
                                             {tank.variance > 0 ? '+' : ''}{formatNumber(tank.variance)} L
                                         </span>
@@ -629,7 +747,7 @@ export default function Reports({ user }) {
                                         )}
                                     </div>
                                 </div>
-                            </Card>
+                            </div>
                         </motion.div>
                     );
                 })}
@@ -882,52 +1000,97 @@ export default function Reports({ user }) {
             </Card>
 
             {/* Daily Stock Reconciliation Table */}
-            <Card className="bg-white mt-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                <Title className="mb-4 text-slate-700 border-b border-slate-100 pb-2 dark:text-white dark:border-white/10">تفاصيل حركة المخزون اليومية (مطابقة الأرصدة)</Title>
+            <div className="mt-6 relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-indigo-200/50 shadow-xl dark:bg-white/5 dark:backdrop-blur-xl dark:border-indigo-500/30 dark:shadow-indigo-500/10 dark:shadow-xl">
+                {/* Gradient Header */}
+                <div className="px-6 py-4 border-b border-indigo-100/50 dark:border-indigo-500/20 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-500/10 dark:to-purple-500/10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                            <Activity className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <div className="text-base font-black text-slate-800 dark:text-white">تفاصيل حركة المخزون اليومية</div>
+                            <div className="text-xs text-slate-500 dark:text-slate-400">مطابقة الأرصدة</div>
+                        </div>
+                    </div>
+                </div>
+                
                 {stats?.warehouse?.daily_reconciliation?.length > 0 ? (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto p-4">
                         <table className="w-full text-right text-sm">
-                            <thead className="bg-slate-50 text-slate-500 font-bold dark:bg-white/5 dark:text-slate-400">
-                                <tr>
-                                    <th className="p-3">التاريخ</th>
-                                    <th className="p-3">الخزان</th>
-                                    <th className="p-3">رصيد أول المدة</th>
-                                    <th className="p-3 text-cyan-600">وارد (+)</th>
-                                    <th className="p-3 text-rose-600">منصرف (-)</th>
-                                    <th className="p-3 text-blue-600">رصيد نظري (=)</th>
-                                    <th className="p-3 text-purple-600">رصيد فعلي (قياس)</th>
-                                    <th className="p-3">الفارق (Variance)</th>
+                            <thead>
+                                <tr className="border-b-2 border-indigo-100/50 dark:border-indigo-500/20">
+                                    <th className="p-3 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">التاريخ</th>
+                                    <th className="p-3 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">الخزان</th>
+                                    <th className="p-3 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">رصيد أول المدة</th>
+                                    <th className="p-3 text-xs font-black text-cyan-600 dark:text-cyan-400 uppercase tracking-wider">وارد (+)</th>
+                                    <th className="p-3 text-xs font-black text-rose-600 dark:text-rose-400 uppercase tracking-wider">منصرف (-)</th>
+                                    <th className="p-3 text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider">رصيد نظري (=)</th>
+                                    <th className="p-3 text-xs font-black text-purple-600 dark:text-purple-400 uppercase tracking-wider">رصيد فعلي (قياس)</th>
+                                    <th className="p-3 text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-wider">الفارق</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                                {stats.warehouse.daily_reconciliation.map((row, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                                        <td className="p-3 whitespace-nowrap dark:text-slate-300">{row.date}</td>
-                                        <td className="p-3 font-bold dark:text-white">{row.tank_name}</td>
-                                        <td className="p-3 font-mono">{formatNumber(row.opening)}</td>
-                                        <td className="p-3 font-mono text-cyan-600">{formatNumber(row.in)}</td>
-                                        <td className="p-3 font-mono text-rose-600">{formatNumber(row.out)}</td>
-                                        <td className="p-3 font-mono font-bold text-blue-600">{formatNumber(row.theoretical)}</td>
-                                        <td className="p-3 font-mono font-bold text-purple-600">
-                                            {row.actual !== null ? formatNumber(row.actual) : <span className="text-slate-300">-</span>}
+                            <tbody>
+                                {stats.warehouse.daily_reconciliation.map((row, idx) => {
+                                    const hasVariance = row.actual !== null && row.variance !== 0;
+                                    const isNegativeVariance = row.variance < 0;
+                                    return (
+                                    <tr key={idx} className="border-b border-slate-100/50 dark:border-white/5 hover:bg-indigo-50/30 dark:hover:bg-indigo-500/5 transition-colors group">
+                                        <td className="p-3 whitespace-nowrap text-slate-700 dark:text-slate-300 font-medium">{row.date}</td>
+                                        <td className="p-3 font-bold text-slate-800 dark:text-white">{row.tank_name}</td>
+                                        <td className="p-3 font-mono text-slate-600 dark:text-slate-300">
+                                            {parseFloat(row.opening) !== 0 ? formatNumber(row.opening) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                        </td>
+                                        <td className="p-3 font-mono font-bold">
+                                            {parseFloat(row.in) !== 0 ? (
+                                                <span className="text-cyan-600 dark:text-cyan-400 bg-cyan-50/80 dark:bg-cyan-500/10 px-2 py-0.5 rounded-md">+{formatNumber(row.in)}</span>
+                                            ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                        </td>
+                                        <td className="p-3 font-mono font-bold">
+                                            {parseFloat(row.out) !== 0 ? (
+                                                <span className="text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-500/10 px-2 py-0.5 rounded-md">-{formatNumber(row.out)}</span>
+                                            ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
+                                        </td>
+                                        <td className="p-3 font-mono font-black text-blue-700 dark:text-blue-400">{formatNumber(row.theoretical)}</td>
+                                        <td className="p-3 font-mono font-bold text-purple-700 dark:text-purple-400">
+                                            {row.actual !== null ? formatNumber(row.actual) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                         </td>
                                         <td className="p-3">
                                             {row.actual !== null ? (
-                                                <span className={`font-mono font-bold px-2 py-1 rounded ${row.variance < 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-                                                    {formatNumber(row.variance)}
-                                                </span>
-                                            ) : <span className="text-slate-300">-</span>}
+                                                hasVariance ? (
+                                                    <span className={`inline-flex items-center gap-1 font-mono font-bold px-2.5 py-1 rounded-lg text-xs shadow-sm ${
+                                                        isNegativeVariance 
+                                                        ? 'bg-gradient-to-r from-red-50 to-red-100 text-red-700 border border-red-200/50 dark:from-red-500/20 dark:to-red-600/20 dark:text-red-400 dark:border-red-500/30' 
+                                                        : 'bg-gradient-to-r from-emerald-50 to-green-100 text-emerald-700 border border-emerald-200/50 dark:from-emerald-500/20 dark:to-green-600/20 dark:text-emerald-400 dark:border-emerald-500/30'
+                                                    }`}>
+                                                        {isNegativeVariance ? '▼' : '▲'} {formatNumber(row.variance)}
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1 font-mono font-bold px-2.5 py-1 rounded-lg text-xs bg-slate-50 text-slate-500 border border-slate-200/50 dark:bg-white/5 dark:text-slate-400 dark:border-white/10">
+                                                        ✓ متطابق
+                                                    </span>
+                                                )
+                                            ) : <span className="text-slate-300 dark:text-slate-600">—</span>}
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
                 ) : (
-                    <Text className="text-center py-6 text-slate-400">لا توجد حركات مخزون في هذه الفترة</Text>
+                    <div className="text-center py-10 text-slate-400 dark:text-slate-500">
+                        <Activity className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                        <div className="font-medium">لا توجد حركات مخزون في هذه الفترة</div>
+                    </div>
                 )}
-            </Card>
-        </div>
+            </div>
+            </>
+        ) : warehouseTab === 1 ? (
+            <TankSalesReport stationId={user?.station_id} />
+        ) : (
+            <TankTransactionReport stationId={user?.station_id} />
+        )}
+    </div>
     );
     
     // Sales Cards - REFACTORED
@@ -943,28 +1106,28 @@ export default function Reports({ user }) {
 
     const renderSales = () => (
         <div className="animate-fade-in space-y-6">
-            {/* Sales Sub-Navigation */}
-            <div className="flex gap-2 p-1 bg-slate-100/50 rounded-xl w-fit">
+            {/* Sales Sub-Navigation - Glassmorphism style matching warehouse */}
+            <div className="flex gap-2 p-1.5 bg-white/50 backdrop-blur-xl rounded-xl w-fit border border-slate-200/50 shadow-sm dark:bg-white/5 dark:border-white/10 mb-6">
                 <button
                     onClick={() => setSalesTab(0)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                        salesTab === 0 ? 'bg-white shadow text-violet-700' : 'text-slate-500 hover:text-slate-700'
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        salesTab === 0 ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
                     }`}
                 >
                     نظرة عامة
                 </button>
                 <button
                     onClick={() => setSalesTab(1)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                        salesTab === 1 ? 'bg-white shadow text-violet-700' : 'text-slate-500 hover:text-slate-700'
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        salesTab === 1 ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
                     }`}
                 >
                     التقرير اليومي
                 </button>
                 <button
                     onClick={() => setSalesTab(2)}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                        salesTab === 2 ? 'bg-white shadow text-violet-700' : 'text-slate-500 hover:text-slate-700'
+                    className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${
+                        salesTab === 2 ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/25' : 'text-slate-500 hover:text-slate-700 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
                     }`}
                 >
                     مبيعات الآبار
@@ -974,86 +1137,131 @@ export default function Reports({ user }) {
             {/* Sales Content Based on Sub-Tab */}
             {salesTab === 0 ? (
                 <div className="space-y-6">
-                    {/* Summary Cards */}
+                    {/* Summary Cards - Glassmorphism */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <Card decoration="top" decorationColor="violet" className="bg-white">
-                            <Text>إجمالي المبيعات (إيراد)</Text>
-                            <Metric className="mt-2 text-violet-700">{formatCurrency(stats?.sales?.total_revenue)}</Metric>
-                            <Flex className="mt-4 pt-4 border-t border-slate-100">
-                                <Text>عدد العمليات</Text>
-                                <Text className="font-bold">{stats?.sales?.total_transactions}</Text>
-                            </Flex>
-                        </Card>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
+                            <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-violet-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-violet-500/30 dark:shadow-violet-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-purple-500/5 dark:from-violet-500/10 dark:to-purple-500/10" />
+                                <div className="relative z-10 flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/30 group-hover:scale-110 transition-transform">
+                                        <TrendingUp className="w-7 h-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-violet-600 dark:text-violet-400 uppercase tracking-wider mb-1">إجمالي المبيعات (إيراد)</div>
+                                        <div className="text-2xl font-black text-slate-800 dark:text-white">{formatCurrency(stats?.sales?.total_revenue)}</div>
+                                    </div>
+                                </div>
+                                <div className="relative z-10 mt-4 pt-4 border-t border-violet-100/50 dark:border-violet-500/20 flex justify-between items-center">
+                                    <span className="text-sm text-slate-500 dark:text-slate-400">عدد العمليات</span>
+                                    <span className="font-mono font-bold text-violet-700 dark:text-violet-300 bg-violet-50/80 dark:bg-violet-500/10 px-3 py-1 rounded-lg">{stats?.sales?.total_transactions}</span>
+                                </div>
+                            </div>
+                        </motion.div>
                         
-                        <Card decoration="top" decorationColor="indigo" className="bg-white">
-                            <Text>الكميات المباعة</Text>
-                            <Metric className="mt-2 text-indigo-700">{formatNumber(stats?.sales?.total_liters)} <span className="text-sm">لتر</span></Metric>
-                        </Card>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                            <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-indigo-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-indigo-500/30 dark:shadow-indigo-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 dark:from-indigo-500/10 dark:to-blue-500/10" />
+                                <div className="relative z-10 flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
+                                        <Droplets className="w-7 h-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">الكميات المباعة</div>
+                                        <div className="text-2xl font-black text-slate-800 dark:text-white">{formatNumber(stats?.sales?.total_liters)} <span className="text-sm font-normal text-slate-500 dark:text-slate-400">لتر</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Product breakdown */}
-                        <Card className="bg-white">
-                            <Title className="mb-4">تحليل المبيعات حسب المنتج</Title>
-                            <div className="space-y-4">
-                                {stats?.sales?.by_product?.length > 0 ? (
-                                    stats.sales.by_product.map((item, idx) => (
-                                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color_hex || '#94a3b8' }}></div>
-                                                <span className="font-bold text-slate-700">{item.product_name}</span>
-                                            </div>
-                                            <div className="flex gap-6 text-sm">
-                                                <div className="text-slate-500">
-                                                    <span className="font-bold text-slate-800">{formatNumber(item.total_liters)}</span> لتر
-                                                </div>
-                                                <div className="text-slate-500 font-mono">
-                                                    <span className="font-bold text-slate-800">{formatNumber(item.total_revenue)}</span> SDG
-                                                </div>
-                                            </div>
+                        {/* Product breakdown - Glassmorphism */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                            <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-purple-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-purple-500/30 dark:shadow-purple-500/10 dark:shadow-lg">
+                                {/* Gradient Header */}
+                                <div className="px-6 py-4 border-b border-purple-100/50 dark:border-purple-500/20 bg-gradient-to-r from-purple-50/80 to-violet-50/80 dark:from-purple-500/10 dark:to-violet-500/10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                                            <Activity className="w-5 h-5 text-white" />
                                         </div>
-                                    ))
+                                        <div className="text-base font-black text-slate-800 dark:text-white">تحليل المبيعات حسب المنتج</div>
+                                    </div>
+                                </div>
+                                <div className="p-5 space-y-3">
+                                    {stats?.sales?.by_product?.length > 0 ? (
+                                        stats.sales.by_product.map((item, idx) => (
+                                            <div key={idx} className="flex items-center justify-between p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-slate-100/80 hover:bg-white/90 hover:shadow-md transition-all dark:bg-white/5 dark:border-white/10 dark:hover:bg-white/10">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-4 h-4 rounded-full shadow-sm ring-2 ring-white dark:ring-slate-800" style={{ backgroundColor: item.color_hex || '#94a3b8' }}></div>
+                                                    <span className="font-bold text-slate-700 dark:text-white">{item.product_name}</span>
+                                                </div>
+                                                <div className="flex gap-4 text-sm">
+                                                    <div className="text-slate-500 dark:text-slate-400">
+                                                        <span className="font-bold font-mono text-blue-700 dark:text-blue-400">{formatNumber(item.total_liters)}</span> لتر
+                                                    </div>
+                                                    <div className="text-slate-500 dark:text-slate-400 font-mono">
+                                                        <span className="font-bold text-emerald-700 dark:text-emerald-400">{formatNumber(item.total_revenue)}</span> SDG
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="text-center text-slate-400 dark:text-slate-500 py-8">لا توجد بيانات مبيعات تفصيلية لهذه الفترة</div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        {/* Recent Sales Table - Glassmorphism */}
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                            <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-emerald-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-emerald-500/30 dark:shadow-emerald-500/10 dark:shadow-lg">
+                                {/* Gradient Header */}
+                                <div className="px-6 py-4 border-b border-emerald-100/50 dark:border-emerald-500/20 bg-gradient-to-r from-emerald-50/80 to-teal-50/80 dark:from-emerald-500/10 dark:to-teal-500/10">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/30">
+                                            <TrendingUp className="w-5 h-5 text-white" />
+                                        </div>
+                                        <div className="text-base font-black text-slate-800 dark:text-white">المبيعات الأخيرة (مباشر)</div>
+                                    </div>
+                                </div>
+                                {stats?.sales?.recent_sales?.length > 0 ? (
+                                    <div className="overflow-x-auto p-4">
+                                        <table className="w-full text-right text-sm">
+                                            <thead>
+                                                <tr className="border-b-2 border-emerald-100/50 dark:border-emerald-500/20">
+                                                    <th className="p-3 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">الوقت</th>
+                                                    <th className="p-3 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">المكنة</th>
+                                                    <th className="p-3 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">الكمية</th>
+                                                    <th className="p-3 text-xs font-black text-slate-600 dark:text-slate-300 uppercase tracking-wider">المبلغ</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {stats.sales.recent_sales.map((sale, idx) => (
+                                                    <tr key={idx} className="border-b border-slate-100/50 dark:border-white/5 hover:bg-emerald-50/30 dark:hover:bg-emerald-500/5 transition-colors">
+                                                        <td className="p-3 whitespace-nowrap text-slate-400 dark:text-slate-500 text-xs font-mono">
+                                                            {new Date(sale.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
+                                                        </td>
+                                                        <td className="p-3">
+                                                            <span className="font-bold text-slate-700 dark:text-white">{sale.pump_name}</span>
+                                                            <span className="block text-xs text-slate-400 dark:text-slate-500">{sale.fuel_type}</span>
+                                                        </td>
+                                                        <td className="p-3 font-mono font-bold">
+                                                            <span className="text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-500/10 px-2 py-0.5 rounded-md">{formatNumber(sale.volume_sold)}</span>
+                                                        </td>
+                                                        <td className="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">{formatNumber(sale.total_amount)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 ) : (
-                                    <div className="text-center text-slate-400 py-6">لا توجد بيانات مبيعات تفصيلية لهذه الفترة</div>
+                                    <div className="text-center text-slate-400 dark:text-slate-500 py-10">
+                                        <TrendingUp className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                        <div className="font-medium">لا توجد مبيعات حديثة</div>
+                                    </div>
                                 )}
                             </div>
-                        </Card>
-
-                        {/* Recent Sales Table (New Feature) */}
-                        <Card className="bg-white">
-                            <Title className="mb-4">المبيعات الأخيرة (مباشر)</Title>
-                            {stats?.sales?.recent_sales?.length > 0 ? (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-right text-sm">
-                                        <thead className="bg-slate-50 text-slate-500 text-xs uppercase">
-                                            <tr>
-                                                <th className="p-2">الوقت</th>
-                                                <th className="p-2">المكنة</th>
-                                                <th className="p-2">الكمية</th>
-                                                <th className="p-2">المبلغ</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-50">
-                                            {stats.sales.recent_sales.map((sale, idx) => (
-                                                <tr key={idx} className="hover:bg-slate-50">
-                                                    <td className="p-2 whitespace-nowrap text-slate-400 text-xs">
-                                                        {new Date(sale.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}
-                                                    </td>
-                                                    <td className="p-2 font-medium">
-                                                        {sale.pump_name}
-                                                        <span className="block text-xs text-slate-400">{sale.fuel_type}</span>
-                                                    </td>
-                                                    <td className="p-2 font-mono text-blue-600">{formatNumber(sale.volume_sold)}</td>
-                                                    <td className="p-2 font-mono font-bold text-emerald-600">{formatNumber(sale.total_amount)}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : (
-                                <div className="text-center text-slate-400 py-6">لا توجد مبيعات حديثة</div>
-                            )}
-                        </Card>
+                        </motion.div>
                     </div>
                 </div>
             ) : salesTab === 1 ? (
@@ -1075,139 +1283,165 @@ export default function Reports({ user }) {
 
         return (
             <div className="space-y-6 animate-fade-in">
-                {/* 1. Leaderboard Cards */}
+                {/* 1. Leaderboard Cards - Glassmorphism */}
                 {empList.length > 0 && (
                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Top Sales */}
-                        <Card decoration="top" decorationColor="emerald" className="bg-white relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-3 opacity-10">
-                                 <Users className="w-24 h-24 text-emerald-600" />
-                             </div>
-                             <Text>الأعلى مبيعاً (إيراد)</Text>
-                             <div className="mt-4 flex items-center gap-3">
-                                 <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xl border-2 border-emerald-200">
-                                     1
-                                 </div>
-                                 <div>
-                                     <div className="text-lg font-bold text-slate-800">{topSales?.worker_name}</div>
-                                     <Metric className="text-emerald-600 text-xl">{formatCurrency(topSales?.total_sales)}</Metric>
-                                 </div>
-                             </div>
-                        </Card>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
+                            <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-emerald-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-emerald-500/30 dark:shadow-emerald-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-green-500/5 dark:from-emerald-500/10 dark:to-green-500/10" />
+                                <div className="absolute top-0 right-0 p-3 opacity-5 dark:opacity-10">
+                                    <Users className="w-24 h-24 text-emerald-600 dark:text-emerald-400" />
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-3">الأعلى مبيعاً (إيراد)</div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/30 group-hover:scale-110 transition-transform">
+                                            1
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-black text-slate-800 dark:text-white">{topSales?.worker_name}</div>
+                                            <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">{formatCurrency(topSales?.total_sales)}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
 
                         {/* Top Volume */}
-                        <Card decoration="top" decorationColor="blue" className="bg-white relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-3 opacity-10">
-                                 <Droplets className="w-24 h-24 text-blue-600" />
-                             </div>
-                             <Text>الأكثر مبيعاً (كمية)</Text>
-                             <div className="mt-4 flex items-center gap-3">
-                                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-xl border-2 border-blue-200">
-                                     1
-                                 </div>
-                                 <div>
-                                     <div className="text-lg font-bold text-slate-800">{topVolume?.worker_name}</div>
-                                     <Metric className="text-blue-600 text-xl">{formatNumber(topVolume?.total_volume)} لتر</Metric>
-                                 </div>
-                             </div>
-                        </Card>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                            <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-blue-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-blue-500/30 dark:shadow-blue-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 dark:from-blue-500/10 dark:to-cyan-500/10" />
+                                <div className="absolute top-0 right-0 p-3 opacity-5 dark:opacity-10">
+                                    <Droplets className="w-24 h-24 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-3">الأكثر مبيعاً (كمية)</div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform">
+                                            1
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-black text-slate-800 dark:text-white">{topVolume?.worker_name}</div>
+                                            <div className="text-xl font-black text-blue-600 dark:text-blue-400">{formatNumber(topVolume?.total_volume)} لتر</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
 
                         {/* Most Shifts */}
-                        <Card decoration="top" decorationColor="amber" className="bg-white relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-3 opacity-10">
-                                 <Briefcase className="w-24 h-24 text-amber-600" />
-                             </div>
-                             <Text>الأكثر حضوراً (ورديات)</Text>
-                             <div className="mt-4 flex items-center gap-3">
-                                 <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 font-bold text-xl border-2 border-amber-200">
-                                     ★
-                                 </div>
-                                 <div>
-                                     <div className="text-lg font-bold text-slate-800">{mostShifts?.worker_name}</div>
-                                     <Metric className="text-amber-600 text-xl">{mostShifts?.shifts_count} وردية</Metric>
-                                 </div>
-                             </div>
-                        </Card>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                            <div className="relative overflow-hidden rounded-2xl p-5 bg-white/80 backdrop-blur-xl border border-amber-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-amber-500/30 dark:shadow-amber-500/10 dark:shadow-lg transition-all hover:shadow-xl group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 dark:from-amber-500/10 dark:to-orange-500/10" />
+                                <div className="absolute top-0 right-0 p-3 opacity-5 dark:opacity-10">
+                                    <Briefcase className="w-24 h-24 text-amber-600 dark:text-amber-400" />
+                                </div>
+                                <div className="relative z-10">
+                                    <div className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider mb-3">الأكثر حضوراً (ورديات)</div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
+                                            ★
+                                        </div>
+                                        <div>
+                                            <div className="text-lg font-black text-slate-800 dark:text-white">{mostShifts?.worker_name}</div>
+                                            <div className="text-xl font-black text-amber-600 dark:text-amber-400">{mostShifts?.shifts_count} وردية</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
                      </div>
                 )}
 
-                {/* 2. Detailed Performance Table */}
-                <Card className="bg-white">
-                    <div className="flex justify-between items-center mb-6">
-                        <Title className="flex items-center gap-2">
-                            <Users className="w-5 h-5 text-slate-500" />
-                            سجل الأداء والمستحقات
-                        </Title>
-                        <Badge className="bg-slate-100 text-slate-600">
-                            {empList.length} موظف نشط
-                        </Badge>
-                    </div>
+                {/* 2. Detailed Performance Table - Glassmorphism */}
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                    <div className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-xl border border-amber-200/50 shadow-lg dark:bg-white/5 dark:backdrop-blur-xl dark:border-amber-500/30 dark:shadow-amber-500/10 dark:shadow-lg">
+                        <div className="px-6 py-4 border-b border-amber-100/50 dark:border-amber-500/20 bg-gradient-to-r from-amber-50/80 to-orange-50/80 dark:from-amber-500/10 dark:to-orange-500/10">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                                        <Users className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div className="text-base font-black text-slate-800 dark:text-white">سجل الأداء والمستحقات</div>
+                                </div>
+                                <span className="px-3 py-1.5 bg-white/60 backdrop-blur-sm rounded-lg border border-amber-200/50 text-sm font-bold text-amber-700 dark:bg-white/10 dark:border-amber-500/20 dark:text-amber-400">
+                                    {empList.length} موظف نشط
+                                </span>
+                            </div>
+                        </div>
                     
-                    {empList.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-right text-sm border-separate border-spacing-y-2">
-                                <thead className="bg-slate-50 text-slate-500 font-bold text-xs uppercase">
-                                    <tr>
-                                        <th className="p-3 rounded-r-lg">الموظف</th>
-                                        <th className="p-3">الورديات</th>
-                                        <th className="p-3">المبيعات (لتر)</th>
-                                        <th className="p-3">المبيعات (إيراد)</th>
-                                        <th className="p-3 text-emerald-600">الحوافز (+)</th>
-                                        <th className="p-3 text-red-600">الخصومات (-)</th>
-                                        <th className="p-3">مؤشر الأداء</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {empList.map((emp, idx) => {
-                                        // Calculate generic efficiency score (just for visuals)
-                                        const maxVol = topVolume?.total_volume || 1;
-                                        const efficiency = (emp.total_volume / maxVol) * 100;
-                                        
-                                        return (
-                                            <tr key={idx} className="bg-white hover:bg-slate-50 transition-shadow hover:shadow-sm group">
-                                                <td className="p-3 border-y border-r border-slate-100 rounded-r-lg font-bold text-slate-700 flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 text-xs">
-                                                        {emp.worker_name.charAt(0)}
-                                                    </div>
-                                                    {emp.worker_name}
-                                                    {emp === topSales && <span className="text-emerald-500 text-xs">👑</span>}
-                                                </td>
-                                                <td className="p-3 border-y border-slate-100 text-slate-500 font-mono">
-                                                    {emp.shifts_count}
-                                                </td>
-                                                <td className="p-3 border-y border-slate-100 font-mono text-blue-600 font-medium">
-                                                    {formatNumber(emp.total_volume)}
-                                                </td>
-                                                <td className="p-3 border-y border-slate-100 font-mono font-bold text-slate-700">
-                                                    {formatCurrency(emp.total_sales)}
-                                                </td>
-                                                <td className="p-3 border-y border-slate-100 font-mono text-emerald-600 bg-emerald-50/50 group-hover:bg-emerald-100/50 transition-colors">
-                                                    {emp.bonuses > 0 ? formatNumber(emp.bonuses) : '-'}
-                                                </td>
-                                                <td className="p-3 border-y border-l border-slate-100 rounded-l-lg font-mono text-red-600 bg-red-50/50 group-hover:bg-red-100/50 transition-colors">
-                                                    {emp.deductions > 0 ? formatNumber(emp.deductions) : '-'}
-                                                </td>
-                                                <td className="p-3 border-y border-l border-slate-100">
-                                                     <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                         <div 
-                                                            className="h-full bg-indigo-500 rounded-full"
-                                                            style={{ width: `${efficiency}%` }}
-                                                         ></div>
-                                                     </div>
-                                                </td>
+                        <div className="p-5">
+                            {empList.length > 0 ? (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-right text-sm border-separate border-spacing-y-2">
+                                        <thead>
+                                            <tr>
+                                                <th className="p-3 rounded-r-lg bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-500/15 dark:to-orange-500/15 text-amber-800 dark:text-amber-300 font-bold text-xs uppercase">الموظف</th>
+                                                <th className="p-3 bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-500/15 dark:to-orange-500/15 text-amber-800 dark:text-amber-300 font-bold text-xs uppercase">الورديات</th>
+                                                <th className="p-3 bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-500/15 dark:to-orange-500/15 text-amber-800 dark:text-amber-300 font-bold text-xs uppercase">المبيعات (لتر)</th>
+                                                <th className="p-3 bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-500/15 dark:to-orange-500/15 text-amber-800 dark:text-amber-300 font-bold text-xs uppercase">المبيعات (إيراد)</th>
+                                                <th className="p-3 bg-gradient-to-r from-emerald-100/80 to-green-100/80 dark:from-emerald-500/15 dark:to-green-500/15 text-emerald-700 dark:text-emerald-300 font-bold text-xs uppercase">الحوافز (+)</th>
+                                                <th className="p-3 bg-gradient-to-r from-rose-100/80 to-red-100/80 dark:from-rose-500/15 dark:to-red-500/15 text-rose-700 dark:text-rose-300 font-bold text-xs uppercase">الخصومات (-)</th>
+                                                <th className="p-3 rounded-l-lg bg-gradient-to-r from-amber-100/80 to-orange-100/80 dark:from-amber-500/15 dark:to-orange-500/15 text-amber-800 dark:text-amber-300 font-bold text-xs uppercase">مؤشر الأداء</th>
                                             </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                                        </thead>
+                                        <tbody>
+                                            {empList.map((emp, idx) => {
+                                                const maxVol = topVolume?.total_volume || 1;
+                                                const efficiency = (emp.total_volume / maxVol) * 100;
+                                                
+                                                return (
+                                                    <tr key={idx} className="bg-white/60 backdrop-blur-sm hover:bg-white/90 hover:shadow-md transition-all group dark:bg-white/5 dark:hover:bg-white/10">
+                                                        <td className="p-3 border-y border-r border-slate-100/50 dark:border-white/10 rounded-r-xl font-bold text-slate-700 dark:text-white">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 dark:from-amber-500/30 dark:to-orange-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 text-xs font-black">
+                                                                    {emp.worker_name.charAt(0)}
+                                                                </div>
+                                                                {emp.worker_name}
+                                                                {emp === topSales && <span className="text-emerald-500 text-xs">👑</span>}
+                                                            </div>
+                                                        </td>
+                                                        <td className="p-3 border-y border-slate-100/50 dark:border-white/10 text-slate-500 dark:text-slate-400 font-mono">
+                                                            {emp.shifts_count}
+                                                        </td>
+                                                        <td className="p-3 border-y border-slate-100/50 dark:border-white/10 font-mono text-blue-600 dark:text-blue-400 font-medium">
+                                                            {formatNumber(emp.total_volume)}
+                                                        </td>
+                                                        <td className="p-3 border-y border-slate-100/50 dark:border-white/10 font-mono font-bold text-slate-700 dark:text-white">
+                                                            {formatCurrency(emp.total_sales)}
+                                                        </td>
+                                                        <td className="p-3 border-y border-slate-100/50 dark:border-white/10 font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50/30 dark:bg-emerald-500/5 group-hover:bg-emerald-100/50 dark:group-hover:bg-emerald-500/10 transition-colors">
+                                                            {emp.bonuses > 0 ? formatNumber(emp.bonuses) : '-'}
+                                                        </td>
+                                                        <td className="p-3 border-y border-l border-slate-100/50 dark:border-white/10 font-mono text-red-600 dark:text-red-400 bg-red-50/30 dark:bg-red-500/5 group-hover:bg-red-100/50 dark:group-hover:bg-red-500/10 transition-colors">
+                                                            {emp.deductions > 0 ? formatNumber(emp.deductions) : '-'}
+                                                        </td>
+                                                        <td className="p-3 border-y border-l border-slate-100/50 dark:border-white/10 rounded-l-xl">
+                                                             <div className="w-24 h-2 bg-slate-200/50 dark:bg-white/10 rounded-full overflow-hidden">
+                                                                 <motion.div 
+                                                                    initial={{ width: 0 }}
+                                                                    animate={{ width: `${efficiency}%` }}
+                                                                    transition={{ duration: 0.8, ease: "easeOut", delay: idx * 0.05 }}
+                                                                    className="h-full bg-gradient-to-r from-indigo-500 to-violet-600 rounded-full shadow-sm"
+                                                                 />
+                                                             </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-12 text-slate-400 dark:text-slate-500">
+                                    <Users className="w-12 h-12 mb-3 text-slate-200 dark:text-slate-600" />
+                                    <div className="text-sm">لا توجد بيانات للأداء الوظيفي في هذه الفترة</div>
+                                </div>
+                            )}
                         </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center py-12 text-slate-400">
-                            <Users className="w-12 h-12 mb-3 text-slate-200" />
-                            <Text>لا توجد بيانات للأداء الوظيفي في هذه الفترة</Text>
-                        </div>
-                    )}
-                </Card>
+                    </div>
+                </motion.div>
             </div>
         );
     };
@@ -1245,6 +1479,11 @@ export default function Reports({ user }) {
                              <Users className="w-5 h-5"/> <span>الموظفين</span>
                         </div>
                     </Tab>
+                    <Tab className="px-5 py-2.5 rounded-xl font-bold text-slate-500 ui-selected:bg-gradient-to-r ui-selected:from-indigo-600 ui-selected:to-purple-600 ui-selected:text-white ui-selected:shadow-lg transition-all dark:text-slate-400 dark:ui-selected:text-white">
+                        <div className="flex items-center gap-2">
+                             <Brain className="w-5 h-5"/> <span>تقفيل اليوم</span>
+                        </div>
+                    </Tab>
 
                     {/* DIVIDER */}
                     <div className="hidden md:inline-block w-px h-8 bg-slate-200 mx-3 dark:bg-white/10"></div>
@@ -1273,8 +1512,10 @@ export default function Reports({ user }) {
                     {activeTab === 2 && renderSales()}
                     {activeTab === 3 && renderEmployees()}
                     {/* GLOBAL REPORTS */}
-                    {activeTab === 4 && <SupplierReport stationId={filters.station_id} />}
-                    {activeTab === 5 && <CustomerReport stationId={filters.station_id} />}
+                    {activeTab === 4 && <DailyClosingReport stationId={filters.station_id} />}
+                    {/* GLOBAL REPORTS */}
+                    {activeTab === 5 && <SupplierReport stationId={filters.station_id} />}
+                    {activeTab === 6 && <CustomerReport stationId={filters.station_id} />}
                 </div>
             </TabGroup>
         </div>

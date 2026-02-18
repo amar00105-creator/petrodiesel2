@@ -140,6 +140,18 @@ class ReportsController extends Controller
             return;
         }
 
+        if (isset($_GET['action']) && $_GET['action'] === 'get_tank_transaction_report') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getTankTransactionReport();
+            return;
+        }
+
+        if (isset($_GET['action']) && $_GET['action'] === 'get_daily_closing') {
+            while (ob_get_level()) ob_end_clean();
+            $this->getDailyClosing();
+            return;
+        }
+
 
         $this->view('reports/index', [
             'user' => $user,
@@ -150,8 +162,14 @@ class ReportsController extends Controller
     private function getStats()
     {
         try {
+            $user = AuthHelper::user();
             // 1. Filter Parameters
             $stationId = $_GET['station_id'] ?? 'all';
+
+            // Enforce isolation
+            if ($user['role'] !== 'super_admin') {
+                $stationId = $user['station_id'];
+            }
             $startDate = $_GET['start_date'] ?? date('Y-m-01');
             $endDate = $_GET['end_date'] ?? date('Y-m-d');
             $categoryId = !empty($_GET['category_id']) ? $_GET['category_id'] : null;
@@ -289,6 +307,14 @@ class ReportsController extends Controller
 
             $evaporationLoss = 0;
 
+            // Filter tanks by station before building stats
+            $filteredTanks = $tanks;
+            if ($stationId !== 'all') {
+                $filteredTanks = array_values(array_filter($tanks, function ($t) use ($stationId) {
+                    return $t['station_id'] == $stationId;
+                }));
+            }
+
             $tankStats = array_map(function ($t) use ($startDate, $endDate, &$evaporationLoss) {
                 $lastCal = method_exists($this->tankModel, 'getLastCalibration')
                     ? $this->tankModel->getLastCalibration($t['id'])
@@ -346,7 +372,7 @@ class ReportsController extends Controller
                     'last_calibration' => $lastCal ? date('Y-m-d', strtotime($lastCal)) : 'N/A',
                     'variance' => round($variance, 2)
                 ];
-            }, $tanks);
+            }, $filteredTanks);
 
             // 5. Employee/Worker Stats
             $workerStats = method_exists($this->saleModel, 'getWorkerPerformance')
@@ -612,15 +638,29 @@ class ReportsController extends Controller
             }
 
             // Fetch all sources (default behavior)
-            // Fetch Safes
-            $stmt = $db->prepare("SELECT id, name, balance FROM safes WHERE station_id = ? ORDER BY name ASC");
-            $stmt->execute([$stationId]);
-            $safes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            // Fetch Safes - show all if station_id is not set
+            if ($stationId) {
+                $stmt = $db->prepare("SELECT id, name, balance FROM safes WHERE station_id = ? ORDER BY name ASC");
+                $stmt->execute([$stationId]);
+                $safes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            }
+            // Fallback: if no station or station has no safes, fetch ALL safes
+            if (empty($safes)) {
+                $stmt = $db->query("SELECT id, name, balance FROM safes ORDER BY name ASC");
+                $safes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            }
 
-            // Fetch Banks
-            $stmt = $db->prepare("SELECT id, bank_name as name, balance FROM banks WHERE station_id = ? ORDER BY bank_name ASC");
-            $stmt->execute([$stationId]);
-            $banks = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            // Fetch Banks - show all if station_id is not set
+            if ($stationId) {
+                $stmt = $db->prepare("SELECT id, bank_name as name, balance FROM banks WHERE station_id = ? ORDER BY bank_name ASC");
+                $stmt->execute([$stationId]);
+                $banks = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            }
+            // Fallback: if no station or station has no banks, fetch ALL banks
+            if (empty($banks)) {
+                $stmt = $db->query("SELECT id, bank_name as name, balance FROM banks ORDER BY bank_name ASC");
+                $banks = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            }
 
             // Fetch Suppliers (global - no station filter)
             $stmt = $db->query("SELECT id, name, balance FROM suppliers ORDER BY name ASC");
@@ -912,7 +952,12 @@ class ReportsController extends Controller
         header('Content-Type: application/json');
 
         try {
+            $user = AuthHelper::user();
             $stationId = $_GET['station_id'] ?? 'all';
+
+            if ($user['role'] !== 'super_admin') {
+                $stationId = $user['station_id'];
+            }
             $date = $_GET['date'] ?? date('Y-m-d'); // Single date report as per image
 
             $db = \App\Config\Database::connect();
@@ -977,7 +1022,6 @@ class ReportsController extends Controller
                 // Get Opening (Reading from Yesterday's Closing OR Today's Opening)
                 $prevDate = date('Y-m-d', strtotime($date . ' -1 day'));
                 $openingVol = $this->tankModel->getReadingAt($tank['id'], $prevDate);
-                if ($openingVol === false) $openingVol = 0; // fallback
 
                 // Calculate Totals for this tank for the day
                 $salesVol = 0;
@@ -993,9 +1037,11 @@ class ReportsController extends Controller
                 $purchaseVol = $this->purchaseModel->getVolumeByTank($tank['id'], $date, $date);
 
                 $currentVol = $closingReading ? $closingReading['volume_liters'] : $tank['current_volume'];
-                // Note: If reporting for past date, $tank['current_volume'] is wrong. 
-                // But without historical log of 'volume at midnight', reading is best bet.
-                // Assuming operator enters reading daily.
+
+                // Fallback: if no reading exists, back-calculate opening
+                if ($openingVol === false || $openingVol === null || $openingVol == 0) {
+                    $openingVol = floatval($currentVol) + $salesVol - $purchaseVol;
+                }
 
                 $theoretical = $openingVol + $purchaseVol - $salesVol;
                 $actual = $currentVol;
@@ -1042,6 +1088,7 @@ class ReportsController extends Controller
         header('Content-Type: application/json');
 
         try {
+            $user = AuthHelper::user();
             $tankId = $_GET['tank_id'] ?? null;
             $date = $_GET['date'] ?? date('Y-m-d');
 
@@ -1060,8 +1107,16 @@ class ReportsController extends Controller
                         FROM tanks t
                         LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
                         WHERE t.id = ?";
+
+            // Enforce isolation
+            $params = [$tankId];
+            if ($user['role'] !== 'super_admin') {
+                $tankSql .= " AND t.station_id = ?";
+                $params[] = $user['station_id'];
+            }
+
             $stmt = $db->prepare($tankSql);
-            $stmt->execute([$tankId]);
+            $stmt->execute($params);
             $tank = $stmt->fetch(\PDO::FETCH_ASSOC);
 
             if (!$tank) {
@@ -1081,12 +1136,13 @@ class ReportsController extends Controller
                             s.volume_sold,
                             s.unit_price as price_per_liter,
                             s.total_amount,
-                            w.name as worker_name,
+                            COALESCE(w.name, w2.name) as worker_name,
                             p.name as machine_name,
                             c.name as counter_name
                         FROM sales s
                         LEFT JOIN workers w ON s.worker_id = w.id
                         LEFT JOIN counters c ON s.counter_id = c.id
+                        LEFT JOIN workers w2 ON c.current_worker_id = w2.id
                         LEFT JOIN pumps p ON c.pump_id = p.id
                         WHERE p.tank_id = ?
                         AND DATE(s.created_at) = ?
@@ -1128,10 +1184,10 @@ class ReportsController extends Controller
             $actual = $closingReading ? floatval($closingReading['volume_liters']) : floatval($tank['current_volume']);
 
             // If no historical reading exists, calculate opening balance
-            // Formula: Opening = Current + Sold - Purchases - Variance
-            // This gives the tank volume at start of day before any operations, accounting for calibration
+            // Formula: Opening = Actual + Sold - Purchases
+            // Variance is derived after opening is known, not used to compute it
             if ($openingVol === false || $openingVol === null || $openingVol == 0) {
-                $openingVol = $actual + $totalVolumeSold - $purchaseVol - $variance;
+                $openingVol = $actual + $totalVolumeSold - $purchaseVol;
             }
 
             // Calculate theoretical closing (what it should be based on math)
@@ -1195,7 +1251,7 @@ class ReportsController extends Controller
             $params[] = $stationId;
         }
 
-        $sql .= " ORDER BY cl.created_at DESC LIMIT 50";
+        $sql .= " ORDER BY c.created_at DESC LIMIT 50";
 
         $stmt = $db->prepare($sql);
         $stmt->execute($params);
@@ -1227,21 +1283,32 @@ class ReportsController extends Controller
             }
 
             // 2. Get All Purchases from this Supplier (all stations)
-            $stmt = $db->prepare("
+            $sql = "
                 SELECT 
                     p.*,
                     s.name as station_name,
                     t.name as tank_name,
-                    d.name as driver_name
+                    d.name as driver_name,
+                    ft.name as fuel_type_name
                 FROM purchases p
                 LEFT JOIN stations s ON p.station_id = s.id
                 LEFT JOIN tanks t ON p.tank_id = t.id
                 LEFT JOIN drivers d ON p.driver_id = d.id
+                LEFT JOIN fuel_types ft ON p.fuel_type_id = ft.id
                 WHERE p.supplier_id = ?
-                AND DATE(p.created_at) BETWEEN ? AND ?
-                ORDER BY p.created_at DESC
-            ");
-            $stmt->execute([$supplierId, $startDate, $endDate]);
+                AND DATE(p.created_at) BETWEEN ? AND ?";
+
+            $params = [$supplierId, $startDate, $endDate];
+            $user = AuthHelper::user();
+            if ($user['role'] !== 'super_admin') {
+                $sql .= " AND p.station_id = ?";
+                $params[] = $user['station_id'];
+            }
+
+            $sql .= " ORDER BY p.created_at DESC";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
             $purchases = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             // 3. Calculate Totals
@@ -1305,12 +1372,15 @@ class ReportsController extends Controller
 
                 // Add purchase transaction
                 $runningBalance += $purchaseValue;
+                $fuelLabel = $purchase['fuel_type_name'] ?? '';
                 $transactions[] = [
                     'date' => date('Y-m-d', strtotime($purchase['created_at'])),
                     'statement_title' => 'شراء ' . ($purchase['tank_name'] ?? 'وقود'),
                     'statement_subtitle' => 'فاتورة #' . $purchase['invoice_number'] . ' - ' . ($purchase['station_name'] ?? ''),
                     'type' => 'purchase',
-                    'category' => 'شراء',
+                    'category' => 'شراء' . ($fuelLabel ? ' ' . $fuelLabel : ''),
+                    'fuel_type' => $fuelLabel,
+                    'driver_name' => $purchase['driver_name'] ?? '',
                     'quantity' => $purchase['volume_received'],
                     'price' => $purchase['price_per_liter'],
                     'amount_paid' => 0,
@@ -1328,6 +1398,8 @@ class ReportsController extends Controller
                         'statement_subtitle' => 'دفعة مقابل فاتورة #' . $purchase['invoice_number'],
                         'type' => 'payment',
                         'category' => 'دفعة',
+                        'fuel_type' => '',
+                        'driver_name' => '',
                         'quantity' => 0,
                         'price' => 0,
                         'amount_paid' => $paidValue,
@@ -1358,6 +1430,8 @@ class ReportsController extends Controller
                         'statement_subtitle' => $trans['description'] ?: $categoryDisplay,
                         'type' => 'payment',
                         'category' => $categoryDisplay,
+                        'fuel_type' => '',
+                        'driver_name' => '',
                         'quantity' => 0,
                         'price' => 0,
                         'amount_paid' => $transAmount,
@@ -1374,6 +1448,8 @@ class ReportsController extends Controller
                         'statement_subtitle' => $trans['description'] ?: ($trans['category_name'] ?? 'إيراد'),
                         'type' => 'income',
                         'category' => $trans['category_name'] ?? 'إيراد',
+                        'fuel_type' => '',
+                        'driver_name' => '',
                         'quantity' => 0,
                         'price' => 0,
                         'amount_paid' => 0,
@@ -1429,7 +1505,7 @@ class ReportsController extends Controller
             $db = \App\Config\Database::connect();
 
             // Get all suppliers with their purchase stats
-            $stmt = $db->prepare("
+            $sql = "
                 SELECT 
                     sup.id,
                     sup.name,
@@ -1442,11 +1518,19 @@ class ReportsController extends Controller
                     COALESCE(SUM(p.paid_amount), 0) as total_paid
                 FROM suppliers sup
                 LEFT JOIN purchases p ON p.supplier_id = sup.id 
-                    AND DATE(p.created_at) BETWEEN ? AND ?
-                GROUP BY sup.id
-                ORDER BY total_cost DESC
-            ");
-            $stmt->execute([$startDate, $endDate]);
+                    AND DATE(p.created_at) BETWEEN ? AND ?";
+
+            $params = [$startDate, $endDate];
+            $user = AuthHelper::user();
+            if ($user['role'] !== 'super_admin') {
+                $sql .= " AND p.station_id = ?";
+                $params[] = $user['station_id'];
+            }
+
+            $sql .= " GROUP BY sup.id ORDER BY total_cost DESC";
+
+            $stmt = $db->prepare($sql);
+            $stmt->execute($params);
             $suppliers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             header('Content-Type: application/json');
@@ -1565,7 +1649,7 @@ class ReportsController extends Controller
                         'quantity' => 0,
                         'price' => 0,
                         'sale_value' => 0,
-                        'amount_paid' => $paidValue,
+                        'amount_paid' => $amountPaid,
                         'running_balance' => $runningBalance
                     ];
                 }
@@ -2271,6 +2355,646 @@ class ReportsController extends Controller
             echo json_encode([
                 'success' => false,
                 'message' => 'Error: ' . $e->getMessage()
+            ]);
+            exit;
+        }
+    }
+
+    public function getTankTransactionReport()
+    {
+        while (ob_get_level()) ob_end_clean();
+        header('Content-Type: application/json');
+
+        try {
+            $tankId = $_GET['tank_id'] ?? null;
+            $startDate = $_GET['start_date'] ?? date('Y-m-01');
+            $endDate = ($_GET['end_date'] ?? date('Y-m-d')) . ' 23:59:59';
+
+            if (!$tankId) {
+                echo json_encode(['success' => false, 'message' => 'Tank ID required']);
+                exit;
+            }
+
+            $db = \App\Config\Database::connect();
+
+            // 0. Get Tank Info (initial volume at creation)
+            $stmt = $db->prepare("SELECT name, current_volume, capacity_liters, created_at FROM tanks WHERE id = ?");
+            $stmt->execute([$tankId]);
+            $tankInfo = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$tankInfo) {
+                echo json_encode(['success' => false, 'message' => 'الخزان غير موجود']);
+                exit;
+            }
+
+            // 1. Derive the Initial Volume (volume at tank creation)
+            // Since current_volume = initial + all_offloads + all_direct_purchases - all_sales
+            // We reverse: initial = current - all_offloads - all_direct_purchases + all_sales
+
+            // Total offloads ever
+            $stmt = $db->prepare("
+                SELECT COALESCE(SUM(po.quantity), 0) 
+                FROM purchase_offloads po 
+                JOIN purchases p ON po.purchase_id = p.id 
+                WHERE po.tank_id = ?
+            ");
+            $stmt->execute([$tankId]);
+            $allOffloads = floatval($stmt->fetchColumn());
+
+            // Total direct purchases ever (legacy records without offload entries)
+            $stmt = $db->prepare("
+                SELECT COALESCE(SUM(p.volume_received), 0) 
+                FROM purchases p 
+                LEFT JOIN purchase_offloads po ON po.purchase_id = p.id AND po.tank_id = p.tank_id
+                WHERE p.tank_id = ? AND po.id IS NULL
+            ");
+            $stmt->execute([$tankId]);
+            $allDirectPurchases = floatval($stmt->fetchColumn());
+
+            // Total sales ever
+            $stmt = $db->prepare("
+                SELECT COALESCE(SUM(s.volume_sold), 0) 
+                FROM sales s
+                JOIN counters c ON s.counter_id = c.id
+                JOIN pumps p ON c.pump_id = p.id
+                WHERE p.tank_id = ?
+            ");
+            $stmt->execute([$tankId]);
+            $allSales = floatval($stmt->fetchColumn());
+
+            $currentVolume = floatval($tankInfo['current_volume']);
+            $initialVolume = $currentVolume - $allOffloads - $allDirectPurchases + $allSales;
+
+            // 2. Calculate Opening Balance (All activity before start date)
+            // Opening = Initial Volume + Offloads_before - Sales_before
+
+            // A. Total offloaded to this tank before period
+            $stmt = $db->prepare("
+                SELECT COALESCE(SUM(po.quantity), 0) as total 
+                FROM purchase_offloads po 
+                JOIN purchases p ON po.purchase_id = p.id 
+                WHERE po.tank_id = ? AND p.created_at < ?
+            ");
+            $stmt->execute([$tankId, $startDate]);
+            $offloadsBefore = floatval($stmt->fetchColumn());
+
+            // B. Total purchases directly to this tank (legacy) before period
+            $stmt = $db->prepare("
+                SELECT COALESCE(SUM(p.volume_received), 0) as total 
+                FROM purchases p 
+                LEFT JOIN purchase_offloads po ON po.purchase_id = p.id AND po.tank_id = p.tank_id
+                WHERE p.tank_id = ? AND p.created_at < ? AND po.id IS NULL
+            ");
+            $stmt->execute([$tankId, $startDate]);
+            $directPurchasesBefore = floatval($stmt->fetchColumn());
+
+            // C. Total sales from this tank before period
+            $stmt = $db->prepare("
+                SELECT COALESCE(SUM(s.volume_sold), 0) as total 
+                FROM sales s
+                JOIN counters c ON s.counter_id = c.id
+                JOIN pumps p ON c.pump_id = p.id
+                WHERE p.tank_id = ? AND s.sale_date < ?
+            ");
+            $stmt->execute([$tankId, $startDate]);
+            $salesBefore = floatval($stmt->fetchColumn());
+
+            // D. Last calibration adjustment before period (resets balance)
+            $lastCalibBefore = null;
+            try {
+                $stmt = $db->prepare("
+                    SELECT volume_liters, created_at 
+                    FROM tank_readings 
+                    WHERE tank_id = ? AND created_at < ? 
+                    ORDER BY created_at DESC LIMIT 1
+                ");
+                $stmt->execute([$tankId, $startDate]);
+                $lastCalibBefore = $stmt->fetch(\PDO::FETCH_ASSOC);
+            } catch (\Exception $e) {
+                // tank_readings table might not exist, skip
+            }
+
+            if ($lastCalibBefore) {
+                // If there was a calibration, calculate balance from that calibration point
+                $calibDate = $lastCalibBefore['created_at'];
+                $calibVolume = floatval($lastCalibBefore['volume_liters']);
+
+                // Add offloads after calibration but before period
+                $stmt = $db->prepare("
+                    SELECT COALESCE(SUM(po.quantity), 0) FROM purchase_offloads po 
+                    JOIN purchases p ON po.purchase_id = p.id 
+                    WHERE po.tank_id = ? AND p.created_at > ? AND p.created_at < ?
+                ");
+                $stmt->execute([$tankId, $calibDate, $startDate]);
+                $offloadsAfterCalib = floatval($stmt->fetchColumn());
+
+                // Add direct purchases after calibration but before period
+                $stmt = $db->prepare("
+                    SELECT COALESCE(SUM(p2.volume_received), 0) FROM purchases p2 
+                    LEFT JOIN purchase_offloads po ON po.purchase_id = p2.id AND po.tank_id = p2.tank_id
+                    WHERE p2.tank_id = ? AND p2.created_at > ? AND p2.created_at < ? AND po.id IS NULL
+                ");
+                $stmt->execute([$tankId, $calibDate, $startDate]);
+                $directAfterCalib = floatval($stmt->fetchColumn());
+
+                // Subtract sales after calibration but before period
+                $stmt = $db->prepare("
+                    SELECT COALESCE(SUM(s.volume_sold), 0) FROM sales s
+                    JOIN counters c ON s.counter_id = c.id
+                    JOIN pumps p ON c.pump_id = p.id
+                    WHERE p.tank_id = ? AND s.sale_date > ? AND s.sale_date < ?
+                ");
+                $stmt->execute([$tankId, $calibDate, $startDate]);
+                $salesAfterCalib = floatval($stmt->fetchColumn());
+
+                // Check for more recent calibrations between this one and start date
+                try {
+                    $stmt = $db->prepare("
+                        SELECT volume_liters FROM tank_readings 
+                        WHERE tank_id = ? AND created_at > ? AND created_at < ? 
+                        ORDER BY created_at DESC LIMIT 1
+                    ");
+                    $stmt->execute([$tankId, $calibDate, $startDate]);
+                    $laterCalib = $stmt->fetch(\PDO::FETCH_ASSOC);
+                } catch (\Exception $e) {
+                    $laterCalib = null;
+                }
+
+                if ($laterCalib) {
+                    $openingBalance = floatval($laterCalib['volume_liters']);
+                } else {
+                    $openingBalance = $calibVolume + $offloadsAfterCalib + $directAfterCalib - $salesAfterCalib;
+                }
+            } else {
+                // No calibration before period — include initial volume
+                $openingBalance = $initialVolume + $offloadsBefore + $directPurchasesBefore - $salesBefore;
+            }
+
+            // 2. Fetch Transactions in Period
+            $transactions = [];
+
+            // A. Purchase Offloads (In) - from purchase_offloads table
+            $stmt = $db->prepare("
+                SELECT 
+                    p.created_at as created_at_ts,
+                    DATE(p.created_at) as date,
+                    p.id,
+                    p.invoice_number,
+                    po.quantity as quantity_in,
+                    0 as quantity_out,
+                    'purchase' as type,
+                    'تفريغ شحنة' as description,
+                    NULL as user_name,
+                    p.driver_name,
+                    p.truck_number,
+                    NULL as notes,
+                    NULL as actual_volume,
+                    NULL as calibration_diff
+                FROM purchase_offloads po
+                JOIN purchases p ON po.purchase_id = p.id
+                WHERE po.tank_id = ? AND p.created_at BETWEEN ? AND ?
+            ");
+            $stmt->execute([$tankId, $startDate, $endDate]);
+            $transactions = array_merge($transactions, $stmt->fetchAll(\PDO::FETCH_ASSOC));
+
+            // A2. Legacy direct purchases (In) - purchases with tank_id but no offload record
+            $stmt = $db->prepare("
+                SELECT 
+                    p.created_at as created_at_ts,
+                    DATE(p.created_at) as date,
+                    p.id,
+                    p.invoice_number,
+                    p.volume_received as quantity_in,
+                    0 as quantity_out,
+                    'purchase' as type,
+                    'فاتورة مشتريات' as description,
+                    NULL as user_name,
+                    p.driver_name,
+                    p.truck_number,
+                    NULL as notes,
+                    NULL as actual_volume,
+                    NULL as calibration_diff
+                FROM purchases p
+                LEFT JOIN purchase_offloads po ON po.purchase_id = p.id AND po.tank_id = p.tank_id
+                WHERE p.tank_id = ? AND p.created_at BETWEEN ? AND ? AND po.id IS NULL
+            ");
+            $stmt->execute([$tankId, $startDate, $endDate]);
+            $transactions = array_merge($transactions, $stmt->fetchAll(\PDO::FETCH_ASSOC));
+
+            // B. Sales (Out)
+            $stmt = $db->prepare("
+                SELECT 
+                    s.created_at as created_at_ts,
+                    DATE(s.created_at) as date,
+                    s.id,
+                    s.invoice_number,
+                    0 as quantity_in,
+                    s.volume_sold as quantity_out,
+                    'sale' as type,
+                    'فاتورة مبيعات' as description,
+                    u.name as user_name,
+                    NULL as driver_name,
+                    NULL as truck_number,
+                    NULL as notes,
+                    NULL as actual_volume,
+                    NULL as calibration_diff
+                FROM sales s
+                JOIN counters c ON s.counter_id = c.id
+                JOIN pumps p ON c.pump_id = p.id
+                LEFT JOIN users u ON s.user_id = u.id
+                WHERE p.tank_id = ? AND s.sale_date BETWEEN ? AND ?
+            ");
+            $stmt->execute([$tankId, $startDate, $endDate]);
+            $transactions = array_merge($transactions, $stmt->fetchAll(\PDO::FETCH_ASSOC));
+
+            // C. Calibrations (tank_readings)
+            try {
+                $stmt = $db->prepare("
+                    SELECT 
+                        tr.created_at as created_at_ts,
+                        DATE(tr.created_at) as date,
+                        tr.id,
+                        NULL as invoice_number,
+                        0 as quantity_in,
+                        0 as quantity_out,
+                        'calibration' as type,
+                        'معايرة' as description,
+                        u.name as user_name,
+                        NULL as driver_name,
+                        NULL as truck_number,
+                        CONCAT('القراءة: ', tr.reading_cm, ' سم / الحجم: ', tr.volume_liters, ' لتر') as notes,
+                        tr.volume_liters as actual_volume,
+                        NULL as calibration_diff
+                    FROM tank_readings tr
+                    LEFT JOIN users u ON tr.user_id = u.id
+                    WHERE tr.tank_id = ? AND tr.created_at BETWEEN ? AND ?
+                ");
+                $stmt->execute([$tankId, $startDate, $endDate]);
+                $transactions = array_merge($transactions, $stmt->fetchAll(\PDO::FETCH_ASSOC));
+            } catch (\Exception $e) {
+                // tank_readings table might not exist, skip
+            }
+
+            // 3. Sort Everything by Date/Time
+            usort($transactions, function ($a, $b) {
+                return strtotime($a['created_at_ts']) - strtotime($b['created_at_ts']);
+            });
+
+            // 4. Calculate Running Balance & Totals
+            $currentBalance = $openingBalance;
+            $totalIn = 0;
+            $totalOut = 0;
+            $finalData = [];
+
+            foreach ($transactions as $key => &$t) {
+                if ($t['type'] === 'calibration') {
+                    // Calculate variance dynamically: actual_volume - currentBalance
+                    $actualVolume = floatval($t['actual_volume'] ?? 0);
+                    $variance = $actualVolume - $currentBalance;
+                    $t['calibration_diff'] = $variance;
+
+                    if ($variance > 0) {
+                        $t['quantity_in'] = $variance;
+                        $t['quantity_out'] = 0;
+                        $t['description'] = 'معايرة (زيادة)';
+                        $totalIn += $variance;
+                    } elseif ($variance < 0) {
+                        $t['quantity_in'] = 0;
+                        $t['quantity_out'] = abs($variance);
+                        $t['description'] = 'معايرة (نقصان)';
+                        $totalOut += abs($variance);
+                    } else {
+                        $t['description'] = 'معايرة (بدون فرق)';
+                    }
+
+                    // Set balance to actual volume (calibration resets balance)
+                    $currentBalance = $actualVolume;
+                    $t['balance'] = $currentBalance;
+                } else {
+                    $in = floatval($t['quantity_in']);
+                    $out = floatval($t['quantity_out']);
+
+                    $currentBalance = $currentBalance + $in - $out;
+                    $t['balance'] = $currentBalance;
+                    $totalIn += $in;
+                    $totalOut += $out;
+                }
+
+                // Add Unique Key for React
+                $t['unique_id'] = $t['type'] . '_' . ($t['id'] ?? $key);
+
+                $finalData[] = $t;
+            }
+
+            echo json_encode([
+                'success' => true,
+                'tank_name' => $tankInfo['name'],
+                'tank_capacity' => floatval($tankInfo['capacity_liters']),
+                'initial_volume' => $initialVolume,
+                'opening_balance' => $openingBalance,
+                'closing_balance' => $currentBalance,
+                'total_in' => $totalIn,
+                'total_out' => $totalOut,
+                'transactions' => $finalData
+            ]);
+        } catch (\Throwable $e) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false,
+                'message' => 'Error: ' . $e->getMessage()
+            ]);
+        }
+        exit;
+    }
+
+    /**
+     * Daily Closing Report – AI-style professional A4 report
+     */
+    private function getDailyClosing()
+    {
+        header('Content-Type: application/json');
+        try {
+            $user = AuthHelper::user();
+            $stationId = $_GET['station_id'] ?? ($user['station_id'] ?? 'all');
+            if ($user['role'] !== 'super_admin') {
+                $stationId = $user['station_id'];
+            }
+
+            $today = date('Y-m-d');
+            $db = \App\Config\Database::connect();
+
+            // ── 1. Station Info ──
+            $stationName = 'جميع المحطات';
+            if ($stationId !== 'all') {
+                $stmt = $db->prepare("SELECT name FROM stations WHERE id = ?");
+                $stmt->execute([$stationId]);
+                $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                if ($row) $stationName = $row['name'];
+            }
+
+            // ── 2. Sales by Fuel Type Today ──
+            $salesSql = "
+                SELECT 
+                    ft.name as fuel_name,
+                    COALESCE(SUM(s.volume_sold), 0) as total_liters,
+                    COALESCE(SUM(s.total_amount), 0) as total_amount,
+                    COUNT(s.id) as sale_count
+                FROM sales s
+                JOIN counters c ON s.counter_id = c.id
+                JOIN pumps p ON c.pump_id = p.id
+                JOIN tanks tk ON p.tank_id = tk.id
+                JOIN fuel_types ft ON tk.fuel_type_id = ft.id
+                WHERE s.sale_date = ?
+            ";
+            $params = [$today];
+            if ($stationId !== 'all') {
+                $salesSql .= " AND s.station_id = ?";
+                $params[] = $stationId;
+            }
+            $salesSql .= " GROUP BY ft.id, ft.name ORDER BY total_amount DESC";
+
+            $stmt = $db->prepare($salesSql);
+            $stmt->execute($params);
+            $salesByFuel = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            $totalSalesLiters = array_sum(array_column($salesByFuel, 'total_liters'));
+            $totalSalesAmount = array_sum(array_column($salesByFuel, 'total_amount'));
+            $totalSalesCount = array_sum(array_column($salesByFuel, 'sale_count'));
+
+            // ── 3. Expenses Today ──
+            $expSql = "
+                SELECT 
+                    COALESCE(tc.name, 'غير مصنف') as category_name,
+                    SUM(t.amount) as total_amount
+                FROM transactions t
+                LEFT JOIN transaction_categories tc ON t.category_id = tc.id
+                WHERE t.type = 'expense' AND DATE(t.date) = ?
+            ";
+            $expParams = [$today];
+            if ($stationId !== 'all') {
+                $expSql .= " AND t.station_id = ?";
+                $expParams[] = $stationId;
+            }
+            $expSql .= " GROUP BY tc.id, tc.name ORDER BY total_amount DESC";
+
+            $stmt = $db->prepare($expSql);
+            $stmt->execute($expParams);
+            $expenses = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $totalExpenses = array_sum(array_column($expenses, 'total_amount'));
+
+            // ── 4. Income Today (from transactions) ──
+            $incSql = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income' AND DATE(date) = ?";
+            $incParams = [$today];
+            if ($stationId !== 'all') {
+                $incSql .= " AND station_id = ?";
+                $incParams[] = $stationId;
+            }
+            $stmt = $db->prepare($incSql);
+            $stmt->execute($incParams);
+            $totalIncome = $stmt->fetchColumn() ?: 0;
+
+            // ── 5. Tank Stock Levels ──
+            $tanks = $this->tankModel->getAll();
+            $tankData = [];
+            $totalVariance = 0;
+            $varianceDetails = [];
+
+            foreach ($tanks as $t) {
+                if ($stationId !== 'all' && $t['station_id'] != $stationId) continue;
+
+                $fillPct = $t['capacity_liters'] > 0 ? round(($t['current_volume'] / $t['capacity_liters']) * 100, 1) : 0;
+
+                // Calculate today's variance
+                $variance = 0;
+                $salesVol = 0;
+                $purchaseVol = 0;
+
+                // Get yesterday's reading or last known
+                $opening = method_exists($this->tankModel, 'getReadingAt')
+                    ? $this->tankModel->getReadingAt($t['id'], date('Y-m-d', strtotime('-1 day')))
+                    : false;
+
+                if ($opening !== false) {
+                    $salesVol = method_exists($this->saleModel, 'getVolumeByTank')
+                        ? $this->saleModel->getVolumeByTank($t['id'], $today, $today) : 0;
+                    $purchaseVol = method_exists($this->purchaseModel, 'getVolumeByTank')
+                        ? $this->purchaseModel->getVolumeByTank($t['id'], $today, $today) : 0;
+
+                    $theoretical = $opening + $purchaseVol - $salesVol;
+                    $variance = $t['current_volume'] - $theoretical;
+                    $totalVariance += $variance;
+
+                    $varianceDetails[] = [
+                        'tank' => $t['name'],
+                        'fuel' => $t['fuel_name'],
+                        'variance' => round($variance, 2),
+                        'sales' => $salesVol
+                    ];
+                }
+
+                // Calculate days of stock remaining
+                // Get average daily sales for this tank over last 7 days
+                $avgSql = "
+                    SELECT COALESCE(AVG(daily_vol), 0) as avg_daily
+                    FROM (
+                        SELECT s.sale_date, COALESCE(SUM(s.volume_sold), 0) as daily_vol
+                        FROM sales s
+                        JOIN counters c ON s.counter_id = c.id
+                        JOIN pumps p ON c.pump_id = p.id
+                        WHERE p.tank_id = ?
+                        AND s.sale_date BETWEEN DATE_SUB(?, INTERVAL 7 DAY) AND DATE_SUB(?, INTERVAL 1 DAY)
+                        GROUP BY s.sale_date
+                    ) daily
+                ";
+                $stmt = $db->prepare($avgSql);
+                $stmt->execute([$t['id'], $today, $today]);
+                $avgDaily = floatval($stmt->fetchColumn() ?: 0);
+                $daysRemaining = $avgDaily > 0 ? round($t['current_volume'] / $avgDaily, 1) : null;
+
+                $tankData[] = [
+                    'name' => $t['name'],
+                    'fuel' => $t['fuel_name'],
+                    'volume' => $t['current_volume'],
+                    'capacity' => $t['capacity_liters'],
+                    'fill_pct' => $fillPct,
+                    'value' => round($t['current_volume'] * $t['current_price'], 2),
+                    'price' => $t['current_price'],
+                    'variance' => round($variance, 2),
+                    'days_remaining' => $daysRemaining,
+                    'avg_daily_sales' => round($avgDaily, 1)
+                ];
+            }
+
+            // ── 6. Cash Balances ──
+            $safes = [];
+            $banks = [];
+            try {
+                if ($stationId === 'all') {
+                    $stmt = $db->query("SELECT name, balance FROM safes ORDER BY balance DESC");
+                } else {
+                    $stmt = $db->prepare("SELECT name, balance FROM safes WHERE station_id = ? ORDER BY balance DESC");
+                    $stmt->execute([$stationId]);
+                }
+                $safes = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                if ($stationId === 'all') {
+                    $stmt = $db->query("SELECT bank_name as name, balance FROM banks ORDER BY balance DESC");
+                } else {
+                    $stmt = $db->prepare("SELECT bank_name as name, balance FROM banks WHERE station_id = ? ORDER BY balance DESC");
+                    $stmt->execute([$stationId]);
+                }
+                $banks = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            } catch (\Exception $e) { /* tables may not exist */
+            }
+
+            $totalSafes = array_sum(array_column($safes, 'balance'));
+            $totalBanks = array_sum(array_column($banks, 'balance'));
+
+            // ── 7. AI Smart Notes ──
+            $notes = [];
+
+            // Note 1: Variance / Matching Status
+            $hasDeficit = false;
+            foreach ($varianceDetails as $v) {
+                if ($v['variance'] < -5) { // > 5 liters deficit is notable
+                    $hasDeficit = true;
+                    $notes[] = [
+                        'type' => 'warning',
+                        'icon' => '⚠️',
+                        'text' => "تنبيه: يوجد فرق (عجز) بمقدار " . abs($v['variance']) . " لتر في " . $v['fuel'] . " (" . $v['tank'] . "). يرجى فحص التوصيلات أو معايرة المضخة."
+                    ];
+                }
+            }
+            if (!$hasDeficit && !empty($varianceDetails)) {
+                $notes[] = [
+                    'type' => 'success',
+                    'icon' => '✅',
+                    'text' => "النظام يشير إلى مطابقة تامة بين مبيعات العدادات ونقص المخزون الفعلي. أداء العمليات مستقر."
+                ];
+            }
+
+            // Note 2: Stock Predictions
+            foreach ($tankData as $td) {
+                if ($td['days_remaining'] !== null && $td['days_remaining'] <= 3 && $td['days_remaining'] > 0) {
+                    $hours = round($td['days_remaining'] * 24);
+                    $notes[] = [
+                        'type' => 'fuel',
+                        'icon' => '⛽',
+                        'text' => "ذكاء المخزون: بناءً على معدل البيع الحالي، مخزون {$td['fuel']} ({$td['name']}) سينفد خلال {$hours} ساعة. يوصى بطلب شحنة جديدة الآن."
+                    ];
+                } elseif ($td['fill_pct'] < 15) {
+                    $notes[] = [
+                        'type' => 'fuel',
+                        'icon' => '🔴',
+                        'text' => "مخزون {$td['fuel']} ({$td['name']}) منخفض جداً ({$td['fill_pct']}%). يجب التزويد فوراً."
+                    ];
+                }
+            }
+
+            // Note 3: Cash Flow
+            $netToday = $totalIncome - $totalExpenses;
+            if ($netToday > 0) {
+                $notes[] = [
+                    'type' => 'info',
+                    'icon' => '💰',
+                    'text' => "التدفق النقدي لليوم إيجابي بمبلغ " . number_format($netToday, 2) . " ج.س. الوضع المالي مستقر."
+                ];
+            } elseif ($netToday < 0) {
+                $notes[] = [
+                    'type' => 'warning',
+                    'icon' => '📉',
+                    'text' => "التدفق النقدي لليوم سالب بمبلغ " . number_format(abs($netToday), 2) . " ج.س. المصروفات تجاوزت الإيرادات."
+                ];
+            }
+
+            // Note 4: Sales performance
+            if ($totalSalesCount == 0) {
+                $notes[] = [
+                    'type' => 'info',
+                    'icon' => '📊',
+                    'text' => "لم يتم تسجيل أي مبيعات اليوم حتى الآن."
+                ];
+            } elseif ($totalSalesCount > 0) {
+                $avgPerSale = $totalSalesAmount / $totalSalesCount;
+                $notes[] = [
+                    'type' => 'info',
+                    'icon' => '📊',
+                    'text' => "تم تنفيذ {$totalSalesCount} عملية بيع اليوم بمتوسط " . number_format($avgPerSale, 2) . " ج.س لكل عملية."
+                ];
+            }
+
+            echo json_encode([
+                'success' => true,
+                'date' => $today,
+                'station_name' => $stationName,
+                'sales' => [
+                    'by_fuel' => $salesByFuel,
+                    'total_liters' => $totalSalesLiters,
+                    'total_amount' => $totalSalesAmount,
+                    'total_count' => $totalSalesCount
+                ],
+                'financial' => [
+                    'total_income' => $totalIncome,
+                    'total_expenses' => $totalExpenses,
+                    'net_profit' => $totalIncome - $totalExpenses,
+                    'expenses_breakdown' => $expenses
+                ],
+                'inventory' => $tankData,
+                'cash' => [
+                    'safes' => $safes,
+                    'banks' => $banks,
+                    'total_safes' => $totalSafes,
+                    'total_banks' => $totalBanks,
+                    'total_cash' => $totalSafes + $totalBanks
+                ],
+                'ai_notes' => $notes
+            ]);
+            exit;
+        } catch (\Throwable $e) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage(),
+                'line' => $e->getLine()
             ]);
             exit;
         }

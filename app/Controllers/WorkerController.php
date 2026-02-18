@@ -25,6 +25,16 @@ class WorkerController extends Controller
         ]);
     }
 
+    public function list_ajax()
+    {
+        $stationId = AuthHelper::user()['station_id'];
+        $workerModel = new Worker();
+        $workers = $workerModel->getAll($stationId);
+
+        // Normalize data for frontend if needed, but getAll returns array
+        echo json_encode(['success' => true, 'workers' => $workers]);
+    }
+
     public function create_ajax()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

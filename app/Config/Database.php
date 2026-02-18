@@ -12,6 +12,16 @@ class Database
     private static $username = 'root';
     private static $password = '';
     private static $conn = null;
+    private static $timezoneOffset = null;
+
+    /**
+     * Store timezone offset so it persists across reconnections.
+     * Called from index.php after reading the timezone setting.
+     */
+    public static function setTimezone($offset)
+    {
+        self::$timezoneOffset = $offset;
+    }
 
     private static function loadConfig()
     {
@@ -93,10 +103,14 @@ class Database
                     self::$password,
                     $options
                 );
+
+                // Apply timezone if configured (survives reconnect/ping)
+                if (self::$timezoneOffset) {
+                    self::$conn->exec("SET time_zone = '" . self::$timezoneOffset . "'");
+                }
             } catch (PDOException $e) {
-                // On production, hide detailed errors
-                // die("Database Connection Error");
-                die("Connection Error: " . $e->getMessage());
+                error_log("Database Connection Error: " . $e->getMessage());
+                die("خطأ في الاتصال بقاعدة البيانات - يرجى المحاولة لاحقاً");
             }
         }
         return self::$conn;

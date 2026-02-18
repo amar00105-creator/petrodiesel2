@@ -24,10 +24,27 @@ class Staff extends Model
         return $stmt->fetch();
     }
 
+    public function findByUsername($username)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = :username LIMIT 1");
+        $stmt->bindParam(':username', $username);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
+    public function findByEmailOrUsername($identifier)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :identifier OR username = :identifier2 LIMIT 1");
+        $stmt->bindParam(':identifier', $identifier);
+        $stmt->bindParam(':identifier2', $identifier);
+        $stmt->execute();
+        return $stmt->fetch();
+    }
+
     public function create($data)
     {
-        $sql = "INSERT INTO users (station_id, name, email, password_hash, google_id, role, status) 
-                VALUES (:station_id, :name, :email, :password_hash, :google_id, :role, :status)";
+        $sql = "INSERT INTO users (station_id, name, username, email, password_hash, google_id, role, status) 
+                VALUES (:station_id, :name, :username, :email, :password_hash, :google_id, :role, :status)";
 
         // Robust Fallback for Station ID
         if (empty($data['station_id'])) {
@@ -48,6 +65,7 @@ class Staff extends Model
         $stmt->execute([
             ':station_id' => $data['station_id'],
             ':name' => $data['name'],
+            ':username' => $data['username'] ?? null,
             ':email' => $data['email'],
             ':password_hash' => $data['password_hash'] ?? null, // Can be null if using Google only
             ':google_id' => $data['google_id'] ?? null,

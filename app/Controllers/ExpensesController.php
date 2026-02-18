@@ -150,7 +150,7 @@ class ExpensesController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        if (!AuthHelper::can('expenses_delete')) {
+        if (!AuthHelper::can('expenses.delete')) {
             echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             return;
         }
@@ -175,7 +175,7 @@ class ExpensesController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        if (!AuthHelper::can('expenses_edit')) {
+        if (!AuthHelper::can('expenses.edit')) {
             // Assuming permission
         }
 

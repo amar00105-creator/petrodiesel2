@@ -57,15 +57,7 @@ class Router
             $uri = '/';
         }
 
-        file_put_contents(
-            __DIR__ . '/../../debug_router.txt',
-            "Original URI: " . $_SERVER['REQUEST_URI'] . "\n" .
-                "Script Dir: " . $scriptDir . "\n" .
-                "Calculated URI: " . $uri . "\n" .
-                "Method: " . $method . "\n" .
-                "Routes Count: " . count($this->routes) . "\n",
-            FILE_APPEND
-        );
+
 
         // Handle Preflight OPTIONS requests
         if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -90,8 +82,7 @@ class Router
 
                 foreach ($this->routes as $route) {
                     if ($route['path'] === $altUri && strtoupper($route['method']) === strtoupper($method)) {
-                        // Log this fallback success for debugging
-                        file_put_contents(__DIR__ . '/../../debug_router.txt', "Fallback Match! URI: $altUri\n", FILE_APPEND);
+
                         return $this->executeRoute($route);
                     }
                 }
@@ -100,9 +91,7 @@ class Router
 
         // 404
         http_response_code(404);
-        file_put_contents(__DIR__ . '/../../debug_router.txt', "404 Not Found for URI: $uri\n", FILE_APPEND);
-        echo "404 Not Found - URI Treated: " . htmlspecialchars($uri) . "<br>";
-        echo "Script Dir: " . htmlspecialchars($scriptDir);
+        echo "404 - الصفحة غير موجودة";
     }
 
     private function executeRoute($route)
@@ -115,10 +104,14 @@ class Router
             if (method_exists($controller, $action)) {
                 return $controller->$action();
             } else {
-                file_put_contents(__DIR__ . '/../../debug_router.txt', "Method $action NOT FOUND in $controllerClass\n", FILE_APPEND);
+                error_log("Router: Method $action NOT FOUND in $controllerClass");
+                http_response_code(404);
+                echo "404 - الصفحة غير موجودة";
             }
         } else {
-            file_put_contents(__DIR__ . '/../../debug_router.txt', "Class $controllerClass NOT FOUND\n", FILE_APPEND);
+            error_log("Router: Class $controllerClass NOT FOUND");
+            http_response_code(404);
+            echo "404 - الصفحة غير موجودة";
         }
     }
 }

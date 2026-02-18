@@ -19,6 +19,7 @@
     <script>
         window.BASE_URL = "<?= BASE_URL ?>";
         window.AUTO_LOCK_MINUTES = <?= $autoLockMinutes ?? 0 ?>;
+        window.justLoggedIn = <?= !empty($justLoggedIn) ? 'true' : 'false' ?>;
 
         // Immediate Theme Application
         (function() {
@@ -57,6 +58,223 @@
 </head>
 
 <body>
+    <?php if (!empty($justLoggedIn) || !empty($justSwitchedStation)): ?>
+        <!-- Pure PHP/CSS Welcome Overlay - No React dependency -->
+        <div id="welcome-overlay-php" style="
+    position: fixed; inset: 0; z-index: 999999;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at center, rgba(2,6,23,0.97) 0%, rgba(2,6,23,0.99) 100%);
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    font-family: 'Cairo', sans-serif; direction: rtl;
+    animation: welOverlayIn 0.6s ease-out forwards;
+    transition: opacity 0.6s ease-out;
+">
+            <style>
+                @keyframes welOverlayIn {
+                    from {
+                        opacity: 0;
+                    }
+
+                    to {
+                        opacity: 1;
+                    }
+                }
+
+                @keyframes welContentUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(40px) scale(0.85);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+
+                @keyframes welIconPop {
+                    0% {
+                        opacity: 0;
+                        transform: scale(0) rotate(-20deg);
+                    }
+
+                    60% {
+                        transform: scale(1.15) rotate(5deg);
+                    }
+
+                    100% {
+                        opacity: 1;
+                        transform: scale(1) rotate(0deg);
+                    }
+                }
+
+                @keyframes welTextReveal {
+                    from {
+                        opacity: 0;
+                        transform: translateY(15px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                @keyframes welLineGrow {
+                    from {
+                        transform: scaleX(0);
+                    }
+
+                    to {
+                        transform: scaleX(1);
+                    }
+                }
+
+                @keyframes welBadgePop {
+                    0% {
+                        opacity: 0;
+                        transform: translateY(15px) scale(0.8);
+                    }
+
+                    60% {
+                        transform: translateY(-3px) scale(1.05);
+                    }
+
+                    100% {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+
+                @keyframes welBarFill {
+                    from {
+                        width: 0%;
+                    }
+
+                    to {
+                        width: 100%;
+                    }
+                }
+
+                @keyframes welGlowRotate {
+                    from {
+                        transform: translate(-50%, -50%) rotate(0deg);
+                    }
+
+                    to {
+                        transform: translate(-50%, -50%) rotate(360deg);
+                    }
+                }
+
+                @keyframes welPulseRing {
+                    0% {
+                        transform: scale(1);
+                        opacity: 0.6;
+                    }
+
+                    100% {
+                        transform: scale(2.5);
+                        opacity: 0;
+                    }
+                }
+
+                @keyframes welShimmer {
+                    0% {
+                        background-position: -200% center;
+                    }
+
+                    100% {
+                        background-position: 200% center;
+                    }
+                }
+
+                @keyframes welParticle {
+                    0% {
+                        transform: translateY(0) scale(1);
+                        opacity: 0.4;
+                    }
+
+                    50% {
+                        transform: translateY(-30px) scale(1.3);
+                        opacity: 0.7;
+                    }
+
+                    100% {
+                        transform: translateY(0) scale(1);
+                        opacity: 0.4;
+                    }
+                }
+            </style>
+
+            <!-- Ambient particles -->
+            <div style="position:absolute;width:220px;height:220px;left:10%;top:15%;background:radial-gradient(circle,rgba(16,185,129,0.06) 0%,transparent 70%);border-radius:50%;animation:welParticle 4s ease-in-out infinite;"></div>
+            <div style="position:absolute;width:290px;height:290px;left:25%;top:40%;background:radial-gradient(circle,rgba(59,130,246,0.05) 0%,transparent 70%);border-radius:50%;animation:welParticle 5s ease-in-out infinite 0.4s;"></div>
+            <div style="position:absolute;width:360px;height:360px;right:15%;top:20%;background:radial-gradient(circle,rgba(168,85,247,0.04) 0%,transparent 70%);border-radius:50%;animation:welParticle 6s ease-in-out infinite 0.8s;"></div>
+
+            <!-- Content -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:20px;padding:48px;max-width:480px;text-align:center;animation:welContentUp 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;">
+
+                <!-- Fuel Icon -->
+                <div style="position:relative;animation:welIconPop 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.3s both;">
+                    <div style="position:absolute;top:50%;left:50%;width:160px;height:160px;background:conic-gradient(from 0deg,rgba(16,185,129,0.35),rgba(59,130,246,0.35),rgba(168,85,247,0.35),rgba(16,185,129,0.35));border-radius:50%;filter:blur(25px);animation:welGlowRotate 8s linear infinite;"></div>
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:112px;height:112px;border-radius:50%;border:2px solid rgba(16,185,129,0.3);animation:welPulseRing 2s ease-out infinite;"></div>
+                    <div style="position:relative;width:112px;height:112px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(16,185,129,0.12) 0%,rgba(59,130,246,0.12) 100%);border:2px solid rgba(16,185,129,0.3);box-shadow:0 0 40px rgba(16,185,129,0.2),0 0 80px rgba(59,130,246,0.1);">
+                        <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 22V5C3 3.89543 3.89543 3 5 3H13C14.1046 3 15 3.89543 15 5V22" stroke="url(#fgW)" stroke-width="1.6" stroke-linecap="round" />
+                            <path d="M2 22H16" stroke="url(#fgW)" stroke-width="1.6" stroke-linecap="round" />
+                            <rect x="6" y="8" width="6" height="4" rx="0.5" stroke="url(#fgW)" stroke-width="1.3" fill="rgba(16,185,129,0.12)" />
+                            <path d="M15 7L17.5 4.5C18.33 3.67 19.67 3.67 20.5 4.5C21.05 5.05 21.05 5.95 20.5 6.5L19 8V14C19 15.1 19.9 16 21 16" stroke="url(#fgW)" stroke-width="1.3" stroke-linecap="round" />
+                            <defs>
+                                <linearGradient id="fgW" x1="2" y1="3" x2="22" y2="22">
+                                    <stop stop-color="#10b981" />
+                                    <stop offset="0.5" stop-color="#3b82f6" />
+                                    <stop offset="1" stop-color="#a855f7" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Greeting -->
+                <div style="font-size:17px;font-weight:600;color:rgba(148,163,184,0.85);letter-spacing:0.08em;animation:welTextReveal 0.6s ease-out 0.7s both;">مرحباً بك يا</div>
+
+                <!-- User Name -->
+                <div style="font-size:38px;font-weight:900;background:linear-gradient(135deg,#ffffff 0%,#e2e8f0 50%,#94a3b8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;animation:welTextReveal 0.6s ease-out 0.85s both;">
+                    <?= htmlspecialchars($user['name'] ?? 'مستخدم') ?>
+                </div>
+
+                <!-- Divider -->
+                <div style="width:80px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(16,185,129,0.5),rgba(59,130,246,0.5),transparent);animation:welLineGrow 0.6s ease-out 0.95s both;transform-origin:center;"></div>
+
+                <!-- Station Label -->
+                <div style="font-size:15px;font-weight:500;color:rgba(148,163,184,0.6);animation:welTextReveal 0.5s ease-out 1.05s both;">في محطة</div>
+
+                <!-- Station Badge -->
+                <div style="position:relative;padding:12px 32px;border-radius:16px;background:linear-gradient(135deg,rgba(16,185,129,0.1) 0%,rgba(59,130,246,0.1) 100%);border:1px solid rgba(16,185,129,0.22);box-shadow:0 0 30px rgba(16,185,129,0.12),0 0 60px rgba(59,130,246,0.06);animation:welBadgePop 0.7s cubic-bezier(0.34,1.56,0.64,1) 1.15s both;">
+                    <div style="font-size:28px;font-weight:900;background:linear-gradient(135deg,#10b981 0%,#3b82f6 50%,#a855f7 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200% auto;animation:welShimmer 3s linear infinite 1.5s;">
+                        ⛽ <?= htmlspecialchars($user['station_name'] ?? 'المحطة') ?>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="width:180px;height:3px;border-radius:3px;background:rgba(255,255,255,0.05);overflow:hidden;margin-top:12px;animation:welTextReveal 0.4s ease-out 1.3s both;">
+                    <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#10b981,#3b82f6,#a855f7);animation:welBarFill 1.0s ease-in-out 1.4s both;"></div>
+                </div>
+            </div>
+        </div>
+        <script>
+            // Auto-fade welcome overlay after 2.5 seconds
+            setTimeout(function() {
+                var el = document.getElementById('welcome-overlay-php');
+                if (el) {
+                    el.style.opacity = '0';
+                    setTimeout(function() {
+                        el.remove();
+                    }, 600);
+                }
+            }, 2500);
+        </script>
+    <?php endif; ?>
     <!-- Mobile Header (Visible only on mobile) -->
     <div class="mobile-header">
         <div class="d-flex align-items-center gap-2">
@@ -108,15 +326,17 @@
 
         <nav class="sidebar-nav">
             <!-- الرئيسية -->
-            <div class="nav-item <?= ($_SERVER['REQUEST_URI'] == '/PETRODIESEL2/public/' || $_SERVER['REQUEST_URI'] == '/PETRODIESEL2/public') ? 'active' : '' ?>"
-                onclick="window.location.href='<?= BASE_URL ?>/'"
-                style="cursor: pointer;">
-                <i class="fas fa-home nav-icon"></i>
-                <span class="nav-text">لوحة التحكم</span>
-            </div>
+            <?php if (App\Helpers\AuthHelper::can('dashboard.view')): ?>
+                <div class="nav-item <?= ($_SERVER['REQUEST_URI'] == '/PETRODIESEL2/public/' || $_SERVER['REQUEST_URI'] == '/PETRODIESEL2/public') ? 'active' : '' ?>"
+                    onclick="window.location.href='<?= BASE_URL ?>/'"
+                    style="cursor: pointer;">
+                    <i class="fas fa-home nav-icon"></i>
+                    <span class="nav-text">لوحة التحكم</span>
+                </div>
+            <?php endif; ?>
 
             <!-- المشتريات -->
-            <?php if (App\Helpers\AuthHelper::can('purchases_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('purchases.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/purchases') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/purchases'"
                     style="cursor: pointer;">
@@ -126,7 +346,7 @@
             <?php endif; ?>
 
             <!-- المبيعات -->
-            <?php if (App\Helpers\AuthHelper::can('sales_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('sales.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/sales') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/sales'"
                     style="cursor: pointer;">
@@ -136,7 +356,7 @@
             <?php endif; ?>
 
             <!-- المكن والعدادات -->
-            <?php if (App\Helpers\AuthHelper::can('tanks_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('pumps.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/pumps') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/pumps'"
                     style="cursor: pointer;">
@@ -146,7 +366,7 @@
             <?php endif; ?>
 
             <!-- الخزانات -->
-            <?php if (App\Helpers\AuthHelper::can('tanks_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('inventory.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/tanks') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/tanks'"
                     style="cursor: pointer;">
@@ -156,7 +376,7 @@
             <?php endif; ?>
 
             <!-- الحسابات -->
-            <?php if (App\Helpers\AuthHelper::can('finance_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('finance.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/accounting') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/accounting'"
                     style="cursor: pointer;">
@@ -176,7 +396,7 @@
             */ ?>
 
             <!-- الموظفين -->
-            <?php if (App\Helpers\AuthHelper::can('settings_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('hr.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/hr') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/hr'"
                     style="cursor: pointer;">
@@ -186,7 +406,7 @@
             <?php endif; ?>
 
             <!-- العملاء والموردون -->
-            <?php if (App\Helpers\AuthHelper::can('purchases_view') || App\Helpers\AuthHelper::can('sales_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('suppliers.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/suppliers') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/suppliers'"
                     style="cursor: pointer;">
@@ -196,21 +416,17 @@
             <?php endif; ?>
 
             <!-- التقارير -->
-            <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/reports') !== false ? 'active' : '' ?>"
-                onclick="window.location.href='<?= BASE_URL ?>/reports'"
-                style="cursor: pointer;">
-                <i class="fas fa-chart-bar nav-icon"></i>
-                <span class="nav-text">التقارير</span>
-            </div>
-
-            <!-- إدارة المحطات (Super Admin Only) -->
-            <!-- إدارة المحطات (Moved to Settings) -->
-            <?php
-            // Link Removed
-            ?>
+            <?php if (App\Helpers\AuthHelper::can('reports.view')): ?>
+                <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/reports') !== false ? 'active' : '' ?>"
+                    onclick="window.location.href='<?= BASE_URL ?>/reports'"
+                    style="cursor: pointer;">
+                    <i class="fas fa-chart-bar nav-icon"></i>
+                    <span class="nav-text">التقارير</span>
+                </div>
+            <?php endif; ?>
 
             <!-- الإعدادات -->
-            <?php if (App\Helpers\AuthHelper::can('settings_view')): ?>
+            <?php if (App\Helpers\AuthHelper::can('settings.view')): ?>
                 <div class="nav-item <?= strpos($_SERVER['REQUEST_URI'], '/settings') !== false ? 'active' : '' ?>"
                     onclick="window.location.href='<?= BASE_URL ?>/settings'"
                     style="cursor: pointer;">

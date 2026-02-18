@@ -12,14 +12,18 @@ class AuthController extends Controller
     public function login()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email = $_POST['email'] ?? '';
+            $identifier = trim($_POST['identifier'] ?? $_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
             $userModel = new Staff();
-            $user = $userModel->findByEmail($email);
+
+            // Try to find by email or username
+            $user = $userModel->findByEmailOrUsername($identifier);
 
             if ($user && password_verify($password, $user['password_hash'])) {
                 AuthHelper::login($user);
+                $_SESSION['just_logged_in'] = true;
+                setcookie('just_logged_in', '1', time() + 60, '/'); // Cookie expires in 60 seconds
 
                 // Log successful login
                 try {
@@ -31,11 +35,117 @@ class AuthController extends Controller
 
                 $this->redirect('/');
             } else {
-                $error = "البريد الإلكتروني أو كلمة المرور غير صحيحة";
+                $error = "البريد الإلكتروني/اسم المستخدم أو كلمة المرور غير صحيحة";
                 $this->view('auth/login', ['error' => $error], false);
             }
         } else {
             $this->view('auth/login', [], false);
+        }
+    }
+
+    public function showRegister()
+    {
+        $this->view('auth/register', [], false);
+    }
+
+    public function register()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $username = trim($_POST['username'] ?? '');
+            $name = trim($_POST['name'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+            $password_confirm = $_POST['password_confirm'] ?? '';
+
+            $errors = [];
+
+            // Validation
+            if (empty($username)) {
+                $errors[] = "اسم المستخدم مطلوب";
+            } elseif (strlen($username) < 3) {
+                $errors[] = "اسم المستخدم يجب أن يكون 3 أحرف على الأقل";
+            } elseif (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+                $errors[] = "اسم المستخدم يجب أن يحتوي على حروف إنجليزية وأرقام فقط";
+            }
+
+            if (empty($name)) {
+                $errors[] = "الاسم الكامل مطلوب";
+            }
+
+            if (empty($email)) {
+                $errors[] = "البريد الإلكتروني مطلوب";
+            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $errors[] = "البريد الإلكتروني غير صحيح";
+            }
+
+            if (empty($password)) {
+                $errors[] = "كلمة المرور مطلوبة";
+            } elseif (strlen($password) < 6) {
+                $errors[] = "كلمة المرور يجب أن تكون 6 أحرف على الأقل";
+            }
+
+            if ($password !== $password_confirm) {
+                $errors[] = "كلمة المرور وتأكيدها غير متطابقتين";
+            }
+
+            // Check unique constraints
+            if (empty($errors)) {
+                $userModel = new Staff();
+
+                if ($userModel->findByEmail($email)) {
+                    $errors[] = "البريد الإلكتروني مسجل بالفعل";
+                }
+
+                if ($userModel->findByUsername($username)) {
+                    $errors[] = "اسم المستخدم مستخدم بالفعل";
+                }
+            }
+
+            if (!empty($errors)) {
+                $this->view('auth/register', [
+                    'errors' => $errors,
+                    'old' => [
+                        'username' => $username,
+                        'name' => $name,
+                        'email' => $email
+                    ]
+                ], false);
+                return;
+            }
+
+            // Create User
+            try {
+                $userModel = new Staff();
+                $userId = $userModel->create([
+                    'username' => $username,
+                    'name' => $name,
+                    'email' => $email,
+                    'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                    'role' => 'viewer'
+                ]);
+
+                // Log registration
+                try {
+                    $logModel = new \App\Models\ActivityLog();
+                    $logModel->log($userId, 'register', 'session', null, "تسجيل حساب جديد: {$name}");
+                } catch (\Exception $e) {
+                    // Silently fail
+                }
+
+                // Redirect to login with success message
+                $this->view('auth/login', ['success' => 'تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.'], false);
+            } catch (\Exception $e) {
+                $this->view('auth/register', [
+                    'errors' => ['حدث خطأ أثناء إنشاء الحساب. يرجى المحاولة مرة أخرى.'],
+                    'old' => [
+                        'username' => $username,
+                        'name' => $name,
+                        'email' => $email
+                    ]
+                ], false);
+            }
+        } else {
+            $this->showRegister();
         }
     }
 

@@ -118,7 +118,7 @@ class SupplierController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        if (!AuthHelper::can('suppliers_delete')) {
+        if (!AuthHelper::can('suppliers.delete')) {
             echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             return;
         }

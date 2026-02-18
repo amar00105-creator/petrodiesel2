@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Search, Filter, ArrowUp, ArrowDown, RefreshCw, Layers, Droplets, Briefcase, DollarSign, Wallet, FileDown, FileSpreadsheet, TrendingUp, Activity, CheckCircle, AlertCircle } from 'lucide-react';
-import { Card, Title, Text, Metric, Select, SelectItem, DateRangePicker } from '@tremor/react';
+import { Calendar, Search, Filter, ArrowUp, ArrowDown, RefreshCw, Layers, Droplets, Briefcase, DollarSign, Wallet, FileDown, FileSpreadsheet, TrendingUp, Activity, CheckCircle, AlertCircle, Eye, Printer } from 'lucide-react';
 import { toast } from 'sonner';
+import { openPrintPreview, extractTableHTML } from './utils/printPreview';
 
 export default function FinancialFlowReport({ initialGroup }) {
     const today = new Date();
@@ -29,7 +29,7 @@ export default function FinancialFlowReport({ initialGroup }) {
     }, []);
 
     useEffect(() => {
-        if (filters.source_id) {
+        if (filters.source_id && filters.start_date && filters.end_date) {
             if (filters.start_date > filters.end_date) {
                toast.warning('تم تصحيح التاريخ: تاريخ البداية لا يمكن أن يكون بعد النهاية');
                setFilters(prev => ({ ...prev, start_date: prev.end_date, end_date: prev.start_date }));
@@ -41,19 +41,28 @@ export default function FinancialFlowReport({ initialGroup }) {
 
     const fetchSources = async () => {
         try {
+            console.log('[DEBUG] fetchSources: calling /reports?action=get_sources');
             const response = await fetch(`${window.BASE_URL || ''}/reports?action=get_sources`);
             const result = await response.json();
+            console.log('[DEBUG] fetchSources result:', JSON.stringify(result).substring(0, 500));
             
             if (result.success) {
                 setSources({ safes: result.safes || [], banks: result.banks || [] });
+                console.log('[DEBUG] Safes:', result.safes?.length, 'Banks:', result.banks?.length);
                 
                 if (!filters.source_id) {
                     if (result.safes && result.safes.length > 0) {
+                        console.log('[DEBUG] Auto-selecting safe:', result.safes[0].id, result.safes[0].name);
                         setFilters(prev => ({ ...prev, source_type: 'safe', source_id: result.safes[0].id }));
                     } else if (result.banks && result.banks.length > 0) {
+                        console.log('[DEBUG] Auto-selecting bank:', result.banks[0].id, result.banks[0].name);
                         setFilters(prev => ({ ...prev, source_type: 'bank', source_id: result.banks[0].id }));
+                    } else {
+                        console.warn('[DEBUG] NO safes or banks found! This is why no data shows.');
                     }
                 }
+            } else {
+                console.error('[DEBUG] get_sources failed:', result.message);
             }
 
             // Fetch Categories
@@ -64,13 +73,17 @@ export default function FinancialFlowReport({ initialGroup }) {
             }
 
         } catch (e) {
-            console.error('Failed to fetch sources:', e);
+            console.error('[DEBUG] Failed to fetch sources:', e);
             toast.error('فشل تحميل قائمة الحسابات');
         }
     };
 
     const fetchReport = async () => {
-        if (!filters.source_id) return;
+        console.log('[DEBUG] fetchReport called with:', { source_id: filters.source_id, source_type: filters.source_type, start_date: filters.start_date, end_date: filters.end_date });
+        if (!filters.source_id || !filters.start_date || !filters.end_date) {
+            console.log('[DEBUG] fetchReport SKIPPED - missing params');
+            return;
+        }
         setLoading(true);
         try {
             // Build URL with date filters
@@ -85,10 +98,20 @@ export default function FinancialFlowReport({ initialGroup }) {
                 ? `${window.BASE_URL || ''}/finance/getSafeDetails?${params.toString()}`
                 : `${window.BASE_URL || ''}/finance/getBankDetails?${params.toString()}`;
 
+            console.log('[DEBUG] fetchReport endpoint:', endpoint);
             const response = await fetch(endpoint);
+            const responseText = await response.text();
+            console.log('[DEBUG] fetchReport raw response (first 500 chars):', responseText.substring(0, 500));
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             
-            const result = await response.json();
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch(parseErr) {
+                console.error('[DEBUG] JSON parse error. Full response:', responseText);
+                throw new Error('Invalid JSON response from server');
+            }
+            console.log('[DEBUG] fetchReport parsed result - success:', result.success, 'transactions count:', result.transactions?.length);
 
             if (result.success) {
                 let rawTransactions = result.transactions || [];
@@ -342,7 +365,33 @@ export default function FinancialFlowReport({ initialGroup }) {
         <div className="space-y-6 w-full">
             {/* Header */}
             <motion.div className="bg-white p-6 rounded-2xl border border-slate-100 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-                <h2 className="text-2xl font-bold text-slate-800 mb-6 dark:text-white">كشف حساب</h2>
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">كشف حساب</h2>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => {
+                                const content = extractTableHTML('.overflow-x-auto');
+                                openPrintPreview({
+                                    title: 'كشف حساب',
+                                    subtitle: 'من ' + filters.start_date + ' إلى ' + filters.end_date,
+                                    content,
+                                    landscape: true
+                                });
+                            }}
+                            className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                            title="معاينة التقرير"
+                        >
+                            <Eye className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                            title="طباعة مباشرة"
+                        >
+                            <Printer className="w-5 h-5" />
+                        </button>
+                    </div>
+                </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                     {/* Account Type */}

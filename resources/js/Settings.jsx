@@ -1,15 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, Title, Text, TextInput, Select, SelectItem, Switch, Tab, TabGroup, TabList, TabPanel, TabPanels, Badge } from '@tremor/react';
-import { Settings as SettingsIcon, Fuel, Bell, Shield, Save, Globe, Server, UserCog, Database, Download, Plus, Trash2, Edit, Building2, Activity } from 'lucide-react';
+import { Card, Title, Text, TextInput, Select, SelectItem, Switch, Tab, TabGroup, TabList, Badge } from '@tremor/react';
+import { Settings as SettingsIcon, Fuel, Bell, Shield, Save, Globe, Server, UserCog, Database, Download, Plus, Trash2, Edit, Building2, Activity, DollarSign, FileText, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import StationList from './StationList';
 import RoleManager from './components/RoleManager';
 import UserManager from './components/UserManager';
 import ActivityLogPanel from './components/ActivityLogPanel';
 
-export default function Settings({ general = {}, fuel = {}, alerts = {}, roles = [], fuelTypes = [], stations = [], users = [] }) {
+export default function Settings({ general = {}, fuel = {}, alerts = {}, roles = [], fuelTypes = [], stations = [], users = [], isSuperAdmin = false, userPermissions = [] }) {
     const [loading, setLoading] = useState(false);
+    const [selectedTab, setSelectedTab] = useState(() => {
+        const saved = localStorage.getItem('settings_active_tab');
+        return saved ? parseInt(saved, 10) : 0;
+    });
+    const tabRefs = useRef([]);
+
+    useEffect(() => {
+        localStorage.setItem('settings_active_tab', selectedTab);
+    }, [selectedTab]);
+
+    const settingsTabs = [
+        { id: 'general', label: 'عام', icon: SettingsIcon, permission: 'settings.general' },
+        { id: 'stations', label: 'إدارة المحطات', icon: Building2, permission: 'settings.stations' },
+        { id: 'fuel', label: 'الوقود والأسعار', icon: Fuel, permission: 'settings.fuel' },
+        { id: 'roles', label: 'الصلاحيات والأمان', icon: Shield, permission: 'settings.security', superAdminOnly: true },
+        { id: 'activity', label: 'سجل العمليات', icon: Activity, permission: 'settings.activity' },
+        { id: 'backup', label: 'النسخ الاحتياطي', icon: Server, permission: 'settings.backup' },
+    ];
+
+    // Permission-based tab filtering
+    const canAccess = (perm) => isSuperAdmin || (Array.isArray(userPermissions) && (userPermissions.includes('*') || userPermissions.includes(perm)));
+    const visibleTabs = settingsTabs.filter(tab => {
+        if (tab.superAdminOnly) return isSuperAdmin;
+        return canAccess(tab.permission);
+    });
     
     // settings state
     const [generalSettings, setGeneralSettings] = useState(general);
@@ -140,7 +165,8 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                 toast.error(data.message);
             }
         } catch (e) {
-            toast.error('فشل حفظ الدور');
+            console.error('Role save error:', e);
+            toast.error('فشل حفظ الدور: ' + e.message);
         }
     };
 
@@ -207,20 +233,86 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
         }
     };
 
+    const handleDeleteUser = async (userId) => {
+        try {
+            const res = await fetch('/PETRODIESEL2/public/settings/delete_user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: userId })
+            });
+            const data = await res.json();
+            if(data.success) {
+                toast.success('تم حذف المستخدم بنجاح');
+                setTimeout(() => window.location.reload(), 500);
+            } else {
+                toast.error(data.message);
+            }
+        } catch (e) {
+            toast.error('فشل حذف المستخدم');
+        }
+    };
+
     return (
         <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="p-6 max-w-[1800px] mx-auto space-y-6 dark:bg-[#0F172A]"
         >
-            <TabGroup>
+            {/* Keyframe animations for pill nav */}
+            <style>{`
+                @keyframes settingsNavSlideIn {
+                    from { opacity: 0; transform: scale(0.95); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+                @keyframes settingsTabFadeIn {
+                    from { opacity: 0; transform: translateY(6px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .settings-pill-nav::-webkit-scrollbar { display: none; }
+                .settings-pill-nav { -ms-overflow-style: none; scrollbar-width: none; }
+            `}</style>
+            <TabGroup index={selectedTab} onIndexChange={setSelectedTab}>
                 <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 mb-6 mt-4">
-                    <TabList className="bg-white p-1 rounded-2xl shadow-sm ring-1 ring-slate-200 w-full xl:w-fit overflow-x-auto dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                        <Tab icon={SettingsIcon} className="dark:text-slate-400 ui-selected:dark:bg-emerald-600 ui-selected:dark:text-white">عام</Tab>
-                        <Tab icon={Building2} className="dark:text-slate-400 ui-selected:dark:bg-emerald-600 ui-selected:dark:text-white">إدارة المحطات</Tab>
-                        <Tab icon={Fuel} className="dark:text-slate-400 ui-selected:dark:bg-emerald-600 ui-selected:dark:text-white">الوقود والأسعار</Tab>
-                        <Tab icon={Shield} className="dark:text-slate-400 ui-selected:dark:bg-emerald-600 ui-selected:dark:text-white">الصلاحيات والأمان</Tab>
-                        <Tab icon={Activity} className="dark:text-slate-400 ui-selected:dark:bg-emerald-600 ui-selected:dark:text-white">سجل العمليات</Tab>
-                        <Tab icon={Server} className="dark:text-slate-400 ui-selected:dark:bg-emerald-600 ui-selected:dark:text-white">النسخ الاحتياطي</Tab>
+                    {/* Custom Sliding Pill Navigation */}
+                    <div className="settings-pill-nav relative flex gap-0 p-1 rounded-full w-full xl:w-fit overflow-x-auto
+                        bg-white/80 backdrop-blur-xl shadow-lg border border-slate-200/60
+                        dark:bg-white/[0.08] dark:backdrop-blur-2xl dark:border-white/[0.15] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+                        style={{ animation: 'settingsNavSlideIn 0.6s ease-out' }}
+                    >
+                        {/* Sliding Indicator */}
+                        {tabRefs.current[selectedTab] && (
+                            <motion.div
+                                className="absolute top-1 bottom-1 rounded-full z-0
+                                    bg-white shadow-[0_3px_12px_rgba(0,0,0,0.12),0_1px_4px_rgba(0,0,0,0.08)]
+                                    dark:bg-gradient-to-r dark:from-emerald-500 dark:to-teal-600 dark:shadow-[0_3px_12px_rgba(16,185,129,0.3)]"
+                                layoutId="settingsTabSlider"
+                                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                                style={{
+                                    left: tabRefs.current[selectedTab]?.offsetLeft || 0,
+                                    width: tabRefs.current[selectedTab]?.offsetWidth || 0,
+                                }}
+                            />
+                        )}
+                        {visibleTabs.map((tab, idx) => (
+                            <button
+                                key={tab.id}
+                                ref={el => tabRefs.current[idx] = el}
+                                onClick={() => setSelectedTab(idx)}
+                                className={`relative z-10 flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-bold whitespace-nowrap transition-colors duration-300 cursor-pointer select-none
+                                    ${selectedTab === idx
+                                        ? 'text-emerald-600 dark:text-white'
+                                        : 'text-slate-500 dark:text-white/60 hover:text-slate-700 dark:hover:text-white/80'
+                                    }`}
+                                style={{ animation: `settingsTabFadeIn 0.5s ease-out ${0.1 + idx * 0.06}s backwards` }}
+                            >
+                                <tab.icon className="w-4 h-4" />
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Hidden TabList required by Tremor to sync panels */}
+                    <TabList className="hidden">
+                        {visibleTabs.map(tab => <Tab key={tab.id}>{tab.label}</Tab>)}
                     </TabList>
 
                     <button 
@@ -232,13 +324,21 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                     </button>
                 </div>
                 
-                <TabPanels>
-                    {/* General Settings */}
-                    <TabPanel>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+                {/* Render active tab content based on selected visible tab ID */}
+                {(() => {
+                    const currentTabId = visibleTabs[selectedTab]?.id;
+                    return (
+                        <>
+                            {currentTabId === 'general' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
                             {/* Station Info */}
-                            <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 p-6 space-y-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white"><Globe className="w-5 h-5"/> بيانات المؤسسة</Title>
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+                            <Card className="rounded-2xl shadow-lg ring-1 ring-blue-100/50 p-6 space-y-6 bg-white/80 backdrop-blur-xl dark:bg-white/[0.04] dark:backdrop-blur-2xl dark:border dark:border-white/[0.08] dark:ring-white/[0.06] dark:shadow-black/20 hover:shadow-xl hover:ring-blue-200/80 dark:hover:ring-blue-500/20 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 rounded-t-2xl"></div>
+                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white">
+                                    <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 shadow-lg shadow-blue-500/20"><Globe className="w-4 h-4 text-white"/></div>
+                                    بيانات المؤسسة
+                                </Title>
                                 <div>
                                     <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">اسم المحطة</label>
                                     <TextInput 
@@ -265,17 +365,23 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     />
                                 </div>
                             </Card>
+                            </motion.div>
 
                             {/* Localization */}
-                            <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 p-6 space-y-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white"><Globe className="w-5 h-5"/> اللغة والعملة</Title>
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                            <Card className="rounded-2xl shadow-lg ring-1 ring-emerald-100/50 p-6 space-y-6 bg-white/80 backdrop-blur-xl dark:bg-white/[0.04] dark:backdrop-blur-2xl dark:border dark:border-white/[0.08] dark:ring-white/[0.06] dark:shadow-black/20 hover:shadow-xl hover:ring-emerald-200/80 dark:hover:ring-emerald-500/20 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 rounded-t-2xl"></div>
+                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white">
+                                    <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20"><Globe className="w-4 h-4 text-white"/></div>
+                                    اللغة والعملة
+                                </Title>
                                 
                                 <div>
                                     <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">لغة النظام</label>
                                     <select 
                                         value={generalSettings.language || 'ar'} 
                                         onChange={(e) => handleGeneralChange('language', e.target.value)}
-                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-blue-500 border outline-none transition-all"
+                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-emerald-500 border outline-none transition-all"
                                     >
                                         <option value="ar">العربية (Arabic)</option>
                                         <option value="en">English (الإنجليزية)</option>
@@ -287,7 +393,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     <select 
                                         value={generalSettings.currency || 'SDG'} 
                                         onChange={(e) => handleGeneralChange('currency', e.target.value)}
-                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-blue-500 border outline-none transition-all"
+                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-emerald-500 border outline-none transition-all"
                                     >
                                         <option value="SDG">جنيه سوداني (SDG)</option>
                                         <option value="SAR">ريال سعودي (SAR)</option>
@@ -300,7 +406,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     <select 
                                         value={generalSettings.timezone || 'Africa/Khartoum'} 
                                         onChange={(e) => handleGeneralChange('timezone', e.target.value)}
-                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-blue-500 border outline-none transition-all"
+                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-emerald-500 border outline-none transition-all"
                                     >
                                         <option value="Africa/Khartoum">🇸🇩 الخرطوم (Khartoum)</option>
                                         <option value="Africa/Cairo">🇪🇬 القاهرة (Cairo)</option>
@@ -322,18 +428,24 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     </motion.div>
                                 )}
                             </Card>
+                            </motion.div>
 
                              {/* System Config */}
-                             <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 p-6 space-y-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
-                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white"><Server className="w-5 h-5"/> إعدادات التشغيل</Title>
-                                <div className="flex items-center justify-between">
+                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+                             <Card className="rounded-2xl shadow-lg ring-1 ring-violet-100/50 p-6 space-y-6 bg-white/80 backdrop-blur-xl dark:bg-white/[0.04] dark:backdrop-blur-2xl dark:border dark:border-white/[0.08] dark:ring-white/[0.06] dark:shadow-black/20 hover:shadow-xl hover:ring-violet-200/80 dark:hover:ring-violet-500/20 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-violet-600 rounded-t-2xl"></div>
+                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white">
+                                    <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20"><Server className="w-4 h-4 text-white"/></div>
+                                    إعدادات التشغيل
+                                </Title>
+                                <div className="flex items-center justify-between bg-slate-50/80 dark:bg-white/[0.03] p-3 rounded-xl ring-1 ring-black/[0.03] dark:ring-white/[0.04]">
                                     <span className="text-sm font-bold text-slate-700 dark:text-slate-300">وضع الصيانة</span>
                                     <Switch 
                                         checked={generalSettings.maintenance_mode === '1'} 
                                         onChange={(val) => handleGeneralChange('maintenance_mode', val ? '1' : '0')}
                                     />
                                 </div>
-                            <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between bg-slate-50/80 dark:bg-white/[0.03] p-3 rounded-xl ring-1 ring-black/[0.03] dark:ring-white/[0.04]">
                                     <span className="text-sm font-bold text-slate-700 dark:text-slate-300">تفعيل الإشعارات</span>
                                     <Switch 
                                         checked={generalSettings.enable_notifications === '1'} 
@@ -346,7 +458,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     <select 
                                         value={generalSettings.auto_lock_minutes || '0'} 
                                         onChange={(e) => handleGeneralChange('auto_lock_minutes', e.target.value)}
-                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-blue-500 border outline-none transition-all"
+                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-violet-500 border outline-none transition-all"
                                     >
                                         <option value="0" className="dark:bg-slate-800">معطل (Disabled)</option>
                                         <option value="1" className="dark:bg-slate-800">دقيقة واحدة</option>
@@ -356,18 +468,250 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     </select>
                                 </div>
                              </Card>
-                        </div>
-                    </TabPanel>
+                             </motion.div>
 
-                    {/* Stations Management */}
-                    <TabPanel>
+                             {/* ═══════════ NEW: Numbers & Amounts Settings ═══════════ */}
+                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                             <Card className="rounded-2xl shadow-lg ring-1 ring-amber-100/50 p-6 space-y-6 bg-white/80 backdrop-blur-xl dark:bg-white/[0.04] dark:backdrop-blur-2xl dark:border dark:border-white/[0.08] dark:ring-white/[0.06] dark:shadow-black/20 hover:shadow-xl hover:ring-amber-200/80 dark:hover:ring-amber-500/20 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 rounded-t-2xl"></div>
+                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white">
+                                    <div className="p-2 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/20"><DollarSign className="w-4 h-4 text-white"/></div>
+                                    الأرقام والمبالغ
+                                </Title>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">الخانات العشرية للمبالغ</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {[
+                                            { val: '0', label: 'بدون', example: '1,250' },
+                                            { val: '1', label: 'واحدة', example: '1,250.5' },
+                                            { val: '2', label: 'اثنتان', example: '1,250.50' },
+                                            { val: '3', label: 'ثلاث', example: '1,250.500' }
+                                        ].map(opt => (
+                                            <button
+                                                type="button"
+                                                key={opt.val}
+                                                onClick={() => handleGeneralChange('decimal_places', opt.val)}
+                                                className={`p-2.5 rounded-xl text-center transition-all duration-200 ring-1 ${
+                                                    (generalSettings.decimal_places || '0') === opt.val
+                                                        ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white ring-amber-400 shadow-lg shadow-amber-500/30 scale-[1.02]'
+                                                        : 'bg-white dark:bg-white/5 ring-slate-200/60 dark:ring-white/[0.06] text-slate-700 dark:text-slate-300 hover:ring-amber-300 dark:hover:ring-amber-500/30 hover:bg-amber-50/50 dark:hover:bg-amber-500/5'
+                                                }`}
+                                            >
+                                                <span className="block text-xs font-bold">{opt.label}</span>
+                                                <span className={`block text-[10px] mt-1 font-mono ${(generalSettings.decimal_places || '0') === opt.val ? 'text-amber-100' : 'text-slate-400 dark:text-slate-500'}`}>{opt.example}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">الخانات العشرية للكميات</label>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {[
+                                            { val: '0', label: 'بدون', example: '500' },
+                                            { val: '1', label: 'واحدة', example: '500.5' },
+                                            { val: '2', label: 'اثنتان', example: '500.50' },
+                                            { val: '3', label: 'ثلاث', example: '500.500' }
+                                        ].map(opt => (
+                                            <button
+                                                type="button"
+                                                key={opt.val}
+                                                onClick={() => handleGeneralChange('quantity_decimal_places', opt.val)}
+                                                className={`p-2.5 rounded-xl text-center transition-all duration-200 ring-1 ${
+                                                    (generalSettings.quantity_decimal_places || '0') === opt.val
+                                                        ? 'bg-gradient-to-br from-amber-500 to-orange-600 text-white ring-amber-400 shadow-lg shadow-amber-500/30 scale-[1.02]'
+                                                        : 'bg-white dark:bg-white/5 ring-slate-200/60 dark:ring-white/[0.06] text-slate-700 dark:text-slate-300 hover:ring-amber-300 dark:hover:ring-amber-500/30 hover:bg-amber-50/50 dark:hover:bg-amber-500/5'
+                                                }`}
+                                            >
+                                                <span className="block text-xs font-bold">{opt.label}</span>
+                                                <span className={`block text-[10px] mt-1 font-mono ${(generalSettings.quantity_decimal_places || '0') === opt.val ? 'text-amber-100' : 'text-slate-400 dark:text-slate-500'}`}>{opt.example}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                                    <div className="flex items-center justify-between bg-slate-50/80 dark:bg-white/[0.03] p-3 rounded-xl ring-1 ring-black/[0.03] dark:ring-white/[0.04] mb-3">
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300">تفعيل الضريبة (VAT)</span>
+                                        <Switch 
+                                            checked={generalSettings.enable_vat === '1'} 
+                                            onChange={(val) => handleGeneralChange('enable_vat', val ? '1' : '0')}
+                                        />
+                                    </div>
+                                    <AnimatePresence>
+                                    {generalSettings.enable_vat === '1' && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                                            <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">نسبة الضريبة (%)</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="number" step="0.5" min="0" max="50"
+                                                    value={generalSettings.vat_percentage || '0'} 
+                                                    onChange={(e) => handleGeneralChange('vat_percentage', e.target.value)}
+                                                    className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 pl-10 text-right focus:ring-2 focus:ring-amber-500 border outline-none transition-all font-mono font-bold"
+                                                />
+                                                <span className="absolute left-3 top-2.5 text-amber-500 font-bold text-sm">%</span>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                    </AnimatePresence>
+                                </div>
+                             </Card>
+                             </motion.div>
+
+                             {/* ═══════════ NEW: Invoice & Print Settings ═══════════ */}
+                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+                             <Card className="rounded-2xl shadow-lg ring-1 ring-rose-100/50 p-6 space-y-6 bg-white/80 backdrop-blur-xl dark:bg-white/[0.04] dark:backdrop-blur-2xl dark:border dark:border-white/[0.08] dark:ring-white/[0.06] dark:shadow-black/20 hover:shadow-xl hover:ring-rose-200/80 dark:hover:ring-rose-500/20 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 via-pink-500 to-rose-600 rounded-t-2xl"></div>
+                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white">
+                                    <div className="p-2 rounded-lg bg-gradient-to-br from-rose-500 to-pink-600 shadow-lg shadow-rose-500/20"><FileText className="w-4 h-4 text-white"/></div>
+                                    الفواتير والطباعة
+                                </Title>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">بادئة رقم الفاتورة</label>
+                                    <TextInput 
+                                        value={generalSettings.invoice_prefix || ''} 
+                                        onChange={(e) => handleGeneralChange('invoice_prefix', e.target.value)}
+                                        placeholder="مثال: INV- أو فاتورة-" 
+                                        className="rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white text-right font-mono" 
+                                    />
+                                    <Text className="text-xs text-slate-500 mt-1 dark:text-slate-400 text-right">
+                                        سيظهر كـ: {(generalSettings.invoice_prefix || 'INV-')}00001
+                                    </Text>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">رقم بداية الفواتير</label>
+                                    <input 
+                                        type="number" min="1"
+                                        value={generalSettings.invoice_start_number || '1'} 
+                                        onChange={(e) => handleGeneralChange('invoice_start_number', e.target.value)}
+                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-rose-500 border outline-none transition-all font-mono"
+                                        placeholder="1"
+                                    />
+                                </div>
+
+                                <div className="pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">عنوان الطباعة (Header)</label>
+                                    <TextInput 
+                                        value={generalSettings.print_header || ''} 
+                                        onChange={(e) => handleGeneralChange('print_header', e.target.value)}
+                                        placeholder="مثال: محطة بتروديزل الحديثة" 
+                                        className="rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white text-right" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">تذييل الطباعة (Footer)</label>
+                                    <TextInput 
+                                        value={generalSettings.print_footer || ''} 
+                                        onChange={(e) => handleGeneralChange('print_footer', e.target.value)}
+                                        placeholder="مثال: شكراً لتعاملكم معنا" 
+                                        className="rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white text-right" 
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between bg-slate-50/80 dark:bg-white/[0.03] p-3 rounded-xl ring-1 ring-black/[0.03] dark:ring-white/[0.04]">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">إظهار الشعار في الطباعة</span>
+                                    <Switch 
+                                        checked={generalSettings.show_logo_on_print === '1'} 
+                                        onChange={(val) => handleGeneralChange('show_logo_on_print', val ? '1' : '0')}
+                                    />
+                                </div>
+                             </Card>
+                             </motion.div>
+
+                             {/* ═══════════ NEW: Date & Display Settings ═══════════ */}
+                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                             <Card className="rounded-2xl shadow-lg ring-1 ring-cyan-100/50 p-6 space-y-6 bg-white/80 backdrop-blur-xl dark:bg-white/[0.04] dark:backdrop-blur-2xl dark:border dark:border-white/[0.08] dark:ring-white/[0.06] dark:shadow-black/20 hover:shadow-xl hover:ring-cyan-200/80 dark:hover:ring-cyan-500/20 transition-all duration-300 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-cyan-500 via-sky-500 to-cyan-600 rounded-t-2xl"></div>
+                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white">
+                                    <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500 to-sky-600 shadow-lg shadow-cyan-500/20"><Calendar className="w-4 h-4 text-white"/></div>
+                                    التاريخ والعرض
+                                </Title>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">تنسيق التاريخ</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {[
+                                            { val: 'Y-m-d', label: 'YYYY-MM-DD', example: '2026-02-17' },
+                                            { val: 'd-m-Y', label: 'DD-MM-YYYY', example: '17-02-2026' },
+                                            { val: 'd/m/Y', label: 'DD/MM/YYYY', example: '17/02/2026' }
+                                        ].map(opt => (
+                                            <button
+                                                type="button"
+                                                key={opt.val}
+                                                onClick={() => handleGeneralChange('date_format', opt.val)}
+                                                className={`p-2.5 rounded-xl text-center transition-all duration-200 ring-1 ${
+                                                    (generalSettings.date_format || 'Y-m-d') === opt.val
+                                                        ? 'bg-gradient-to-br from-cyan-500 to-sky-600 text-white ring-cyan-400 shadow-lg shadow-cyan-500/30 scale-[1.02]'
+                                                        : 'bg-white dark:bg-white/5 ring-slate-200/60 dark:ring-white/[0.06] text-slate-700 dark:text-slate-300 hover:ring-cyan-300 dark:hover:ring-cyan-500/30 hover:bg-cyan-50/50 dark:hover:bg-cyan-500/5'
+                                                }`}
+                                            >
+                                                <span className="block text-[10px] font-bold">{opt.label}</span>
+                                                <span className={`block text-[10px] mt-1 font-mono ${(generalSettings.date_format || 'Y-m-d') === opt.val ? 'text-cyan-100' : 'text-slate-400 dark:text-slate-500'}`}>{opt.example}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">عدد العناصر في الصفحة</label>
+                                    <select 
+                                        value={generalSettings.items_per_page || '25'} 
+                                        onChange={(e) => handleGeneralChange('items_per_page', e.target.value)}
+                                        className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-cyan-500 border outline-none transition-all"
+                                    >
+                                        <option value="10" className="dark:bg-slate-800">10 عناصر</option>
+                                        <option value="25" className="dark:bg-slate-800">25 عنصر</option>
+                                        <option value="50" className="dark:bg-slate-800">50 عنصر</option>
+                                        <option value="100" className="dark:bg-slate-800">100 عنصر</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">طريقة الدفع الافتراضية</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {[
+                                            { val: 'safe', label: 'خزنة نقدية', icon: '🏦' },
+                                            { val: 'bank', label: 'حساب بنكي', icon: '💳' }
+                                        ].map(opt => (
+                                            <button
+                                                type="button"
+                                                key={opt.val}
+                                                onClick={() => handleGeneralChange('default_payment_method', opt.val)}
+                                                className={`p-3 rounded-xl text-center transition-all duration-200 ring-1 flex items-center justify-center gap-2 ${
+                                                    (generalSettings.default_payment_method || 'safe') === opt.val
+                                                        ? 'bg-gradient-to-br from-cyan-500 to-sky-600 text-white ring-cyan-400 shadow-lg shadow-cyan-500/30'
+                                                        : 'bg-white dark:bg-white/5 ring-slate-200/60 dark:ring-white/[0.06] text-slate-700 dark:text-slate-300 hover:ring-cyan-300 dark:hover:ring-cyan-500/30'
+                                                }`}
+                                            >
+                                                <span className="text-lg">{opt.icon}</span>
+                                                <span className="text-sm font-bold">{opt.label}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between bg-slate-50/80 dark:bg-white/[0.03] p-3 rounded-xl ring-1 ring-black/[0.03] dark:ring-white/[0.04]">
+                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">عرض أرصدة الحسابات في الرأس</span>
+                                    <Switch 
+                                        checked={generalSettings.show_balances_in_header !== '0'} 
+                                        onChange={(val) => handleGeneralChange('show_balances_in_header', val ? '1' : '0')}
+                                    />
+                                </div>
+                             </Card>
+                             </motion.div>
+                        </div>
+                    )}
+
+                            {currentTabId === 'stations' && (
                         <div className="mt-6">
                             <StationList stations={stations} users={users} />
                         </div>
-                    </TabPanel>
+                    )}
 
-                    {/* Fuel Types & Settings */}
-                    <TabPanel>
+                            {currentTabId === 'fuel' && (
                         <div className="mt-6 grid grid-cols-1 gap-6">
                             {/* General Fuel Settings */}
                             <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 p-6 space-y-6 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:ring-white/10">
@@ -413,7 +757,6 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                                 </div>
                                                 <div>
                                                     <span className="font-bold text-lg text-slate-700 block dark:text-white">{fuel.name}</span>
-                                                    <span className="text-xs text-slate-400 font-sans">{fuel.code}</span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">
@@ -441,28 +784,28 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                 </div>
                              </Card>
                         </div>
-                    </TabPanel>
+                    )}
 
 
-                    {/* Roles & Security */}
-                    <TabPanel>
+                            {currentTabId === 'roles' && isSuperAdmin && (
                          <div className="mt-6 grid grid-cols-1 gap-8">
-                            {/* Role Management */}
+                            {/* Role Management - Super Admin Only */}
                             <RoleManager roles={roles} onSave={handleSaveRole} onDelete={handleDeleteRole} />
                             
-                            {/* User Management */}
+                            {/* User Management - Super Admin Only */}
                             <UserManager 
                                 users={users} 
                                 roles={roles} 
                                 stations={stations} 
                                 onSave={handleSaveUser} 
                                 onCreate={handleCreateUser}
+                                onDelete={handleDeleteUser}
+                                isSuperAdmin={isSuperAdmin}
                             />
                          </div>
-                    </TabPanel>
+                    )}
                     
-                    {/* Backup & System */}
-                     <TabPanel>
+                            {currentTabId === 'backup' && (
                         <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Backup Card */}
                             <Card className="rounded-2xl shadow-md ring-1 ring-slate-100 py-8 flex flex-col items-center justify-center space-y-6 bg-slate-50/50 dark:bg-white/5 dark:backdrop-blur-md dark:border dark:border-white/10 dark:text-white">
@@ -599,15 +942,16 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                 </button>
                             </Card>
                         </div>
-                    </TabPanel>
+                    )}
 
-                    {/* Activity Logs Tab */}
-                    <TabPanel>
+                            {currentTabId === 'activity' && (
                         <div className="mt-6">
                             <ActivityLogPanel />
                         </div>
-                    </TabPanel>
-                </TabPanels>
+                    )}
+                        </>
+                    );
+                })()}
             </TabGroup>
 
             {/* Fuel Edit Modal */}
@@ -709,7 +1053,8 @@ function FactoryResetModal({ isOpen, onClose }) {
         sales: false,
         purchases: false,
         tanks_pumps: false,
-        accounts: false,
+        transactions: false,
+        safes_banks: false,
         hr: false,
         customers_suppliers: false,
         fuel_types: false
@@ -721,7 +1066,8 @@ function FactoryResetModal({ isOpen, onClose }) {
         { key: 'sales', label: 'المبيعات', desc: 'جميع فواتير وعمليات البيع', icon: '💰' },
         { key: 'purchases', label: 'المشتريات', desc: 'جميع فواتير وعمليات الشراء', icon: '📦' },
         { key: 'tanks_pumps', label: 'الخزانات والمكائن', desc: 'الخزانات، المضخات، العدادات', icon: '⛽' },
-        { key: 'accounts', label: 'الحسابات', desc: 'الخزائن، البنوك، المعاملات المالية', icon: '🏦' },
+        { key: 'transactions', label: 'العمليات المالية', desc: 'المعاملات، المصروفات، التحويلات', icon: '💳' },
+        { key: 'safes_banks', label: 'الخزائن والبنوك', desc: 'حسابات الخزائن والبنوك', icon: '🏦' },
         { key: 'hr', label: 'الموارد البشرية', desc: 'الموظفين، الحضور، السلف، الرواتب', icon: '👥' },
         { key: 'customers_suppliers', label: 'العملاء والموردين', desc: 'قائمة العملاء والموردين', icon: '🤝' },
         { key: 'fuel_types', label: 'أنواع الوقود', desc: 'تعريفات أنواع الوقود والأسعار', icon: '🛢️' }
@@ -772,7 +1118,7 @@ function FactoryResetModal({ isOpen, onClose }) {
         setStep(1);
         setSelectedSections({
             sales: false, purchases: false, tanks_pumps: false, 
-            accounts: false, hr: false, customers_suppliers: false, fuel_types: false
+            transactions: false, safes_banks: false, hr: false, customers_suppliers: false, fuel_types: false
         });
         setCredentials({ email: '', password: '' });
         setError('');

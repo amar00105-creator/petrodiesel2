@@ -73,49 +73,49 @@ export default function EditWorkerModal({ isOpen, onClose, worker, onSuccess }) 
 
     return (
         <Dialog open={isOpen} onClose={onClose} static={true} className="z-[100]">
-            <DialogPanel className="max-w-md w-full bg-white rounded-2xl shadow-2xl ring-1 ring-slate-900/5 p-0 overflow-hidden">
+            <DialogPanel className="max-w-md w-full bg-white dark:bg-[#0F172A] dark:backdrop-blur-xl dark:border dark:border-white/10 rounded-2xl shadow-2xl ring-1 ring-slate-900/5 p-0 overflow-hidden">
                 {/* Header */}
-                <div className="bg-slate-50 border-b border-slate-100 p-6 flex justify-between items-center">
+                <div className="bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10 p-6 flex justify-between items-center">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                            <Briefcase className="w-5 h-5 text-navy-900" />
+                        <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                            <Briefcase className="w-5 h-5 text-navy-900 dark:text-teal-400" />
                             تعديل بيانات العامل
                         </h2>
-                        <p className="text-slate-500 text-sm">تعديل اسم أو رقم العامل</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm">تعديل اسم أو رقم العامل</p>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-full transition-colors text-slate-500">
+                    <button onClick={onClose} className="p-2 hover:bg-slate-200 dark:hover:bg-white/10 rounded-full transition-colors text-slate-500 dark:text-slate-400">
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">الاسم</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">الاسم</label>
                         <div className="relative">
-                            <User className="absolute right-3 top-3 text-slate-400 w-5 h-5" />
+                            <User className="absolute right-3 top-3 text-slate-400 dark:text-slate-500 w-5 h-5" />
                             <input
                                 type="text"
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
                                 placeholder="اسم العامل"
-                                className="w-full pr-10 pl-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all"
+                                className="w-full pr-10 pl-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-teal-500 transition-all dark:text-white dark:placeholder-slate-500"
                                 required
                             />
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">رقم الهاتف</label>
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">رقم الهاتف</label>
                         <div className="relative">
-                            <Phone className="absolute right-3 top-3 text-slate-400 w-5 h-5" />
+                            <Phone className="absolute right-3 top-3 text-slate-400 dark:text-slate-500 w-5 h-5" />
                             <input
                                 type="text"
                                 name="phone"
                                 value={formData.phone}
                                 onChange={handleChange}
                                 placeholder="05xxxxxxxx"
-                                className="w-full pr-10 pl-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 transition-all"
+                                className="w-full pr-10 pl-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-navy-500 dark:focus:ring-teal-500 transition-all dark:text-white dark:placeholder-slate-500"
                             />
                         </div>
                     </div>
@@ -124,14 +124,14 @@ export default function EditWorkerModal({ isOpen, onClose, worker, onSuccess }) 
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors ml-2"
+                            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg transition-colors ml-2"
                         >
                             إلغاء
                         </button>
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-6 py-2 text-sm font-bold text-white bg-navy-900 hover:bg-navy-800 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+                            className="px-6 py-2 text-sm font-bold text-white bg-navy-900 dark:bg-teal-600 hover:bg-navy-800 dark:hover:bg-teal-700 rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
                         >
                             {isSubmitting ? 'جاري الحفظ...' : (
                                 <>

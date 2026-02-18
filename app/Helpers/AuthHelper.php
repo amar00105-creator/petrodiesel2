@@ -65,8 +65,19 @@ class AuthHelper
     public static function user()
     {
         self::startSession();
+        // Get all assigned stations first
+        $assignedStations = self::getUserStationIds();
+
         // Prefer active_station_id if set (for switching), otherwise default station_id
         $currentStationId = $_SESSION['active_station_id'] ?? ($_SESSION['station_id'] ?? null);
+
+        // Validation for Non-Super Admin:
+        // Ensure currentStationId is actually assigned to the user
+        if (!self::isSuperAdmin() && !in_array($currentStationId, $assignedStations)) {
+            // If unauthorized station in session, fallback to first assigned station
+            $currentStationId = !empty($assignedStations) ? $assignedStations[0] : null;
+            $_SESSION['active_station_id'] = $currentStationId; // Correct the session
+        }
 
         // Auto-select first station for Super Admin if none selected
         if (!$currentStationId && self::isAdmin()) {
@@ -84,7 +95,9 @@ class AuthHelper
             'name' => $_SESSION['user_name'] ?? null,
             'role' => $_SESSION['user_role'] ?? 'guest',
             'station_id' => $currentStationId,
-            'original_station_id' => $_SESSION['station_id'] ?? null // Keep track of assigned station
+            'station_name' => self::getStationName($currentStationId),
+            'original_station_id' => $_SESSION['station_id'] ?? null, // Keep track of assigned station
+            'station_ids' => $assignedStations // Include all assigned for frontend check
         ];
     }
 
@@ -93,6 +106,45 @@ class AuthHelper
         self::startSession();
         // verify permission? Controller should check if super admin.
         $_SESSION['active_station_id'] = $stationId;
+    }
+
+    /**
+     * Get all station IDs assigned to current user via user_stations table
+     * Super admin gets all stations, regular users get their assigned stations
+     * @return array Array of station IDs
+     */
+    public static function getUserStationIds()
+    {
+        self::startSession();
+        $userId = $_SESSION['user_id'] ?? null;
+
+        if (!$userId) {
+            return [];
+        }
+
+        // Super admin sees all stations
+        if (self::isSuperAdmin()) {
+            $db = \App\Config\Database::connect();
+            $stmt = $db->query("SELECT id FROM stations ORDER BY id ASC");
+            return array_column($stmt->fetchAll(\PDO::FETCH_ASSOC), 'id');
+        }
+
+        $db = \App\Config\Database::connect();
+        $stmt = $db->prepare("
+            SELECT DISTINCT station_id 
+            FROM user_stations 
+            WHERE user_id = ?
+            ORDER BY station_id ASC
+        ");
+        $stmt->execute([$userId]);
+        $stationIds = array_column($stmt->fetchAll(\PDO::FETCH_ASSOC), 'station_id');
+
+        // Fallback to legacy station_id if no entries in user_stations
+        if (empty($stationIds) && !empty($_SESSION['station_id'])) {
+            $stationIds = [$_SESSION['station_id']];
+        }
+
+        return $stationIds;
     }
 
     public static function can($permission)
@@ -154,9 +206,35 @@ class AuthHelper
         }
     }
 
+    /**
+     * Get the station name for a given station ID
+     */
+    public static function getStationName($stationId)
+    {
+        if (!$stationId || $stationId === 'all') {
+            return null;
+        }
+        try {
+            $db = \App\Config\Database::connect();
+            $stmt = $db->prepare("SELECT name FROM stations WHERE id = ?");
+            $stmt->execute([$stationId]);
+            $result = $stmt->fetchColumn();
+            return $result ?: null;
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
     public static function isAdmin()
     {
         self::startSession();
-        return ($_SESSION['user_role'] ?? 'guest') === 'super_admin' || self::can('*');
+        $role = $_SESSION['user_role'] ?? 'guest';
+        $perms = $_SESSION['permissions'] ?? [];
+        return $role === 'super_admin' || in_array('*', $perms);
+    }
+
+    public static function isSuperAdmin()
+    {
+        return self::isAdmin();
     }
 }

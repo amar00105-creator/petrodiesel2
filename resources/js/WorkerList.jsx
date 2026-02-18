@@ -37,8 +37,19 @@ const WorkerList = forwardRef(({ workers = [], search = '' }, ref) => {
         setIsEditModalOpen(false);
     };
 
-    const handleAddSuccess = () => {
-        window.location.reload(); // Keep reload for Add for now or implement full refresh
+    const handleAddSuccess = async () => {
+        // Fetch updated list instead of reload
+        try {
+            const response = await fetch('/PETRODIESEL2/public/workers/list_ajax');
+            const data = await response.json();
+            if (data.success && Array.isArray(data.workers)) {
+                setWorkerList(data.workers);
+            }
+        } catch (error) {
+            console.error('Failed to refresh worker list', error);
+            // Fallback if fetch fails? optional
+            // window.location.reload(); 
+        }
     };
 
     // Delete Modal State

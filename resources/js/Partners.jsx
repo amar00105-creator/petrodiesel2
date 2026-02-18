@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TabGroup, TabList, Tab } from '@tremor/react';
-import { Users, Truck, Building2 } from 'lucide-react';
+import { Users, Truck, Building2, Eye } from 'lucide-react';
 
 import SupplierList from './SupplierList';
 import CustomerList from './CustomerList';
 import AddSupplierModal from './AddSupplierModal';
 import AddCustomerModal from './AddCustomerModal';
+import { openPrintPreview, extractTableHTML } from './utils/printPreview';
 
 export default function Partners(props) {
     const { suppliers = [], customers: initialCustomers = [] } = props;
@@ -38,7 +39,12 @@ export default function Partners(props) {
         const filename = selectedIndex === 0 ? 'suppliers' : 'customers';
         
         if (type === 'print') {
-            window.print();
+            const content = extractTableHTML('.overflow-x-auto, table');
+            openPrintPreview({
+                title: selectedIndex === 0 ? 'سجل الموردين' : 'سجل العملاء',
+                subtitle: 'جميع البيانات',
+                content
+            });
             return;
         }
 
@@ -99,8 +105,17 @@ export default function Partners(props) {
                                 <span>{selectedIndex === 0 ? 'إضافة مورد' : 'إضافة عميل'}</span>
                             </button>
                              <button 
+                                onClick={() => handleExport('print')} 
+                                className="flex items-center gap-2 px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl font-bold border border-blue-200 transition-colors text-sm dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400 dark:hover:bg-blue-500/20"
+                                title="معاينة"
+                            >
+                                <Eye className="w-4 h-4" />
+                                <span>معاينة</span>
+                            </button>
+                             <button 
                                 onClick={() => window.print()} 
                                 className="flex items-center gap-2 px-4 py-2 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl font-bold border border-slate-200 transition-colors text-sm dark:bg-white/5 dark:border-white/10 dark:text-slate-300 dark:hover:bg-white/10"
+                                title="طباعة مباشرة"
                             >
                                 <span>طباعة</span>
                             </button>

@@ -25,14 +25,16 @@ class Supplier extends Model
 
     public function create($data)
     {
-        // Re-enabling station_id to fix FK constraint
+        // Station ID is optional
+        $stationId = !empty($data['station_id']) ? $data['station_id'] : null;
+
         $sql = "INSERT INTO suppliers (name, phone, balance, station_id) VALUES (:name, :phone, :balance, :station_id)";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             ':name' => $data['name'],
             ':phone' => $data['phone'] ?? '',
             ':balance' => $data['balance'] ?? 0.00,
-            ':station_id' => $data['station_id']
+            ':station_id' => $stationId
         ]);
         return $this->db->lastInsertId();
     }

@@ -9,24 +9,9 @@ class Customer extends Model
 {
     public function getAll($stationId = null)
     {
-        $sql = "SELECT * FROM customers";
-        $params = [];
-
-        if ($stationId !== null) {
-            $sql .= " WHERE station_id = ?";
-            $params[] = $stationId;
-        }
-
-        $sql .= " ORDER BY name ASC";
-
-        if (!empty($params)) {
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute($params);
-        } else {
-            // Super Admin sees all
-            $stmt = $this->db->query($sql);
-        }
-
+        // Customers are Global - fetch all
+        $sql = "SELECT * FROM customers ORDER BY name ASC";
+        $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
 
@@ -39,26 +24,15 @@ class Customer extends Model
 
     public function create($data)
     {
-        // Robust Fallback for Station ID
-        if (empty($data['station_id'])) {
-            $stmt = $this->db->query("SELECT id FROM stations ORDER BY id ASC LIMIT 1");
-            $fallback = $stmt->fetch();
-
-            if ($fallback) {
-                $data['station_id'] = $fallback['id'];
-            } else {
-                // Auto-Create Station if missing
-                $this->db->exec("INSERT INTO stations (name, address, phone) VALUES ('Default Station', 'Main Location', '0000000000')");
-                $data['station_id'] = $this->db->lastInsertId();
-            }
-        }
+        // Station ID is optional (Global Customers)
+        $stationId = !empty($data['station_id']) ? $data['station_id'] : null;
 
         $sql = "INSERT INTO customers (station_id, name, phone) 
                 VALUES (:station_id, :name, :phone)";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            ':station_id' => $data['station_id'],
+            ':station_id' => $stationId,
             ':name' => $data['name'],
             ':phone' => !empty($data['phone']) ? $data['phone'] : null
         ]);

@@ -201,10 +201,19 @@ export default function AddTankModal({ isOpen, onClose, onSuccess, fuelTypes = [
                                         required
                                         min="0"
                                         placeholder="0"
-                                        className="w-full p-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none font-mono dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:ring-blue-500/20"
+                                        readOnly={!!tank}
+                                        disabled={!!tank}
+                                        className={`w-full p-3 rounded-xl border outline-none font-mono ${
+                                            tank 
+                                                ? 'border-slate-200 bg-slate-100 text-slate-500 cursor-not-allowed dark:bg-slate-800/50 dark:border-slate-700 dark:text-slate-400' 
+                                                : 'border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:focus:ring-blue-500/20'
+                                        }`}
                                         value={formData.current_volume}
                                         onChange={handleChange}
                                     />
+                                    {tank && (
+                                        <p className="text-[11px] text-amber-500 mt-1 font-medium">⚠️ تعديل الكمية يتم من المعايرة فقط</p>
+                                    )}
                                 </div>
                             </div>
 

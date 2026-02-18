@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Printer, Calendar, FileDown, Droplets, ArrowDown, ArrowUp } from 'lucide-react';
+import { Search, Printer, Calendar, FileDown, Droplets, ArrowDown, ArrowUp, Eye } from 'lucide-react';
 import { Card, Title, Text, Metric, Badge } from '@tremor/react';
 import { toast } from 'sonner';
+import { openPrintPreview, extractTableHTML, formatDateArabic } from './utils/printPreview';
 
 export default function DailySalesReconciliation({ stationId }) {
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -42,7 +43,12 @@ export default function DailySalesReconciliation({ stationId }) {
     const formatCurrency = (amount) => parseFloat(amount || 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' }).replace('$', '');
 
     const handlePrint = () => {
-        window.print();
+        const content = extractTableHTML('.overflow-x-auto');
+        openPrintPreview({
+            title: 'تقرير مبيعات العدادات اليومية',
+            subtitle: 'التاريخ: ' + formatDateArabic(date),
+            content
+        });
     };
 
     return (
@@ -67,7 +73,15 @@ export default function DailySalesReconciliation({ stationId }) {
                         </div>
                         <button 
                             onClick={handlePrint}
+                            className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl transition-colors"
+                            title="معاينة التقرير"
+                        >
+                            <Eye className="w-5 h-5" />
+                        </button>
+                        <button 
+                            onClick={() => window.print()}
                             className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
+                            title="طباعة مباشرة"
                         >
                             <Printer className="w-5 h-5" />
                         </button>

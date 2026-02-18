@@ -22,8 +22,8 @@ class Driver extends Model
 
     public function findByName($name)
     {
-        $stmt = $this->db->prepare("SELECT * FROM drivers WHERE name LIKE :name LIMIT 1");
-        $stmt->bindValue(':name', "%$name%");
+        $stmt = $this->db->prepare("SELECT * FROM drivers WHERE LOWER(TRIM(name)) = LOWER(TRIM(:name)) LIMIT 1");
+        $stmt->bindValue(':name', $name);
         $stmt->execute();
         return $stmt->fetch();
     }
@@ -34,7 +34,7 @@ class Driver extends Model
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             ':name' => $data['name'],
-            ':truck_number' => $data['truck_number'],
+            ':truck_number' => $data['truck_number'] ?? '',
             ':phone' => $data['phone'] ?? ''
         ]);
         return $this->db->lastInsertId();
@@ -46,7 +46,7 @@ class Driver extends Model
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             ':name' => $data['name'],
-            ':truck_number' => $data['truck_number'],
+            ':truck_number' => $data['truck_number'] ?? '',
             ':phone' => $data['phone'] ?? '',
             ':id' => $id
         ]);

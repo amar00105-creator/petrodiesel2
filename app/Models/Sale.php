@@ -7,33 +7,52 @@ use PDO;
 
 class Sale extends Model
 {
-    public function getAll($stationId, $filters = [])
+    public function getAll($stationId = 'all', $filters = [])
     {
         $sql = "SELECT s.*, 
                        c.name as counter_name, 
                        p.name as pump_name, 
-                       w.name as worker_name,
+                       COALESCE(w.name, w2.name) as worker_name,
                        cust.name as customer_name,
                        safes.name as safe_name,
                        banks.bank_name as bank_name,
-                       ft.name as product_type
+                       ft.name as product_type,
+                       stations.name as station_name
                 FROM sales s
                 LEFT JOIN counters c ON s.counter_id = c.id
                 LEFT JOIN pumps p ON c.pump_id = p.id
                 LEFT JOIN tanks t ON p.tank_id = t.id
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
                 LEFT JOIN workers w ON s.worker_id = w.id
+                LEFT JOIN workers w2 ON c.current_worker_id = w2.id
                 LEFT JOIN customers cust ON s.customer_id = cust.id
                 LEFT JOIN transactions tr ON (tr.related_entity_id = s.id AND tr.related_entity_type = 'sales' AND tr.type = 'income')
                 LEFT JOIN safes ON (tr.to_type = 'safe' AND tr.to_id = safes.id)
                 LEFT JOIN banks ON (tr.to_type = 'bank' AND tr.to_id = banks.id)
-                WHERE s.station_id = ? ";
+                LEFT JOIN stations ON s.station_id = stations.id";
 
-        $params = [$stationId];
+        $params = [];
+        $whereClauses = [];
+
+        if ($stationId !== 'all') {
+            if (is_array($stationId)) {
+                // Support array of station IDs
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $whereClauses[] = "s.station_id IN ($placeholders)";
+                $params = array_merge($params, $stationId);
+            } else {
+                $whereClauses[] = "s.station_id = ?";
+                $params[] = $stationId;
+            }
+        }
 
         if (!empty($filters['date'])) {
-            $sql .= " AND s.sale_date = ?";
+            $whereClauses[] = "s.sale_date = ?";
             $params[] = $filters['date'];
+        }
+
+        if (!empty($whereClauses)) {
+            $sql .= " WHERE " . implode(" AND ", $whereClauses);
         }
 
         $sql .= " ORDER BY s.created_at DESC";
@@ -125,6 +144,36 @@ class Sale extends Model
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
+    public function getByInvoiceNumber($invoiceNumber)
+    {
+        $sql = "SELECT s.*, 
+                       c.name as counter_name,
+                       c.pump_id, 
+                       p.name as pump_name, 
+                       w.name as worker_name,
+                       cust.name as customer_name,
+                       safes.name as safe_name,
+                       banks.bank_name as bank_name,
+                       t.to_type as account_type,
+                       t.to_id as account_id,
+                       ft.name as fuel_type
+                FROM sales s
+                LEFT JOIN counters c ON s.counter_id = c.id
+                LEFT JOIN pumps p ON c.pump_id = p.id
+                LEFT JOIN workers w ON s.worker_id = w.id
+                LEFT JOIN customers cust ON s.customer_id = cust.id
+                LEFT JOIN transactions t ON (t.related_entity_id = s.id AND t.related_entity_type = 'sales' AND t.type = 'income')
+                LEFT JOIN safes ON (t.to_type = 'safe' AND t.to_id = safes.id)
+                LEFT JOIN banks ON (t.to_type = 'bank' AND t.to_id = banks.id)
+                LEFT JOIN tanks tank ON p.tank_id = tank.id
+                LEFT JOIN fuel_types ft ON tank.fuel_type_id = ft.id
+                WHERE s.invoice_number = ?";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([$invoiceNumber]);
+        return $stmt->fetchAll();
+    }
+
     public function getStatsByPeriod($start, $end, $stationId = 'all')
     {
         $sql = "SELECT SUM(total_amount) as total_revenue, SUM(volume_sold) as total_liters, COUNT(*) as count 
@@ -133,8 +182,14 @@ class Sale extends Model
 
         $params = [$start, $end];
         if ($stationId !== 'all') {
-            $sql .= " AND station_id = ?";
-            $params[] = $stationId;
+            if (is_array($stationId)) {
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $sql .= " AND station_id IN ($placeholders)";
+                $params = array_merge($params, $stationId);
+            } else {
+                $sql .= " AND station_id = ?";
+                $params[] = $stationId;
+            }
         }
 
         $stmt = $this->db->prepare($sql);
@@ -153,8 +208,14 @@ class Sale extends Model
 
         $params = [$start, $end];
         if ($stationId !== 'all') {
-            $sql .= " AND s.station_id = ?";
-            $params[] = $stationId;
+            if (is_array($stationId)) {
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $sql .= " AND s.station_id IN ($placeholders)";
+                $params = array_merge($params, $stationId);
+            } else {
+                $sql .= " AND s.station_id = ?";
+                $params[] = $stationId;
+            }
         }
 
         $sql .= " GROUP BY t.fuel_type_id, ft.name, ft.color_hex ORDER BY total_revenue DESC";
@@ -173,8 +234,14 @@ class Sale extends Model
         $params = [$start, $end];
 
         if ($stationId !== 'all') {
-            $sql .= " AND s.station_id = ?";
-            $params[] = $stationId;
+            if (is_array($stationId)) {
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $sql .= " AND s.station_id IN ($placeholders)";
+                $params = array_merge($params, $stationId);
+            } else {
+                $sql .= " AND s.station_id = ?";
+                $params[] = $stationId;
+            }
         }
 
         $sql .= " GROUP BY s.worker_id ORDER BY total_sales DESC";
@@ -197,16 +264,29 @@ class Sale extends Model
     }
     public function getDailySalesByTank($stationId, $start, $end)
     {
-        $sql = "SELECT s.sale_date, p.tank_id, SUM(s.volume_sold) as total_vol 
-                FROM sales s
-                JOIN counters c ON s.counter_id = c.id
-                JOIN pumps mp ON c.pump_id = mp.id
-                LEFT JOIN pumps p ON c.pump_id = p.id
-                WHERE s.station_id = ? AND s.sale_date BETWEEN ? AND ?
-                GROUP BY s.sale_date, p.tank_id";
+        if (is_array($stationId)) {
+            $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+            $sql = "SELECT s.sale_date, p.tank_id, SUM(s.volume_sold) as total_vol 
+                    FROM sales s
+                    JOIN counters c ON s.counter_id = c.id
+                    JOIN pumps mp ON c.pump_id = mp.id
+                    LEFT JOIN pumps p ON c.pump_id = p.id
+                    WHERE s.station_id IN ($placeholders) AND s.sale_date BETWEEN ? AND ?
+                    GROUP BY s.sale_date, p.tank_id";
+            $params = array_merge($stationId, [$start, $end]);
+        } else {
+            $sql = "SELECT s.sale_date, p.tank_id, SUM(s.volume_sold) as total_vol 
+                    FROM sales s
+                    JOIN counters c ON s.counter_id = c.id
+                    JOIN pumps mp ON c.pump_id = mp.id
+                    LEFT JOIN pumps p ON c.pump_id = p.id
+                    WHERE s.station_id = ? AND s.sale_date BETWEEN ? AND ?
+                    GROUP BY s.sale_date, p.tank_id";
+            $params = [$stationId, $start, $end];
+        }
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$stationId, $start, $end]);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -264,8 +344,14 @@ class Sale extends Model
 
         $params = [];
         if ($stationId !== 'all') {
-            $sql .= " AND s.station_id = ?";
-            $params[] = $stationId;
+            if (is_array($stationId)) {
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $sql .= " AND s.station_id IN ($placeholders)";
+                $params = $stationId;
+            } else {
+                $sql .= " AND s.station_id = ?";
+                $params[] = $stationId;
+            }
         }
 
         $sql .= " ORDER BY s.created_at DESC LIMIT " . intval($limit);

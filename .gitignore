@@ -8,32 +8,33 @@
 .DS_Store
 Thumbs.db
 
-# Mobile App Builds (Flutter)
-mobile_app/build/
-mobile_app/.dart_tool/
-mobile_app/.flutter-plugins
-mobile_app/.flutter-plugins-dependencies
-mobile_app/.pub-cache/
+# Mobile App (excluded from web repo)
+mobile_app/
 
 # Logs and Debug
 *.log
 node_modules
 debug_*.txt
 request_log.txt
+request_debug.txt
 error_log*.txt
 
 # Local config & Secrets
 app/Config/db_config.php
 .env
 
+# Deploy scripts with credentials
+deploy.php
+deploy_manager.php
+cleanup.bat
+
 # Large Files / Backups
 *.zip
 *.rar
 *.sql
+*.bak
 !database/migrations/*.sql
 !database/*.sql
-fix_timezone.sql
-verify_timezone.sql
 
 # Temporary Debug Scripts
 check_*.php
@@ -41,3 +42,25 @@ test_*.php
 debug_*.php
 verify_*.php
 inspect_db.php
+
+# Public debug/diagnostic files
+public/diag*.php
+public/reproduce_*.php
+public/scan_*.php
+public/show_*.php
+public/autologin.php
+public/db_repair.php
+public/add_*.php
+public/add_*.sql
+public/run_*.php
+public/update_*.php
+public/migrate_*.php
+public/deploy_*.php
+public/*.log
+public/request_debug.txt
+public/schema_trans.html
+public/system_analysis_report.html
+
+# Unused controllers
+app/Controllers/WorkersController.php
+app/Controllers/ReportsController_supplier_methods.php

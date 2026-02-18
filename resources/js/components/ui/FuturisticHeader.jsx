@@ -25,6 +25,27 @@ import {
 const FuturisticHeader = ({ page, user, stats, allStations }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [serverTimeOffset, setServerTimeOffset] = useState(0); // Offset in milliseconds
+  const [pendingShipments, setPendingShipments] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Fetch Pending Shipments for Notifications
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch(`${window.BASE_URL || ''}/purchases/getPending`);
+        const data = await res.json();
+        if (data.success) {
+          setPendingShipments(data.data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      }
+    };
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Poll every minute
+    return () => clearInterval(interval);
+  }, []);
   
   // Theme Toggle State
   const [isDark, setIsDark] = useState(() => {
@@ -96,7 +117,10 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
         body: JSON.stringify({ station_id: stationId }),
       });
       const result = await res.json();
-      if (result.success) window.location.reload();
+      if (result.success) {
+        localStorage.setItem('station_just_switched', 'true');
+        window.location.reload();
+      }
     } catch (err) {
       console.error("Switch failed", err);
     }
@@ -359,7 +383,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
         initial={{ opacity: 0, scale: 0.94, filter: "blur(12px)" }}
         animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
         transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }} // "Luxury" Easing
-        className={`relative z-10 px-6 py-7 ${headerBg} backdrop-blur-2xl rounded-2xl shadow-2xl ${activeConfig.glow} overflow-hidden flex items-center justify-between transition-all duration-500`}
+        className={`relative z-10 px-6 py-7 ${headerBg} backdrop-blur-2xl rounded-2xl shadow-2xl ${activeConfig.glow} flex items-center justify-between transition-all duration-500`}
         style={{
           border: '1px solid rgba(255, 255, 255, 0.12)',
           boxShadow: `
@@ -404,7 +428,7 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
         </div>
 
         {/* 4. Light Sweep Effect (Very Slow & Subtle) */}
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-50">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-50 overflow-hidden rounded-2xl">
           <div className="absolute top-0 bottom-0 left-[-100%] w-[50%] bg-gradient-to-r from-transparent via-white/40 to-transparent skew-x-[-20deg] animate-[shimmer_12s_infinite]" />
         </div>
 
@@ -493,22 +517,26 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
                         : allStations.find(s => s.id == user.station_id)?.name || "Select Station"}
                   </span>
 
-                  {/* Invisible Overlay Select for Interaction */}
+                  {/* Invisible Overlay Select for Interaction - Super Admin or multi-station users */}
+                  {(user?.role === 'super_admin' || allStations.length > 1) && (
                   <select
                     onChange={handleStationSwitch}
                     value={user?.station_id || ""}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
                     style={{ appearance: 'none' }}
                   >
+                    {user?.role === 'super_admin' && (
                     <option className="text-slate-900" value="all">
                       Global View
                     </option>
+                    )}
                     {allStations.map((s) => (
                       <option key={s.id} className="text-slate-900" value={s.id}>
                         {s.name}
                       </option>
                     ))}
                   </select>
+                  )}
                 </div>
               </div>
             ) : (
@@ -596,11 +624,176 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
 
               {/* Action Group */}
               <div className="flex items-center gap-2">
-                {/* Bell */}
-                <div className="relative p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all cursor-pointer group">
-                  <Bell size={18} />
-                  <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+                {/* Bell & Notifications */}
+                <div className="relative">
+                  <button 
+                    className="relative p-2.5 rounded-xl text-white transition-all duration-300 cursor-pointer"
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    style={{
+                      background: pendingShipments.length > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.1)',
+                      border: pendingShipments.length > 0 ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.15)',
+                      boxShadow: pendingShipments.length > 0 
+                        ? '0 0 16px rgba(245,158,11,0.25), inset 0 1px 1px rgba(255,255,255,0.1)' 
+                        : '0 2px 8px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.1)',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = pendingShipments.length > 0 ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.2)';
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = pendingShipments.length > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.1)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    <Bell size={20} strokeWidth={2.2} className={pendingShipments.length > 0 ? 'text-amber-300' : 'text-white'} />
+                    {pendingShipments.length > 0 && (
+                      <span 
+                        className="absolute -top-1.5 -right-1.5 flex items-center justify-center rounded-full text-white text-[11px] font-black animate-pulse"
+                        style={{
+                          minWidth: '22px',
+                          height: '22px',
+                          padding: '0 5px',
+                          background: 'linear-gradient(135deg, #ef4444, #f97316)',
+                          boxShadow: '0 0 12px rgba(239,68,68,0.6), 0 2px 4px rgba(0,0,0,0.3)',
+                          border: '2px solid rgba(255,255,255,0.3)',
+                        }}
+                      >
+                        {pendingShipments.length}
+                      </span>
+                    )}
+                  </button>
                 </div>
+
+                {/* ═══ Notification Overlay Panel (Fixed/Portal Style) ═══ */}
+                {showNotifications && (
+                  <>
+                    {/* Backdrop */}
+                    <div 
+                      className="fixed inset-0 z-[9998]"
+                      style={{ background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' }}
+                      onClick={() => setShowNotifications(false)}
+                    />
+                    {/* Panel */}
+                    <motion.div
+                      initial={{ opacity: 0, x: 80, scale: 0.95 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: 80, scale: 0.95 }}
+                      transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                      className="fixed top-4 right-4 w-96 max-h-[85vh] rounded-2xl overflow-hidden z-[9999] flex flex-col"
+                      style={{
+                        background: isDark ? 'rgba(15,23,42,0.97)' : 'rgba(255,255,255,0.98)',
+                        border: isDark ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(0,0,0,0.08)',
+                        boxShadow: isDark 
+                          ? '0 25px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06), 0 0 40px rgba(99,102,241,0.1)' 
+                          : '0 25px 80px rgba(0,0,0,0.2), 0 0 0 1px rgba(0,0,0,0.04)',
+                        backdropFilter: 'blur(24px)',
+                      }}
+                    >
+                      {/* Panel Header */}
+                      <div 
+                        className="px-5 py-4 flex justify-between items-center flex-shrink-0"
+                        style={{
+                          background: isDark ? 'linear-gradient(135deg, rgba(245,158,11,0.12), rgba(249,115,22,0.06))' : 'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(249,115,22,0.03))',
+                          borderBottom: isDark ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-xl" style={{ background: 'rgba(245,158,11,0.15)' }}>
+                            <Bell size={18} className="text-amber-500" />
+                          </div>
+                          <div>
+                            <h3 className="text-base font-black" style={{ color: isDark ? '#f1f5f9' : '#1e293b' }}>الإشعارات</h3>
+                            <p className="text-[11px]" style={{ color: isDark ? '#64748b' : '#94a3b8' }}>شحنات قادمة ومعلقة</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span 
+                            className="text-[11px] font-bold px-3 py-1 rounded-full"
+                            style={{ 
+                              background: pendingShipments.length > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.1)', 
+                              color: pendingShipments.length > 0 ? '#f59e0b' : '#10b981' 
+                            }}
+                          >
+                            {pendingShipments.length > 0 ? `${pendingShipments.length} جديد` : 'لا جديد'}
+                          </span>
+                          <button
+                            onClick={() => setShowNotifications(false)}
+                            className="p-1.5 rounded-lg transition-colors"
+                            style={{ 
+                              background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                              color: isDark ? '#94a3b8' : '#64748b'
+                            }}
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Panel Content */}
+                      <div className="flex-1 overflow-y-auto" style={{ maxHeight: 'calc(85vh - 80px)' }}>
+                        {pendingShipments.length === 0 ? (
+                          <div className="p-10 text-center">
+                            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl flex items-center justify-center" style={{ background: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }}>
+                              <Bell size={32} style={{ color: isDark ? '#334155' : '#cbd5e1' }} />
+                            </div>
+                            <p className="text-sm font-bold" style={{ color: isDark ? '#475569' : '#94a3b8' }}>لا توجد إشعارات جديدة</p>
+                            <p className="text-xs mt-1" style={{ color: isDark ? '#334155' : '#cbd5e1' }}>سيتم إعلامك عند وصول شحنات جديدة</p>
+                          </div>
+                        ) : (
+                          <div className="p-3 space-y-2">
+                            {pendingShipments.map((shipment, idx) => (
+                              <motion.a 
+                                key={shipment.id}
+                                href={`${window.BASE_URL || ''}/purchases`}
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.06, duration: 0.35 }}
+                                className="block p-4 rounded-xl transition-all duration-200"
+                                style={{ 
+                                  background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)',
+                                  border: isDark ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(0,0,0,0.04)',
+                                }}
+                                onMouseEnter={e => {
+                                  e.currentTarget.style.background = isDark ? 'rgba(59,130,246,0.08)' : 'rgba(59,130,246,0.05)';
+                                  e.currentTarget.style.borderColor = isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)';
+                                  e.currentTarget.style.transform = 'scale(1.01)';
+                                }}
+                                onMouseLeave={e => {
+                                  e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)';
+                                  e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                }}
+                              >
+                                <div className="flex items-start gap-3">
+                                  <div 
+                                    className="p-2.5 rounded-xl flex-shrink-0"
+                                    style={{ background: 'rgba(59,130,246,0.12)', color: '#3b82f6' }}
+                                  >
+                                    <Truck size={20} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold truncate" style={{ color: isDark ? '#f1f5f9' : '#1e293b' }}>
+                                      شحنة قادمة #{shipment.invoice_number}
+                                    </p>
+                                    <p className="text-xs mt-1" style={{ color: isDark ? '#94a3b8' : '#64748b' }}>
+                                      {shipment.volume_ordered} لتر • {shipment.supplier_name}
+                                    </p>
+                                    <span 
+                                      className="inline-block text-[10px] font-bold mt-2 px-2.5 py-1 rounded-full"
+                                      style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}
+                                    >
+                                      🚛 جاري الشحن
+                                    </span>
+                                  </div>
+                                </div>
+                              </motion.a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
 
                 {/* Theme */}
                 <button 

@@ -23,58 +23,122 @@ class SettingsController extends Controller
     public function index()
     {
         $settingModel = new Setting();
-        $roleModel = new Role();
+        $db = \App\Config\Database::connect();
+        $user = AuthHelper::user();
+        $isSuperAdmin = AuthHelper::isSuperAdmin();
+        $userPermissions = $_SESSION['permissions'] ?? [];
 
         // Load all settings grouped by section
         $generalSettings = $settingModel->getAllBySection('general');
         $fuelSettings = $settingModel->getAllBySection('fuel');
         $alertSettings = $settingModel->getAllBySection('alerts');
-        $roles = $roleModel->getAll();
 
         $fuelTypeModel = new FuelType();
         $fuelTypes = $fuelTypeModel->getAll();
 
-        // Fetch Stations & Users for the new Tab (Matching StationController Logic)
-        $stationModel = new \App\Models\Station();
-        $stations = $stationModel->getAll();
+        // Only load roles, users, stations if user has security tab access
+        $roles = [];
+        $users = [];
+        $stations = [];
 
-        // Fetch Users for Assignment with extended info
-        $db = \App\Config\Database::connect();
-        $stmt = $db->query("
-            SELECT u.id, u.name, u.email, u.station_id, u.role, u.role_id, u.status, 
-                   r.name as role_name 
-            FROM users u
-            LEFT JOIN roles r ON u.role_id = r.id
-        ");
-        $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        // STRICT: Only super admin can access roles & users (security tab)
+        $canAccessSecurity = $isSuperAdmin;
 
-        // Fetch user stations mapping
-        $stmt = $db->query("
-            SELECT us.user_id, us.station_id, s.name as station_name
-            FROM user_stations us
-            JOIN stations s ON us.station_id = s.id
-        ");
-        $allUserStations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        if ($canAccessSecurity) {
+            $roleModel = new Role();
+            $roles = $roleModel->getAll();
 
-        // Map stations to users
-        foreach ($users as &$user) {
-            $user['stations'] = [];
-            foreach ($allUserStations as $us) {
-                if ($us['user_id'] == $user['id']) {
-                    $user['stations'][] = [
-                        'id' => $us['station_id'],
-                        'name' => $us['station_name']
-                    ];
+            // Fetch Stations
+            $stationModel = new \App\Models\Station();
+            if ($isSuperAdmin) {
+                $stations = $stationModel->getAll();
+            } else {
+                // Non-super-admin: show only their assigned stations from user_stations table
+                $stmtUserStations = $db->prepare("
+                    SELECT s.* FROM stations s
+                    JOIN user_stations us ON s.id = us.station_id
+                    WHERE us.user_id = ?
+                ");
+                $stmtUserStations->execute([$user['id']]);
+                $stations = $stmtUserStations->fetchAll(\PDO::FETCH_ASSOC);
+                // Fallback to legacy station_id if no user_stations entries
+                if (empty($stations) && $user['station_id']) {
+                    $currentStation = $stationModel->find($user['station_id']);
+                    $stations = $currentStation ? [$currentStation] : [];
                 }
             }
-            // For backward compatibility or UI display
-            if (!empty($user['stations'])) {
-                $user['station_name'] = implode('، ', array_column($user['stations'], 'name'));
+
+            // Fetch Users — non-super-admin only sees users in their own stations
+            if ($isSuperAdmin) {
+                $userSql = "SELECT u.id, u.name, u.username, u.email, u.station_id, u.role, u.role_id, u.status, 
+                                   r.name as role_name 
+                            FROM users u
+                            LEFT JOIN roles r ON u.role_id = r.id";
+                $stmt = $db->prepare($userSql);
+                $stmt->execute();
             } else {
-                $user['station_name'] = 'عام / جميع المحطات';
+                // Only show users that share at least one station with the current user
+                $userSql = "SELECT DISTINCT u.id, u.name, u.username, u.email, u.station_id, u.role, u.role_id, u.status, 
+                                   r.name as role_name 
+                            FROM users u
+                            LEFT JOIN roles r ON u.role_id = r.id
+                            LEFT JOIN user_stations us ON u.id = us.user_id
+                            WHERE us.station_id IN (
+                                SELECT station_id FROM user_stations WHERE user_id = ?
+                            ) OR u.station_id = ?";
+                $stmt = $db->prepare($userSql);
+                $stmt->execute([$user['id'], $user['original_station_id'] ?? $user['station_id']]);
+            }
+            $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Fetch user stations mapping
+            $stmtMapping = $db->query("
+                SELECT us.user_id, us.station_id, s.name as station_name
+                FROM user_stations us
+                JOIN stations s ON us.station_id = s.id
+            ");
+            $allUserStations = $stmtMapping->fetchAll(\PDO::FETCH_ASSOC);
+
+            // Map stations to users
+            foreach ($users as &$u) {
+                $u['stations'] = [];
+                foreach ($allUserStations as $us) {
+                    if ($us['user_id'] == $u['id']) {
+                        $u['stations'][] = [
+                            'id' => $us['station_id'],
+                            'name' => $us['station_name']
+                        ];
+                    }
+                }
+                if (!empty($u['stations'])) {
+                    $u['station_name'] = implode('، ', array_column($u['stations'], 'name'));
+                } else {
+                    $u['station_name'] = 'عام / جميع المحطات';
+                }
+            }
+            unset($u);
+        } else {
+            // For stations tab (non-security), load minimal station data
+            $canAccessStations = in_array('settings.stations', $userPermissions) || in_array('*', $userPermissions);
+            if ($canAccessStations) {
+                $stationModel = new \App\Models\Station();
+                if ($isSuperAdmin) {
+                    $stations = $stationModel->getAll();
+                } else {
+                    $stmtUserStations = $db->prepare("
+                        SELECT s.* FROM stations s
+                        JOIN user_stations us ON s.id = us.station_id
+                        WHERE us.user_id = ?
+                    ");
+                    $stmtUserStations->execute([$user['id']]);
+                    $stations = $stmtUserStations->fetchAll(\PDO::FETCH_ASSOC);
+                    if (empty($stations) && $user['station_id']) {
+                        $currentStation = $stationModel->find($user['station_id']);
+                        $stations = $currentStation ? [$currentStation] : [];
+                    }
+                }
             }
         }
-        unset($user);
 
         $this->view('admin/settings/index', [
             'general' => $generalSettings,
@@ -84,6 +148,8 @@ class SettingsController extends Controller
             'fuelTypes' => $fuelTypes,
             'stations' => $stations,
             'users' => $users,
+            'isSuperAdmin' => $isSuperAdmin,
+            'userPermissions' => $userPermissions,
             'hide_topbar' => true
         ]);
     }
@@ -91,6 +157,12 @@ class SettingsController extends Controller
     public function update()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            // Permission check: require settings.edit
+            if (!AuthHelper::can('settings.edit') && !AuthHelper::isSuperAdmin()) {
+                http_response_code(403);
+                die('Unauthorized: Missing settings.edit permission');
+            }
+
             $settingModel = new Setting();
             $section = $_POST['section'] ?? 'general';
 
@@ -127,6 +199,12 @@ class SettingsController extends Controller
 
     public function backup()
     {
+        // Permission check
+        if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.backup')) {
+            http_response_code(403);
+            die('غير مصرح: لا تملك صلاحية النسخ الاحتياطي');
+        }
+
         // Simple Database Backup using mysqldump or PHP fallback
         $dbConfig = require __DIR__ . '/../Config/Database.php'; // Assuming config availability
         // Since we are in Controller, we might not have direct access to config array structure easily without parsing or using Config class if static.
@@ -205,39 +283,96 @@ class SettingsController extends Controller
             header('Content-Type: application/json');
             $input = json_decode(file_get_contents('php://input'), true);
 
-            if (!AuthHelper::can('settings.edit')) {
-                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing settings.edit permission']);
-                return;
+            // STRICT: Only super admin can manage roles
+            if (!AuthHelper::isSuperAdmin()) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه إدارة الأدوار']);
+                exit;
             }
 
-            if (!$input['name']) {
+            $isEditing = isset($input['id']) && $input['id'];
+
+            if (empty($input['name'])) {
                 echo json_encode(['success' => false, 'message' => 'Role name required']);
+                exit;
                 return;
             }
 
-            $roleModel = new Role();
-            $data = [
-                'name' => $input['name'],
-                'description' => $input['description'] ?? '',
-                'permissions' => json_encode($input['permissions'] ?? []),
-                'is_system' => 0
-            ];
-
-            if (isset($input['id']) && $input['id']) {
-                $roleModel->update($input['id'], $data);
-            } else {
-                $roleModel->create($data);
+            // Privilege escalation prevention
+            $permissions = $input['permissions'] ?? [];
+            if (is_string($permissions)) {
+                $permissions = json_decode($permissions, true) ?? [];
             }
 
-            echo json_encode(['success' => true, 'message' => 'Role saved successfully']);
+            if (!AuthHelper::isSuperAdmin()) {
+                // Non-super-admin cannot assign wildcard (*) permission
+                if (in_array('*', $permissions)) {
+                    echo json_encode(['success' => false, 'message' => 'غير مصرح: لا يمكنك منح صلاحيات المدير العام']);
+                    exit;
+                    return;
+                }
+
+                // Non-super-admin cannot assign permissions they don't have themselves
+                $myPermissions = $_SESSION['permissions'] ?? [];
+                if (!in_array('*', $myPermissions)) {
+                    foreach ($permissions as $perm) {
+                        if (!in_array($perm, $myPermissions)) {
+                            echo json_encode(['success' => false, 'message' => 'غير مصرح: لا يمكنك منح صلاحية (' . $perm . ') لأنك لا تملكها']);
+                            exit;
+                            return;
+                        }
+                    }
+                }
+
+                // Cannot edit system roles
+                if ($isEditing) {
+                    $roleModel = new Role();
+                    $existingRole = $roleModel->find($input['id']);
+                    if ($existingRole && $existingRole['is_system']) {
+                        echo json_encode(['success' => false, 'message' => 'غير مصرح: لا يمكنك تعديل أدوار النظام']);
+                        exit;
+                        return;
+                    }
+                }
+            }
+
+            try {
+                $roleModel = new Role();
+                $permissionsJson = json_encode($permissions);
+
+                $data = [
+                    'name' => $input['name'],
+                    'description' => $input['description'] ?? '',
+                    'permissions' => $permissionsJson,
+                    'is_system' => 0
+                ];
+
+                if ($isEditing) {
+                    $roleModel->update($input['id'], $data);
+                } else {
+                    $roleModel->create($data);
+                }
+
+                echo json_encode(['success' => true, 'message' => 'تم حفظ الدور بنجاح']);
+            } catch (\Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
+            }
             exit;
         }
     }
+
 
     public function saveFuel()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
+
+            // Permission check
+            if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.fuel') && !AuthHelper::can('settings.edit')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: لا تملك صلاحية تعديل الوقود']);
+                exit;
+                return;
+            }
+
             $rawInput = file_get_contents('php://input');
             $input = json_decode($rawInput, true);
 
@@ -285,6 +420,24 @@ class SettingsController extends Controller
                 $this->logPriceChange($fuelId, $input['name'], $oldPrice, $newPrice);
             }
 
+            // ALWAYS Propagate new price to linked tanks (Ensure consistency)
+            if ($success && $fuelId) {
+                try {
+                    $db = \App\Config\Database::connect();
+
+                    // We must use fuel_type_id because product_type column was dropped in migration
+                    if ($fuelId) {
+                        $stmt = $db->prepare("UPDATE tanks SET current_price = ? WHERE fuel_type_id = ?");
+                        $stmt->execute([$newPrice, $fuelId]);
+
+                        // Log for debugging
+                        error_log("Forced update tanks price to $newPrice where fuel_type_id = $fuelId");
+                    }
+                } catch (\Exception $e) {
+                    error_log("Failed to propagate price to tanks: " . $e->getMessage());
+                }
+            }
+
             if ($success) {
                 echo json_encode(['success' => true, 'message' => 'Fuel type saved successfully']);
             } else {
@@ -326,6 +479,14 @@ class SettingsController extends Controller
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
+
+            // Permission check
+            if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.fuel') && !AuthHelper::can('settings.edit')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: لا تملك صلاحية حذف الوقود']);
+                exit;
+                return;
+            }
+
             try {
                 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -358,9 +519,10 @@ class SettingsController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
-            if (!AuthHelper::can('settings.edit')) {
-                echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-                return;
+            // STRICT: Only super admin can manage users
+            if (!AuthHelper::isSuperAdmin()) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه تعديل المستخدمين']);
+                exit;
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
@@ -377,6 +539,24 @@ class SettingsController extends Controller
                 'role_id' => !empty($input['role_id']) ? $input['role_id'] : null,
                 'status' => $input['status'] ?? 'active'
             ];
+
+            // Only super admin can change name and password
+            if (AuthHelper::isSuperAdmin()) {
+                // Update name if provided
+                if (!empty($input['name'])) {
+                    $data['name'] = trim($input['name']);
+                }
+
+                // Update password if provided (non-empty means super admin wants to change it)
+                if (!empty($input['password'])) {
+                    $data['password_hash'] = password_hash($input['password'], PASSWORD_DEFAULT);
+                }
+
+                // Update username if provided
+                if (array_key_exists('username', $input)) {
+                    $data['username'] = !empty($input['username']) ? trim($input['username']) : null;
+                }
+            }
 
             // If role_id is set, update legacy role string for backward compatibility
             if ($data['role_id']) {
@@ -419,9 +599,10 @@ class SettingsController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
-            if (!AuthHelper::can('settings.edit')) {
-                echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-                return;
+            // STRICT: Only super admin can create users
+            if (!AuthHelper::isSuperAdmin()) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه إنشاء مستخدمين']);
+                exit;
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
@@ -441,6 +622,7 @@ class SettingsController extends Controller
             $data = [
                 'name' => $input['name'],
                 'email' => $input['email'],
+                'username' => !empty($input['username']) ? trim($input['username']) : null,
                 'password_hash' => password_hash($input['password'], PASSWORD_BCRYPT),
                 'role_id' => !empty($input['role_id']) ? $input['role_id'] : null,
                 'station_id' => null, // Will be set after
@@ -473,9 +655,10 @@ class SettingsController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
-            if (!AuthHelper::can('settings.edit')) {
-                echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-                return;
+            // STRICT: Only super admin can delete roles
+            if (!AuthHelper::isSuperAdmin()) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه حذف الأدوار']);
+                exit;
             }
 
             $input = json_decode(file_get_contents('php://input'), true);
@@ -517,10 +700,70 @@ class SettingsController extends Controller
         }
     }
 
+    public function deleteUser()
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            header('Content-Type: application/json');
+
+            // STRICT: Only super admin can delete users
+            if (!AuthHelper::isSuperAdmin()) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه حذف المستخدمين']);
+                exit;
+            }
+
+            $input = json_decode(file_get_contents('php://input'), true);
+            $userId = $input['id'] ?? null;
+
+            if (!$userId) {
+                echo json_encode(['success' => false, 'message' => 'User ID required']);
+                return;
+            }
+
+            // Cannot delete yourself
+            if ($userId == ($_SESSION['user_id'] ?? null)) {
+                echo json_encode(['success' => false, 'message' => 'لا يمكنك حذف حسابك الخاص']);
+                return;
+            }
+
+            $userModel = new \App\Models\User();
+            $user = $userModel->find($userId);
+
+            if (!$user) {
+                echo json_encode(['success' => false, 'message' => 'User not found']);
+                return;
+            }
+
+            try {
+                $db = Database::connect();
+
+                // Clean up user_stations
+                $stmt = $db->prepare("DELETE FROM user_stations WHERE user_id = ?");
+                $stmt->execute([$userId]);
+
+                // Delete the user
+                if ($userModel->delete($userId)) {
+                    echo json_encode(['success' => true, 'message' => 'User deleted successfully']);
+                } else {
+                    echo json_encode(['success' => false, 'message' => 'Failed to delete user']);
+                }
+            } catch (\Exception $e) {
+                echo json_encode(['success' => false, 'message' => 'Error: ' . $e->getMessage()]);
+            }
+            exit;
+        }
+    }
+
     public function factoryReset()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
+
+            // CRITICAL: Only super admin can factory reset
+            if (!AuthHelper::isSuperAdmin()) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه إعادة ضبط المصنع']);
+                exit;
+                return;
+            }
 
             try {
                 // Parse JSON input
@@ -560,7 +803,8 @@ class SettingsController extends Controller
                     'sales' => ['sales'],
                     'purchases' => ['purchases', 'incoming_stock_log'],
                     'tanks_pumps' => ['tanks', 'pumps', 'counters', 'tank_readings', 'tank_calibrations', 'calibration_logs'],
-                    'accounts' => ['transactions', 'safes', 'banks', 'expenses', 'transfer_requests'],
+                    'transactions' => ['transactions', 'expenses', 'transfer_requests'],
+                    'safes_banks' => ['safes', 'banks'],
                     'hr' => ['employees', 'attendance', 'payrolls', 'advances', 'workers', 'drivers'],
                     'customers_suppliers' => ['customers', 'suppliers'],
                     'fuel_types' => ['fuel_types']
@@ -611,6 +855,13 @@ class SettingsController extends Controller
     public function getActivityLogs()
     {
         header('Content-Type: application/json');
+
+        // Permission check
+        if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.activity')) {
+            echo json_encode(['success' => false, 'message' => 'غير مصرح: لا تملك صلاحية عرض سجل العمليات']);
+            exit;
+            return;
+        }
 
         try {
             $logModel = new \App\Models\ActivityLog();

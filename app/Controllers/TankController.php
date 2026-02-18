@@ -42,14 +42,6 @@ class TankController extends Controller
         $generalSettings = $this->settingModel->getAllBySection('general');
         $fuelTypes = $this->fuelTypeModel->getAll();
 
-        // Header Requirements
-        $allStations = [];
-        if ($user['role'] === 'super_admin') {
-            $db = \App\Config\Database::connect();
-            $stmt = $db->query("SELECT id, name FROM stations ORDER BY name ASC");
-            $allStations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        }
-
         $additional_js = ViteHelper::load('resources/js/main.jsx');
 
         // Pass to view
@@ -61,7 +53,6 @@ class TankController extends Controller
             'fuelTypes' => $fuelTypes,
             'fuelTypes' => $fuelTypes,
             'user' => $user,
-            'allStations' => $allStations,
             'additional_js' => $additional_js,
             'hide_topbar' => true
         ]);
@@ -134,7 +125,7 @@ class TankController extends Controller
                 'name' => $input['name'] ?? $_POST['name'] ?? '',
                 'fuel_type_id' => (isset($input['fuel_type_id']) && !str_starts_with($input['fuel_type_id'], 'legacy_')) ? $input['fuel_type_id'] : null,
                 'capacity_liters' => $input['capacity_liters'] ?? $_POST['capacity_liters'] ?? 0,
-                'current_volume' => $input['current_volume'] ?? $_POST['current_volume'] ?? 0,
+                // current_volume is NOT updated here - it can only be changed via calibration
                 'current_price' => $input['current_price'] ?? $_POST['current_price'] ?? 0,
             ];
 
@@ -194,8 +185,6 @@ class TankController extends Controller
         header('Content-Type: application/json');
 
         $rawInput = file_get_contents('php://input');
-        // DEBUG:
-        file_put_contents(__DIR__ . '/../../public/debug_transfer_standalone.txt', date('Y-m-d H:i:s') . " Input: " . $rawInput . "\n", FILE_APPEND);
 
         $input = json_decode($rawInput, true);
         $id = $input['id'] ?? null; // Source Tank
@@ -222,11 +211,11 @@ class TankController extends Controller
             echo json_encode(['success' => true, 'message' => 'تم نقل الوقود بنجاح']);
         } catch (\PDOException $e) {
             $db->rollBack();
-            file_put_contents(__DIR__ . '/../../public/debug_transfer_error.txt', date('Y-m-d H:i:s') . " DB Error: " . $e->getMessage() . "\n", FILE_APPEND);
-            echo json_encode(['success' => false, 'message' => 'خطأ قاعدة بيانات: ' . $e->getMessage()]);
+            error_log('TankController::transfer DB Error: ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => 'خطأ في قاعدة البيانات']);
         } catch (\Exception $e) {
             $db->rollBack();
-            file_put_contents(__DIR__ . '/../../public/debug_transfer_error.txt', date('Y-m-d H:i:s') . " Error: " . $e->getMessage() . "\n", FILE_APPEND);
+            error_log('TankController::transfer Error: ' . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'فشل في عملية النقل: ' . $e->getMessage()]);
         }
     }
@@ -237,8 +226,6 @@ class TankController extends Controller
         header('Content-Type: application/json');
 
         $rawInput = file_get_contents('php://input');
-        // DEBUG: Log input to file
-        file_put_contents(__DIR__ . '/../../public/debug_transfer.txt', date('Y-m-d H:i:s') . " Input: " . $rawInput . "\n", FILE_APPEND);
 
         $input = json_decode($rawInput, true);
         $id = $input['id'] ?? null;

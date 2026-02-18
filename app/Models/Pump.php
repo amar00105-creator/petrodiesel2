@@ -17,7 +17,7 @@ class Pump
     public function getAll($stationId = null)
     {
         // Get pumps with Tank name and Station info
-        $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type 
+        $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type, ft.color_hex as product_color 
                 FROM pumps p 
                 LEFT JOIN tanks t ON p.tank_id = t.id 
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
@@ -37,7 +37,7 @@ class Pump
 
     public function find($id)
     {
-        $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type 
+        $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type, ft.color_hex as product_color 
                 FROM pumps p 
                 LEFT JOIN tanks t ON p.tank_id = t.id 
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
@@ -119,7 +119,7 @@ class Pump
         $this->db = Database::ping();
 
         // 1. Get Pumps (Active Only)
-        $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type 
+        $sql = "SELECT p.*, t.name as tank_name, ft.name as product_type, ft.color_hex as product_color 
                 FROM pumps p 
                 LEFT JOIN tanks t ON p.tank_id = t.id 
                 LEFT JOIN fuel_types ft ON t.fuel_type_id = ft.id
@@ -137,9 +137,11 @@ class Pump
         $pumpIds = array_column($pumps, 'id');
         $placeholders = implode(',', array_fill(0, count($pumpIds), '?'));
 
-        $sqlCounters = "SELECT c.*, w.name as worker_name 
+        $sqlCounters = "SELECT c.*, w.name as worker_name, t.current_price, t.current_volume 
                         FROM counters c 
                         LEFT JOIN workers w ON c.current_worker_id = w.id 
+                        JOIN pumps p ON c.pump_id = p.id
+                        JOIN tanks t ON p.tank_id = t.id
                         WHERE c.pump_id IN ($placeholders) AND c.deleted_at IS NULL
                         ORDER BY c.id";
         $stmtCounters = $this->db->prepare($sqlCounters);

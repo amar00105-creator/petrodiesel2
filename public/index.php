@@ -12,13 +12,24 @@ try {
 
     if ($result && !empty($result['value'])) {
         $timezone = $result['value'];
-        date_default_timezone_set($timezone);
-        $timezoneSet = true;
-
-        // Sync MySQL Timezone
-        $offset = date('P');
-        $db->exec("SET time_zone = '$offset'");
+    } else {
+        // Auto-insert default timezone if missing
+        $timezone = 'Africa/Khartoum';
+        try {
+            $ins = $db->prepare("INSERT INTO settings (station_id, section, key_name, value, type) VALUES (NULL, 'general', 'timezone', ?, 'string') ON DUPLICATE KEY UPDATE value = ?");
+            $ins->execute([$timezone, $timezone]);
+        } catch (Exception $ignore) {
+        }
     }
+
+    date_default_timezone_set($timezone);
+    $timezoneSet = true;
+
+    // Sync MySQL Timezone
+    $offset = date('P');
+    // Register timezone with Database class so it persists across reconnections
+    \App\Config\Database::setTimezone($offset);
+    $db->exec("SET time_zone = '$offset'");
 } catch (Exception $e) {
     // Silence errors but continue
 }
@@ -26,6 +37,9 @@ try {
 // Fallback if not set
 if (!$timezoneSet) {
     date_default_timezone_set('Africa/Khartoum');
+    // Also register fallback timezone for MySQL connections
+    $offset = date('P');
+    \App\Config\Database::setTimezone($offset);
 }
 
 // Autoloader
@@ -66,6 +80,8 @@ $router = new Router();
 
 $router->add('GET', '/login', 'AuthController', 'login');
 $router->add('POST', '/login', 'AuthController', 'login');
+$router->add('GET', '/register', 'AuthController', 'showRegister');
+$router->add('POST', '/register', 'AuthController', 'register');
 $router->add('GET', '/logout', 'AuthController', 'logout');
 $router->add('POST', '/auth/verify_password', 'AuthController', 'verify_password');
 
@@ -113,6 +129,7 @@ $router->add('GET', '/sales/edit', 'SalesController', 'edit'); // Edit page
 $router->add('GET', '/sales/invoice', 'SalesController', 'invoice'); // Invoice page
 $router->add('GET', '/sales/create', 'SalesController', 'create');
 $router->add('POST', '/sales/store', 'SalesController', 'store');
+$router->add('POST', '/sales/update_ajax', 'SalesController', 'update_ajax');
 $router->add('GET', '/sales/getCounterDetails', 'SalesController', 'getCounterDetails');
 $router->add('GET', '/sales/getNextInvoiceNumber', 'SalesController', 'getNextInvoiceNumber');
 $router->add('POST', '/sales/delete_ajax', 'SalesController', 'delete_ajax');
@@ -215,6 +232,7 @@ $router->add('GET', '/settings/backup', 'SettingsController', 'backup');
 $router->add('POST', '/settings/create_user', 'SettingsController', 'createUser');
 $router->add('POST', '/settings/save_user', 'SettingsController', 'saveUser');
 $router->add('POST', '/settings/delete_role', 'SettingsController', 'deleteRole');
+$router->add('POST', '/settings/delete_user', 'SettingsController', 'deleteUser');
 $router->add('POST', '/settings/factory_reset', 'SettingsController', 'factoryReset');
 
 // Roles Routes
@@ -227,6 +245,7 @@ $router->add('POST', '/roles/delete', 'RolesController', 'delete');
 
 // Workers Routes
 $router->add('GET', '/workers', 'WorkerController', 'index');
+$router->add('GET', '/workers/list_ajax', 'WorkerController', 'list_ajax');
 $router->add('POST', '/workers/create_ajax', 'WorkerController', 'create_ajax');
 $router->add('POST', '/workers/update_ajax', 'WorkerController', 'update_ajax');
 $router->add('POST', '/workers/delete_ajax', 'WorkerController', 'delete_ajax');

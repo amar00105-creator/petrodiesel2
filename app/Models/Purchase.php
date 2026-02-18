@@ -6,22 +6,55 @@ use App\Core\Model;
 
 class Purchase extends Model
 {
-    public function getAll($stationId)
+    public function getAll($stationId = 'all', $options = [])
     {
         $sql = "SELECT p.*, 
                        s.name as supplier_name, 
                        t.name as tank_name, 
                        ft.name as fuel_type_name,
+                       st.name as station_name,
                        d.name as driver_name_resolved
                 FROM purchases p 
                 LEFT JOIN suppliers s ON p.supplier_id = s.id 
                 LEFT JOIN tanks t ON p.tank_id = t.id 
+                LEFT JOIN stations st ON p.station_id = st.id
                 LEFT JOIN drivers d ON p.driver_id = d.id 
-                LEFT JOIN fuel_types ft ON p.fuel_type_id = ft.id
-                WHERE p.station_id = ? 
-                ORDER BY p.created_at DESC";
+                LEFT JOIN fuel_types ft ON p.fuel_type_id = ft.id";
+
+        $params = [];
+        $whereClauses = [];
+
+        if ($stationId !== 'all') {
+            if (!empty($options['include_global_pending'])) {
+                // Show: (My Station's Purchases) OR (Any 'ordered' purchase)
+                if (is_array($stationId)) {
+                    $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                    $whereClauses[] = "(p.station_id IN ($placeholders) OR p.status = 'ordered')";
+                    $params = array_merge($params, $stationId);
+                } else {
+                    $whereClauses[] = "(p.station_id = ? OR p.status = 'ordered')";
+                    $params[] = $stationId;
+                }
+            } else {
+                if (is_array($stationId)) {
+                    $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                    $whereClauses[] = "p.station_id IN ($placeholders)";
+                    $params = array_merge($params, $stationId);
+                } else {
+                    $whereClauses[] = "p.station_id = ?";
+                    $params[] = $stationId;
+                }
+            }
+        }
+
+        if (!empty($whereClauses)) {
+            $sql .= " WHERE " . implode(" AND ", $whereClauses);
+        }
+
+        $sql .= " ORDER BY p.created_at DESC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$stationId]);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
@@ -91,8 +124,14 @@ class Purchase extends Model
 
         $params = [$start, $end];
         if ($stationId !== 'all') {
-            $sql .= " AND station_id = ?";
-            $params[] = $stationId;
+            if (is_array($stationId)) {
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $sql .= " AND station_id IN ($placeholders)";
+                $params = array_merge($params, $stationId);
+            } else {
+                $sql .= " AND station_id = ?";
+                $params[] = $stationId;
+            }
         }
 
         $stmt = $this->db->prepare($sql);
@@ -106,7 +145,7 @@ class Purchase extends Model
                 WHERE tank_id = ? AND created_at BETWEEN ? AND ?";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$tankId, $start, $end]);
+        $stmt->execute([$tankId, $start . ' 00:00:00', $end . ' 23:59:59']);
         return $stmt->fetchColumn() ?: 0;
     }
     public function getByPeriod($start, $end, $stationId = 'all')
@@ -120,8 +159,14 @@ class Purchase extends Model
 
         $params = [$start, $end];
         if ($stationId !== 'all') {
-            $sql .= " AND p.station_id = ?";
-            $params[] = $stationId;
+            if (is_array($stationId)) {
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $sql .= " AND p.station_id IN ($placeholders)";
+                $params = array_merge($params, $stationId);
+            } else {
+                $sql .= " AND p.station_id = ?";
+                $params[] = $stationId;
+            }
         }
 
         $sql .= " ORDER BY p.created_at DESC";
@@ -132,13 +177,23 @@ class Purchase extends Model
     }
     public function getDailyPurchasesByTank($stationId, $start, $end)
     {
-        $sql = "SELECT DATE(created_at) as purchase_date, tank_id, SUM(volume_received) as total_vol 
-                FROM purchases 
-                WHERE station_id = ? AND created_at BETWEEN ? AND ?
-                GROUP BY DATE(created_at), tank_id";
+        if (is_array($stationId)) {
+            $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+            $sql = "SELECT DATE(created_at) as purchase_date, tank_id, SUM(volume_received) as total_vol 
+                    FROM purchases 
+                    WHERE station_id IN ($placeholders) AND created_at BETWEEN ? AND ?
+                    GROUP BY DATE(created_at), tank_id";
+            $params = array_merge($stationId, [$start . ' 00:00:00', $end . ' 23:59:59']);
+        } else {
+            $sql = "SELECT DATE(created_at) as purchase_date, tank_id, SUM(volume_received) as total_vol 
+                    FROM purchases 
+                    WHERE station_id = ? AND created_at BETWEEN ? AND ?
+                    GROUP BY DATE(created_at), tank_id";
+            $params = [$stationId, $start . ' 00:00:00', $end . ' 23:59:59'];
+        }
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([$stationId, $start . ' 00:00:00', $end . ' 23:59:59']);
+        $stmt->execute($params);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
@@ -160,8 +215,14 @@ class Purchase extends Model
 
         $params = [];
         if ($stationId !== 'all') {
-            $sql .= " AND p.station_id = ?";
-            $params[] = $stationId;
+            if (is_array($stationId)) {
+                $placeholders = implode(',', array_fill(0, count($stationId), '?'));
+                $sql .= " AND p.station_id IN ($placeholders)";
+                $params = $stationId;
+            } else {
+                $sql .= " AND p.station_id = ?";
+                $params[] = $stationId;
+            }
         }
 
         $sql .= " ORDER BY p.created_at DESC";

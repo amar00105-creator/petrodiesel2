@@ -355,7 +355,6 @@ html.dark-mode .btn-outline {
   box-shadow: var(--glass-shadow);
   /* Added for Mobile Scroll */
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
 }
 
 .table {

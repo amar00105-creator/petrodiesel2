@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Card, Title, Text, TextInput, Select, SelectItem, Badge, Button, Flex } from '@tremor/react';
 import { Search, Filter, Download, FileText, Trash2, Edit, ChevronLeft, ChevronRight, Fuel, Calendar, CreditCard, Plus, Eye, RefreshCw, Database, Droplets, Wallet, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
+import { openPrintPreview, formatDateArabic } from './utils/printPreview';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 
 
@@ -14,35 +15,69 @@ export default function SalesList({ sales = [] }) {
 
     const [allSales, setAllSales] = useState(sales); // Local state for optimistic updates
 
-    // Normalize Data (Backend -> Frontend)
-    const normalizedSales = (allSales || []).map(sale => {
-        let accountName = '-';
-        const method = (sale.payment_method || sale.method || 'cash').toLowerCase();
+    // Normalize Data & Group by Invoice
+    const normalizedSales = React.useMemo(() => {
+        const groups = {};
         
-        if (method === 'cash') {
-            if (sale.bank_name) accountName = `بنك: ${sale.bank_name}`;
-            else if (sale.safe_name) accountName = `خزنة: ${sale.safe_name}`;
-            else accountName = 'نقدي (غير محدد)';
-        } else if (method === 'credit') {
-            accountName = sale.customer_name || 'عميل غير محدد';
-        }
+        (allSales || []).forEach(sale => {
+            const invoice = sale.invoice_number || sale.invoice_no || sale.id || sale.sale_id;
+            if (!groups[invoice]) {
+                // Initialize group
+                let accountName = '-';
+                const method = (sale.payment_method || sale.method || 'cash').toLowerCase();
+                
+                if (method === 'cash') {
+                    if (sale.bank_name) accountName = `بنك: ${sale.bank_name}`;
+                    else if (sale.safe_name) accountName = `خزنة: ${sale.safe_name}`;
+                    else accountName = 'نقدي (غير محدد)';
+                } else if (method === 'credit') {
+                    accountName = sale.customer_name || 'عميل غير محدد';
+                }
 
-        return {
-            id: sale.id || sale.sale_id,
-            date: sale.created_at || sale.date,
-            pump: sale.pump_name || sale.pump || 'Unknown Pump',
-            fuel: sale.product_type || sale.fuel || 'General',
-            liters: sale.volume_sold || sale.liters || 0,
-            amount: sale.total_amount || sale.amount || 0,
-            unit_price: sale.unit_price || 0,
-            method: method === 'cash' ? 'نقدي' : 'آجل',
-            account: accountName,
-            raw_method: method,
-            raw_safe: sale.safe_name, // For filtering
-            raw_bank: sale.bank_name, // For filtering
-            raw_customer: sale.customer_name // For filtering
-        };
-    });
+                groups[invoice] = {
+                    id: sale.id || sale.sale_id, // Use first ID for edit link
+                    invoice_number: invoice,
+                    date: sale.created_at || sale.date,
+                    pumps: [sale.pump_name || sale.pump || 'Unknown Pump'],
+                    fuels: [sale.product_type || sale.fuel || 'General'],
+                    workers: [sale.worker_name || sale.worker || '-'],
+                    total_liters: parseFloat(sale.volume_sold || sale.liters || 0),
+                    total_amount: parseFloat(sale.total_amount || sale.amount || 0),
+                    unit_price: sale.unit_price || 0,
+                    method: method === 'cash' ? 'نقدي' : 'آجل',
+                    account: accountName,
+                    raw_method: method,
+                    raw_safe: sale.safe_name,
+                    raw_bank: sale.bank_name,
+                    raw_customer: sale.customer_name,
+                    count: 1
+                };
+            } else {
+                // Aggregate
+                groups[invoice].total_liters += parseFloat(sale.volume_sold || sale.liters || 0);
+                groups[invoice].total_amount += parseFloat(sale.total_amount || sale.amount || 0);
+                groups[invoice].count += 1;
+                
+                const pump = sale.pump_name || sale.pump;
+                if (pump && !groups[invoice].pumps.includes(pump)) groups[invoice].pumps.push(pump);
+                
+                const fuel = sale.product_type || sale.fuel;
+                if (fuel && !groups[invoice].fuels.includes(fuel)) groups[invoice].fuels.push(fuel);
+
+                const worker = sale.worker_name || sale.worker;
+                if (worker && !groups[invoice].workers.includes(worker)) groups[invoice].workers.push(worker);
+            }
+        });
+
+        return Object.values(groups).map(g => ({
+            ...g,
+            pump: g.pumps.join(', '),
+            fuel: g.fuels.join(', '),
+            worker: g.workers.filter(w => w && w !== '-').length > 1 ? 'مجموعة' : (g.workers.find(w => w && w !== '-') || '-'),
+            liters: g.total_liters,
+            amount: g.total_amount
+        })).sort((a, b) => new Date(b.date) - new Date(a.date));
+    }, [allSales]);
 
     // Delete Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -62,8 +97,58 @@ export default function SalesList({ sales = [] }) {
     };
 
     const handlePreview = (sale) => {
-        // Navigate to dedicated invoice page
-        window.open(`${window.BASE_URL}/sales/invoice?id=${sale.id}`, '_blank');
+        // Filter raw sales by this invoice number
+        const invoiceSales = (allSales || []).filter(s => 
+            (s.invoice_number || s.invoice_no || s.id || s.sale_id) == sale.invoice_number
+        );
+        
+        const headers = ['الماكينة', 'العداد', 'نوع الوقود', 'العامل', 'السابق', 'الحالي', 'الكمية', 'السعر', 'الإجمالي'];
+        let totalAmount = 0;
+        let totalVolume = 0;
+        
+        const rows = invoiceSales.map(s => {
+            const volume = parseFloat(s.volume_sold || 0);
+            const amount = parseFloat(s.total_amount || 0);
+            totalAmount += amount;
+            totalVolume += volume;
+            return [
+                s.pump_name || s.pump || '-',
+                s.counter_name || '-',
+                s.product_type || s.fuel || '-',
+                s.worker_name || s.worker || '-',
+                parseFloat(s.opening_reading || 0).toLocaleString('en-US'),
+                parseFloat(s.closing_reading || 0).toLocaleString('en-US'),
+                volume.toLocaleString('en-US'),
+                parseFloat(s.unit_price || 0).toLocaleString('en-US'),
+                amount.toLocaleString('en-US', { minimumFractionDigits: 2 })
+            ];
+        });
+        
+        const footerRow = ['', '', '', 'الإجمالي', '', '', totalVolume.toLocaleString('en-US'), '', totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 }) + ' SDG'];
+        
+        let tableHtml = '<table><thead><tr>';
+        headers.forEach(h => tableHtml += `<th>${h}</th>`);
+        tableHtml += '</tr></thead><tbody>';
+        rows.forEach(row => {
+            tableHtml += '<tr>';
+            row.forEach(cell => tableHtml += `<td>${cell}</td>`);
+            tableHtml += '</tr>';
+        });
+        tableHtml += '</tbody><tfoot><tr>';
+        footerRow.forEach(cell => tableHtml += `<td>${cell}</td>`);
+        tableHtml += '</tr></tfoot></table>';
+        
+        openPrintPreview({
+            title: 'تقرير مبيعات يومي',
+            subtitle: 'فاتورة رقم ' + sale.invoice_number + ' — ' + formatDateArabic(sale.date),
+            content: tableHtml,
+            landscape: true,
+            extraStyles: `
+                table { font-size: 10px; }
+                th, td { padding: 6px 8px; white-space: nowrap; }
+                tfoot td { background: #374151; color: white; font-weight: bold; font-size: 12px; }
+            `
+        });
     };
 
     const openDeleteModal = (sale) => {
@@ -118,6 +203,7 @@ export default function SalesList({ sales = [] }) {
     const filteredSales = normalizedSales.filter(sale => {
         const matchesSearch = 
             sale.id.toString().includes(search) || 
+            sale.invoice_number.toString().includes(search) ||
             sale.pump.toLowerCase().includes(search.toLowerCase());
 
         // Dynamic Filtering Logic
@@ -188,8 +274,8 @@ export default function SalesList({ sales = [] }) {
                             ></path>
                         </svg>
                     </button>
-                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold bg-white/5 backdrop-blur-xl text-white hover:bg-white/10 transition-all shadow-sm">تصدير Excel</Button>
-                    <Button variant="primary" icon={FileText} className="rounded-xl font-bold bg-navy-900 hover:bg-navy-800 bg-white/5 backdrop-blur-xl text-white shadow-sm">تقرير يومي</Button>
+                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 hover:text-slate-900 transition-all shadow-sm dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:border-white/10 dark:hover:bg-white/10">تصدير Excel</Button>
+                    <Button variant="primary" icon={FileText} className="rounded-xl font-bold bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 transition-all shadow-sm dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:border-white/10 dark:hover:bg-white/10">تقرير يومي</Button>
                 </div>
             </div>
 
@@ -277,6 +363,7 @@ export default function SalesList({ sales = [] }) {
                                 <th className="p-4 text-sm font-bold text-slate-600">رقم #</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">التاريخ والوقت</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">الماكينة / الصنف</th>
+                                <th className="p-4 text-sm font-bold text-slate-600">العامل</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">نوع الوقود</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">الكمية (L)</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">المبلغ (SDG)</th>
@@ -298,13 +385,16 @@ export default function SalesList({ sales = [] }) {
                             )}
                             {filteredSales.map((sale) => (
                                 <tr key={sale.id} className="hover:bg-blue-50/30 transition-colors group dark:hover:bg-white/5">
-                                    <td className="p-4 font-mono font-bold text-slate-700 dark:text-slate-300">#{sale.id}</td>
+                                    <td className="p-4 font-mono font-bold text-slate-700 dark:text-slate-300">#{sale.invoice_number}</td>
                                     <td className="p-4 text-sm text-slate-600 ltr:text-left direction-ltr dark:text-slate-400">{sale.date}</td>
                                     <td className="p-4">
                                         <div className="flex flex-col">
                                             <span className="font-bold text-navy-900 dark:text-white">{sale.pump}</span>
                                             {/* Removed duplicated fuel info here since we have a new column */}
                                         </div>
+                                    </td>
+                                    <td className="p-4 font-bold text-slate-700 dark:text-slate-300">
+                                        {sale.worker}
                                     </td>
                                     <td className="p-4">
                                         <span className={`text-sm font-bold ${
@@ -461,7 +551,13 @@ function SalePreviewModal({ isOpen, onClose, sale }) {
     if (!isOpen || !sale) return null;
 
     const handlePrint = () => {
-        window.print();
+        const invoiceEl = document.querySelector('.invoice-container');
+        const content = invoiceEl ? invoiceEl.innerHTML : '<p>لا توجد بيانات</p>';
+        openPrintPreview({
+            title: 'فاتورة بيع #' + (sale.id || ''),
+            subtitle: sale.date || '',
+            content
+        });
     };
 
     return (

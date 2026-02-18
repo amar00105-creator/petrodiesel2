@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, DollarSign, Tag, User, Users, Settings, Plus, Trash2, Edit2 } from 'lucide-react';
+import { X, Save, DollarSign, Tag, User, Users, Settings, Plus, Trash2, Edit2, CheckCircle, AlertCircle, Layers, Calendar, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AddTransactionModal({ isOpen, onClose, type, categories, safes, banks, suppliers = [], customers = [], baseUrl = '/PETRODIESEL2/public' }) {
@@ -8,7 +8,7 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
     // Manage categories locally to avoid reloads
     const [localCategories, setLocalCategories] = useState(categories);
     
-    // Sync local state if props change (though usually props won't change without parent reload)
+    // Sync local state if props change
     useEffect(() => {
         setLocalCategories(categories);
     }, [categories]);
@@ -19,34 +19,64 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
             setIsManageCategoriesOpen(false);
             setEditingId(null);
             setEditingName('');
+            setDuplicateWarning('');
         }
     }, [isOpen]);
 
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         amount: '',
         description: '',
         category_id: '',
         account_type: 'safe',
         account_id: '',
-        related_entity_type: 'general', // Default to general
+        related_entity_type: 'general',
         related_entity_id: '',
         reference_number: '',
         date: new Date().toISOString().split('T')[0]
-    });
+    };
+    const [formData, setFormData] = useState(initialFormData);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [hasSaved, setHasSaved] = useState(false);
 
     const isIncome = type === 'income';
 
     const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
+    const [duplicateWarning, setDuplicateWarning] = useState('');
+    const [isSubmittingCategory, setIsSubmittingCategory] = useState(false);
+    const newCatInputRef = useRef(null);
+
+    // Check for duplicate when typing new category name
+    const checkDuplicate = (name) => {
+        setNewCategoryName(name);
+        if (name.trim()) {
+            const exists = localCategories.some(c => 
+                c.name.trim().toLowerCase() === name.trim().toLowerCase()
+            );
+            setDuplicateWarning(exists ? 'هذا التصنيف موجود بالفعل' : '');
+        } else {
+            setDuplicateWarning('');
+        }
+    };
 
     const handleAddCategory = async () => {
-        if (!newCategoryName.trim()) return;
+        const trimmedName = newCategoryName.trim();
+        if (!trimmedName) return;
+        
+        // Client-side duplicate check
+        const exists = localCategories.some(c => 
+            c.name.trim().toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (exists) {
+            setDuplicateWarning('هذا التصنيف موجود بالفعل');
+            return;
+        }
+
+        setIsSubmittingCategory(true);
         try {
             const formData = new FormData();
-            formData.append('name', newCategoryName);
+            formData.append('name', trimmedName);
             formData.append('type', type);
-            // Even though we unified list, we should probably save with the current transaction type or 'general'
-            // But since user asked to unify, maybe type doesn't matter as much, but we stuck to 'type'
             
             const res = await fetch(`${baseUrl}/finance/categories/store`, { method: 'POST', body: formData });
             const data = await res.json();
@@ -54,38 +84,70 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
             if (data.success) {
                 toast.success('تمت إضافة التصنيف بنجاح');
                 setNewCategoryName('');
+                setDuplicateWarning('');
                 
-                // Add to local list immediately
-                const newCat = data.category || { id: data.id, name: newCategoryName, type: type };
+                const newCat = data.category || { id: data.id, name: trimmedName, type: type };
                 setLocalCategories(prev => [...prev, newCat]);
                 
             } else {
-                toast.error(data.message);
+                if (data.duplicate) {
+                    setDuplicateWarning(data.message);
+                } else {
+                    toast.error(data.message || 'حدث خطأ');
+                }
             }
         } catch (e) {
-            toast.error('حدث خطأ');
+            toast.error('حدث خطأ في الاتصال');
+        } finally {
+            setIsSubmittingCategory(false);
         }
     };
 
     const [editingId, setEditingId] = useState(null);
     const [editingName, setEditingName] = useState('');
+    const [editDuplicateWarning, setEditDuplicateWarning] = useState('');
 
     const startEditing = (category) => {
         setEditingId(category.id);
         setEditingName(category.name);
+        setEditDuplicateWarning('');
     };
 
     const cancelEditing = () => {
         setEditingId(null);
         setEditingName('');
+        setEditDuplicateWarning('');
+    };
+
+    const checkEditDuplicate = (name) => {
+        setEditingName(name);
+        if (name.trim()) {
+            const exists = localCategories.some(c => 
+                c.id !== editingId && c.name.trim().toLowerCase() === name.trim().toLowerCase()
+            );
+            setEditDuplicateWarning(exists ? 'هذا التصنيف موجود بالفعل' : '');
+        } else {
+            setEditDuplicateWarning('');
+        }
     };
 
     const handleUpdateCategory = async (id) => {
-        if (!editingName.trim()) return;
+        const trimmedName = editingName.trim();
+        if (!trimmedName) return;
+        
+        // Client-side duplicate check
+        const exists = localCategories.some(c => 
+            c.id !== id && c.name.trim().toLowerCase() === trimmedName.toLowerCase()
+        );
+        if (exists) {
+            setEditDuplicateWarning('هذا التصنيف موجود بالفعل');
+            return;
+        }
+
         try {
             const formData = new FormData();
             formData.append('id', id);
-            formData.append('name', editingName);
+            formData.append('name', trimmedName);
             formData.append('type', type);
 
             const res = await fetch(`${baseUrl}/finance/categories/update`, { method: 'POST', body: formData });
@@ -95,15 +157,17 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                 toast.success('تم تعديل التصنيف بنجاح');
                 setEditingId(null);
                 setEditingName('');
-                
-                // Update local list
-                setLocalCategories(prev => prev.map(c => c.id === id ? { ...c, name: editingName } : c));
-                
+                setEditDuplicateWarning('');
+                setLocalCategories(prev => prev.map(c => c.id === id ? { ...c, name: trimmedName } : c));
             } else {
-                toast.error(data.message);
+                if (data.duplicate) {
+                    setEditDuplicateWarning(data.message);
+                } else {
+                    toast.error(data.message || 'حدث خطأ');
+                }
             }
         } catch (e) {
-            toast.error('حدث خطأ');
+            toast.error('حدث خطأ في الاتصال');
         }
     };
 
@@ -118,11 +182,11 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                 toast.success('تم حذف التصنيف بنجاح');
                 setLocalCategories(prev => prev.filter(c => c.id !== id));
             } else {
-                toast.error(data.message);
+                toast.error(data.message || 'فشل حذف التصنيف');
             }
         } catch (e) {
             console.error(e);
-            toast.error('حدث خطأ');
+            toast.error('حدث خطأ في الاتصال');
         }
     };
 
@@ -131,31 +195,26 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
+    const handleClose = () => {
+        if (hasSaved) {
+            window.location.reload();
+        } else {
+            onClose();
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         
         try {
             const form = new FormData();
             form.append('type', type);
-            // If general, the 'related_entity_id' IS the category_id
             if (formData.related_entity_type === 'general') {
                 form.append('category_id', formData.related_entity_id);
-                form.delete('related_entity_id'); // It's not a relation, it's a category
-                form.append('related_entity_type', ''); // Clear it or keep as null
+                form.delete('related_entity_id');
+                form.append('related_entity_type', '');
             } else {
-                form.append('category_id', formData.category_id); // If supplier/customer, maybe we still want a category?
-                // The user said "Remove redundant category field". 
-                // Currently if Supplier/Customer is selected, the Category field was HIDDEN anyway in my previous understanding? 
-                // Let's re-read the code. 
-                // Line 367: {formData.related_entity_type === 'general' && ( <Category Block> )}
-                // So Category Block was ONLY shown for General.
-                // If Type is Supplier/Customer, we typically don't categorize? 
-                // Or do we? The prompt says "delete category selection, keep select item (add manage button)".
-                // For General: Select Item IS the category.
-                // For Supplier: Select Item is Supplier. Do we categorize?
-                // The current code only showed Category dropdown if Type == General.
-                // So for Supplier, category_id was empty? 
-                // Let's assume for now we only care about General mapping.
+                form.append('category_id', formData.category_id);
             }
 
             Object.keys(formData).forEach(key => {
@@ -164,7 +223,6 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                 }
             });
             
-            // Re-append keys we might have skipped if not handled above logic
             if (formData.related_entity_type !== 'general') {
                  form.append('related_entity_type', formData.related_entity_type);
                  form.append('related_entity_id', formData.related_entity_id);
@@ -178,25 +236,26 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                 }
             });
             
-            // Check if response is valid JSON
             const text = await response.text();
             let data;
             try {
                 data = JSON.parse(text);
             } catch (e) {
-                 // Fallback if controller returns redirect/html
                  if (response.redirected || response.status === 200) {
-                     toast.success(isIncome ? 'تم تسجيل الإيراد بنجاح' : 'تم تسجيل المصروف بنجاح');
-                     setTimeout(() => window.location.reload(), 500);
+                     setHasSaved(true);
+                     setShowSuccess(true);
+                     setFormData({ ...initialFormData, date: new Date().toISOString().split('T')[0] });
+                     setTimeout(() => setShowSuccess(false), 2000);
                      return;
                  }
                  throw new Error('Invalid server response');
             }
 
             if (data.success) {
-                toast.success(isIncome ? 'تم تسجيل الإيراد بنجاح' : 'تم تسجيل المصروف بنجاح');
-                onClose();
-                setTimeout(() => window.location.reload(), 500); // Reload to update dashboard
+                setHasSaved(true);
+                setShowSuccess(true);
+                setFormData({ ...initialFormData, date: new Date().toISOString().split('T')[0] });
+                setTimeout(() => setShowSuccess(false), 2000);
             } else {
                 toast.error(data.message || 'حدث خطأ ما');
             }
@@ -207,6 +266,21 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
         }
     };
 
+    // Color scheme based on type
+    const colors = isIncome 
+        ? { accent: 'emerald', gradient: 'from-emerald-500 to-teal-600', glow: 'shadow-emerald-500/30', ring: 'focus:ring-emerald-500/30', border: 'border-emerald-500/30', main: '#10b981', mainLight: '#d1fae5', mainDark: '#065f46' }
+        : { accent: 'rose', gradient: 'from-rose-500 to-pink-600', glow: 'shadow-rose-500/30', ring: 'focus:ring-rose-500/30', border: 'border-rose-500/30', main: '#f43f5e', mainLight: '#ffe4e6', mainDark: '#9f1239' };
+
+    // Shared input classes for dark mode glassmorphism
+    const inputClasses = `w-full p-3 bg-white/80 dark:bg-white/5 border border-slate-200/40 dark:border-white/[0.06] rounded-xl outline-none 
+        focus:ring-2 ${colors.ring} focus:border-transparent dark:text-white dark:placeholder-slate-500
+        backdrop-blur-sm transition-all`;
+
+    const labelClasses = "block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2";
+
+    // Filter categories by type
+    const filteredCategories = localCategories.filter(c => !c.type || c.type === type);
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -214,162 +288,292 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                     {/* Backdrop */}
                     <motion.div 
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 transition-opacity"
+                        onClick={handleClose}
+                        className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-md z-50"
                     />
 
                     {/* Centered Modal */}
                     <motion.div 
-                        initial={{ opacity: 0, scale: 0.95 }} 
-                        animate={{ opacity: 1, scale: 1 }} 
-                        exit={{ opacity: 0, scale: 0.95 }}
+                        initial={{ opacity: 0, scale: 0.9, y: 20 }} 
+                        animate={{ opacity: 1, scale: 1, y: 0 }} 
+                        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                     >
-                        <div className="bg-white pointer-events-auto rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="relative bg-white/95 dark:bg-[#1e293b]/90 dark:backdrop-blur-2xl pointer-events-auto rounded-2xl shadow-2xl dark:shadow-black/50 w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] ring-1 ring-black/[0.05] dark:ring-white/[0.06]">
                             
                             {/* Header */}
-                            <div className={`p-6 border-b flex justify-between items-center ${isIncome ? 'bg-emerald-50' : 'bg-rose-50'}`}>
-                                <div>
-                                    <h2 className={`text-xl font-bold ${isIncome ? 'text-emerald-800' : 'text-rose-800'}`}>
-                                        {isIncome ? 'تسجيل إيراد جديد' : 'تسجيل مصروف جديد'}
-                                    </h2>
-                                    <p className={`text-sm ${isIncome ? 'text-emerald-600' : 'text-rose-600'}`}>أدخل تفاصيل العملية المالية</p>
+                            <div className={`p-5 flex justify-between items-center 
+                                ${isIncome ? 'bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-500/10 dark:to-teal-500/10' : 'bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-500/10 dark:to-pink-500/10'}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2.5 rounded-xl bg-gradient-to-br ${colors.gradient} shadow-lg ${colors.glow}`}>
+                                        <DollarSign className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className={`text-xl font-black ${isIncome ? 'text-emerald-800 dark:text-emerald-300' : 'text-rose-800 dark:text-rose-300'}`}>
+                                            {isIncome ? 'تسجيل إيراد جديد' : 'تسجيل مصروف جديد'}
+                                        </h2>
+                                        <p className={`text-sm font-medium ${isIncome ? 'text-emerald-600 dark:text-emerald-400/70' : 'text-rose-600 dark:text-rose-400/70'}`}>أدخل تفاصيل العملية المالية</p>
+                                    </div>
                                 </div>
-                                <button onClick={onClose} className="p-2 hover:bg-white/50 rounded-full transition-colors">
-                                    <X className="w-5 h-5 text-slate-500" />
+                                <button onClick={handleClose} className="p-2 hover:bg-white/50 dark:hover:bg-white/10 rounded-xl transition-colors">
+                                    <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
                                 </button>
                             </div>
 
                             {/* Body */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                                <form id="transaction-form" onSubmit={handleSubmit} className="space-y-6">
+                            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                                <form id="transaction-form" onSubmit={handleSubmit} className="space-y-5">
                                     
-                                    {/* Amount */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">المبلغ</label>
-                                        <div className="relative">
-                                            <input
-                                                type="number" step="0.01"
-                                                name="amount"
-                                                value={formData.amount} onChange={handleChange}
-                                                className="w-full pl-4 pr-10 py-3 text-lg font-bold border-2 border-slate-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none"
-                                                placeholder="0.00"
-                                                required
-                                            />
-                                            <div className="absolute right-3 top-3.5 text-slate-400">
-                                                <DollarSign className="w-5 h-5" />
+                                    {/* Row: Amount + Date */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className={labelClasses}>المبلغ <span className="text-red-500">*</span></label>
+                                            <div className="relative">
+                                                <input
+                                                    type="number" step="0.01"
+                                                    name="amount"
+                                                    value={formData.amount} onChange={handleChange}
+                                                    className={`w-full pl-4 pr-10 py-3 text-lg font-bold bg-white/80 dark:bg-white/5 border-2 ${isIncome ? 'border-emerald-200/50 dark:border-emerald-500/20 focus:border-emerald-500/60 focus:ring-4 focus:ring-emerald-500/10' : 'border-rose-200/50 dark:border-rose-500/20 focus:border-rose-500/60 focus:ring-4 focus:ring-rose-500/10'} rounded-xl transition-all outline-none dark:text-white dark:placeholder-slate-500 backdrop-blur-sm`}
+                                                    placeholder="0.00"
+                                                    required
+                                                />
+                                                <div className={`absolute right-3 top-3.5 ${isIncome ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                                    <DollarSign className="w-5 h-5" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className={labelClasses}>التاريخ</label>
+                                            <div className="relative">
+                                                <input
+                                                    type="date"
+                                                    name="date"
+                                                    value={formData.date} onChange={handleChange}
+                                                    className={inputClasses}
+                                                />
+                                                <div className="absolute right-3 top-3.5 text-slate-400 dark:text-slate-500 pointer-events-none">
+                                                    <Calendar className="w-5 h-5" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Related Entity / Category Selection */}
-                                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                                    <div className="bg-slate-50/80 dark:bg-white/[0.03] p-4 rounded-xl ring-1 ring-black/[0.04] dark:ring-white/[0.06] space-y-3 backdrop-blur-sm">
                                         <div className="flex justify-between items-center">
-                                            <label className="block text-sm font-bold text-slate-700">الجهة / البند <span className="text-red-500">*</span></label>
+                                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">الجهة / البند <span className="text-red-500">*</span></label>
                                             
-                                            {/* Show Manage Categories ONLY if General */}
+                                            {/* Manage Categories Button */}
                                             {formData.related_entity_type === 'general' && (
-                                                <button 
+                                                <motion.button 
                                                     type="button" 
-                                                    onClick={() => setIsManageCategoriesOpen(!isManageCategoriesOpen)}
-                                                    className="text-xs text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1 bg-white px-2 py-1 rounded-lg border border-blue-100 shadow-sm"
+                                                    onClick={() => {
+                                                        setIsManageCategoriesOpen(!isManageCategoriesOpen);
+                                                        if (!isManageCategoriesOpen) setTimeout(() => newCatInputRef.current?.focus(), 300);
+                                                    }}
+                                                    whileHover={{ scale: 1.03 }}
+                                                    whileTap={{ scale: 0.97 }}
+                                                    className={`text-xs font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 ${
+                                                        isManageCategoriesOpen 
+                                                            ? `bg-gradient-to-r ${colors.gradient} text-white shadow-lg ${colors.glow}` 
+                                                            : 'text-blue-600 dark:text-blue-400 bg-white dark:bg-white/10 ring-1 ring-blue-200/40 dark:ring-blue-500/20 shadow-sm hover:shadow-md'
+                                                    }`}
                                                 >
-                                                    <Settings className="w-3 h-3" /> إدارة التصنيفات
-                                                </button>
+                                                    <Settings className={`w-3.5 h-3.5 transition-transform duration-300 ${isManageCategoriesOpen ? 'rotate-90' : ''}`} />
+                                                    {isManageCategoriesOpen ? 'إغلاق' : 'إدارة التصنيفات'}
+                                                </motion.button>
                                             )}
                                         </div>
 
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white transition-colors">
-                                                <input 
-                                                    type="radio" name="related_entity_type" value="general" 
-                                                    checked={formData.related_entity_type === 'general'} onChange={handleChange}
-                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm font-bold text-slate-700">عام (بند)</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white transition-colors">
-                                                <input 
-                                                    type="radio" name="related_entity_type" value="supplier" 
-                                                    checked={formData.related_entity_type === 'supplier'} onChange={handleChange}
-                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm font-bold text-slate-700">مورد</span>
-                                            </label>
-                                            <label className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-white transition-colors">
-                                                <input 
-                                                    type="radio" name="related_entity_type" value="customer" 
-                                                    checked={formData.related_entity_type === 'customer'} onChange={handleChange}
-                                                    className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                                                />
-                                                <span className="text-sm font-bold text-slate-700">عميل</span>
-                                            </label>
+                                        <div className="flex gap-3">
+                                            {[
+                                                { value: 'general', label: 'عام (بند)', icon: Tag },
+                                                { value: 'supplier', label: 'مورد', icon: Users },
+                                                { value: 'customer', label: 'عميل', icon: User }
+                                            ].map(opt => (
+                                                <label key={opt.value} className={`flex items-center gap-2 cursor-pointer px-3 py-2 rounded-xl transition-all duration-200 ${
+                                                    formData.related_entity_type === opt.value 
+                                                        ? `bg-white dark:bg-white/10 shadow-md ring-1 ring-black/[0.06] dark:ring-white/[0.1]`
+                                                        : 'hover:bg-white/50 dark:hover:bg-white/5'
+                                                }`}>
+                                                    <input 
+                                                        type="radio" name="related_entity_type" value={opt.value} 
+                                                        checked={formData.related_entity_type === opt.value} onChange={handleChange}
+                                                        className={`w-4 h-4 ${isIncome ? 'text-emerald-600 focus:ring-emerald-500' : 'text-rose-600 focus:ring-rose-500'}`}
+                                                    />
+                                                    <opt.icon className="w-3.5 h-3.5 text-slate-400" />
+                                                    <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{opt.label}</span>
+                                                </label>
+                                            ))}
                                         </div>
 
-                                        {/* Manage Categories Panel */}
+                                        {/* ═══ Manage Categories Panel ═══ */}
                                         <AnimatePresence>
                                             {isManageCategoriesOpen && formData.related_entity_type === 'general' && (
                                                 <motion.div 
                                                     initial={{ height: 0, opacity: 0 }} 
                                                     animate={{ height: 'auto', opacity: 1 }} 
                                                     exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.3, ease: 'easeInOut' }}
                                                     className="overflow-hidden"
                                                 >
-                                                    <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3 mb-4">
-                                                        <div className="flex gap-2">
-                                                            <input 
-                                                                type="text" 
-                                                                placeholder="اسم التصنيف الجديد..."
-                                                                className="flex-1 p-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
-                                                                value={newCategoryName}
-                                                                onChange={(e) => setNewCategoryName(e.target.value)}
-                                                            />
-                                                            <button 
-                                                                type="button"
-                                                                onClick={handleAddCategory}
-                                                                className="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 transition-colors"
-                                                            >
-                                                                <Plus className="w-4 h-4" />
-                                                            </button>
+                                                    <div className="bg-white/90 dark:bg-[#0f172a]/60 ring-1 ring-black/[0.06] dark:ring-white/[0.08] rounded-2xl p-5 space-y-4 mb-3 backdrop-blur-xl shadow-lg dark:shadow-black/20">
+                                                        
+                                                        {/* Title */}
+                                                        <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
+                                                            <div className={`p-1.5 rounded-lg bg-gradient-to-br ${colors.gradient}`}>
+                                                                <Layers className="w-3.5 h-3.5 text-white" />
+                                                            </div>
+                                                            <h4 className="text-sm font-black text-slate-800 dark:text-white">
+                                                                إدارة تصنيفات {isIncome ? 'الإيرادات' : 'المصروفات'}
+                                                            </h4>
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 mr-auto">
+                                                                {filteredCategories.length} تصنيف
+                                                            </span>
                                                         </div>
-                                                        <div className="max-h-48 overflow-y-auto space-y-2">
-                                                            {localCategories.map(cat => (
-                                                                <div key={cat.id} className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                                                    {editingId === cat.id ? (
-                                                                        <div className="flex flex-1 gap-2 items-center">
-                                                                            <input 
-                                                                                type="text" 
-                                                                                value={editingName}
-                                                                                onChange={(e) => setEditingName(e.target.value)}
-                                                                                className="flex-1 p-1 text-sm border rounded outline-none focus:ring-1 focus:ring-blue-500"
-                                                                                autoFocus
-                                                                            />
-                                                                            <button onClick={() => handleUpdateCategory(cat.id)} className="text-emerald-600 hover:bg-emerald-50 p-1 rounded"><Save className="w-3 h-3" /></button>
-                                                                            <button onClick={cancelEditing} className="text-slate-400 hover:bg-slate-50 p-1 rounded"><X className="w-3 h-3" /></button>
-                                                                        </div>
+
+                                                        {/* Add New Category */}
+                                                        <div className="space-y-2">
+                                                            <div className="flex gap-2">
+                                                                <div className="flex-1 relative">
+                                                                    <input 
+                                                                        ref={newCatInputRef}
+                                                                        type="text" 
+                                                                        placeholder="أدخل اسم التصنيف الجديد..."
+                                                                        className={`w-full p-2.5 pr-9 bg-white dark:bg-white/[0.06] border-2 rounded-xl text-sm outline-none dark:text-white dark:placeholder-slate-500 transition-all ${
+                                                                            duplicateWarning 
+                                                                                ? 'border-amber-400/60 dark:border-amber-500/30 focus:ring-2 focus:ring-amber-500/20' 
+                                                                                : 'border-slate-200/50 dark:border-white/[0.08] focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400/60'
+                                                                        }`}
+                                                                        value={newCategoryName}
+                                                                        onChange={(e) => checkDuplicate(e.target.value)}
+                                                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCategory())}
+                                                                    />
+                                                                    <Tag className="absolute right-2.5 top-2.5 w-4 h-4 text-slate-300 dark:text-slate-600" />
+                                                                </div>
+                                                                <motion.button 
+                                                                    type="button"
+                                                                    onClick={handleAddCategory}
+                                                                    disabled={isSubmittingCategory || !!duplicateWarning || !newCategoryName.trim()}
+                                                                    whileHover={{ scale: 1.05 }}
+                                                                    whileTap={{ scale: 0.95 }}
+                                                                    className={`px-4 py-2.5 rounded-xl font-bold text-sm flex items-center gap-1.5 transition-all duration-200 ${
+                                                                        isSubmittingCategory || duplicateWarning || !newCategoryName.trim()
+                                                                            ? 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-slate-600 cursor-not-allowed' 
+                                                                            : `bg-gradient-to-r ${colors.gradient} text-white shadow-lg ${colors.glow} hover:shadow-xl`
+                                                                    }`}
+                                                                >
+                                                                    {isSubmittingCategory ? (
+                                                                        <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></div>
                                                                     ) : (
-                                                                        <>
-                                                                            <span className="text-sm text-slate-700 font-medium">{cat.name}</span>
-                                                                            <div className="flex gap-1">
+                                                                        <Plus className="w-4 h-4" />
+                                                                    )}
+                                                                    إضافة
+                                                                </motion.button>
+                                                            </div>
+
+                                                            {/* Duplicate Warning */}
+                                                            <AnimatePresence>
+                                                                {duplicateWarning && (
+                                                                    <motion.div 
+                                                                        initial={{ opacity: 0, y: -5 }} 
+                                                                        animate={{ opacity: 1, y: 0 }} 
+                                                                        exit={{ opacity: 0, y: -5 }}
+                                                                        className="flex items-center gap-2 text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-500/10 px-3 py-2 rounded-lg ring-1 ring-amber-200/50 dark:ring-amber-500/20"
+                                                                    >
+                                                                        <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                                                                        <span className="text-xs font-bold">{duplicateWarning}</span>
+                                                                    </motion.div>
+                                                                )}
+                                                            </AnimatePresence>
+                                                        </div>
+
+                                                        {/* Categories List */}
+                                                        <div className="max-h-52 overflow-y-auto space-y-1.5 scrollbar-thin">
+                                                            {filteredCategories.length === 0 ? (
+                                                                <div className="text-center py-6 text-slate-400 dark:text-slate-500">
+                                                                    <Tag className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                                                                    <p className="text-sm font-medium">لا توجد تصنيفات بعد</p>
+                                                                    <p className="text-xs mt-1">أضف أول تصنيف باستخدام الحقل أعلاه</p>
+                                                                </div>
+                                                            ) : (
+                                                                filteredCategories.map((cat, idx) => (
+                                                                    <motion.div 
+                                                                        key={cat.id} 
+                                                                        initial={{ opacity: 0, x: -10 }}
+                                                                        animate={{ opacity: 1, x: 0 }}
+                                                                        transition={{ delay: idx * 0.03 }}
+                                                                        className={`group flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200 ${
+                                                                            editingId === cat.id 
+                                                                                ? 'bg-blue-50/80 dark:bg-blue-500/10 ring-1 ring-blue-200/50 dark:ring-blue-500/20' 
+                                                                                : 'bg-slate-50/60 dark:bg-white/[0.03] hover:bg-slate-100/80 dark:hover:bg-white/[0.06] ring-1 ring-black/[0.03] dark:ring-white/[0.04]'
+                                                                        }`}
+                                                                    >
+                                                                        {editingId === cat.id ? (
+                                                                            /* Editing Mode */
+                                                                            <div className="flex-1 flex gap-2 items-center">
+                                                                                <div className="flex-1 relative">
+                                                                                    <input 
+                                                                                        type="text" 
+                                                                                        value={editingName}
+                                                                                        onChange={(e) => checkEditDuplicate(e.target.value)}
+                                                                                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleUpdateCategory(cat.id))}
+                                                                                        className={`w-full p-2 text-sm bg-white dark:bg-white/10 border-2 rounded-lg outline-none dark:text-white transition-all ${
+                                                                                            editDuplicateWarning 
+                                                                                                ? 'border-amber-400/60' 
+                                                                                                : 'border-blue-300/60 dark:border-blue-500/30 focus:ring-2 focus:ring-blue-500/20'
+                                                                                        }`}
+                                                                                        autoFocus
+                                                                                    />
+                                                                                    {editDuplicateWarning && (
+                                                                                        <p className="text-[10px] font-bold text-amber-500 mt-1 flex items-center gap-1">
+                                                                                            <AlertCircle className="w-3 h-3" />
+                                                                                            {editDuplicateWarning}
+                                                                                        </p>
+                                                                                    )}
+                                                                                </div>
                                                                                 <button 
                                                                                     type="button"
-                                                                                    onClick={() => startEditing(cat)}
-                                                                                    className="p-1 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                                                                                    onClick={() => handleUpdateCategory(cat.id)} 
+                                                                                    disabled={!!editDuplicateWarning}
+                                                                                    className={`p-2 rounded-lg transition-all ${editDuplicateWarning ? 'text-slate-300 cursor-not-allowed' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10'}`}
                                                                                 >
-                                                                                    <Edit2 className="w-3 h-3" />
+                                                                                    <CheckCircle className="w-4 h-4" />
                                                                                 </button>
-                                                                                <button 
-                                                                                    type="button"
-                                                                                    onClick={() => handleDeleteCategory(cat.id)}
-                                                                                    className="p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
-                                                                                >
-                                                                                    <Trash2 className="w-3 h-3" />
+                                                                                <button type="button" onClick={cancelEditing} className="p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors">
+                                                                                    <X className="w-4 h-4" />
                                                                                 </button>
                                                                             </div>
-                                                                        </>
-                                                                    )}
-                                                                </div>
-                                                            ))}
+                                                                        ) : (
+                                                                            /* View Mode */
+                                                                            <>
+                                                                                <div className={`w-2 h-2 rounded-full flex-shrink-0`} style={{ background: colors.main }}></div>
+                                                                                <span className="flex-1 text-sm text-slate-700 dark:text-slate-200 font-bold">{cat.name}</span>
+                                                                                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                                                                    <button 
+                                                                                        type="button"
+                                                                                        onClick={() => startEditing(cat)}
+                                                                                        className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-500/10 rounded-lg transition-all"
+                                                                                        title="تعديل"
+                                                                                    >
+                                                                                        <Edit2 className="w-3.5 h-3.5" />
+                                                                                    </button>
+                                                                                    <button 
+                                                                                        type="button"
+                                                                                        onClick={() => handleDeleteCategory(cat.id)}
+                                                                                        className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-all"
+                                                                                        title="حذف"
+                                                                                    >
+                                                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                                                    </button>
+                                                                                </div>
+                                                                            </>
+                                                                        )}
+                                                                    </motion.div>
+                                                                ))
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </motion.div>
@@ -381,40 +585,40 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                                 name="related_entity_id"
                                                 value={formData.related_entity_id} 
                                                 onChange={handleChange}
-                                                className="w-full pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold"
+                                                className={`w-full pl-4 pr-10 py-3 bg-white/80 dark:bg-white/5 border border-slate-200/40 dark:border-white/[0.06] rounded-xl outline-none focus:ring-2 ${colors.ring} font-bold dark:text-white backdrop-blur-sm transition-all`}
                                                 required
                                             >
-                                                <option value="">
+                                                <option value="" className="dark:bg-slate-800">
                                                     {formData.related_entity_type === 'general' ? 'اختر البند / التصنيف...' : 
                                                      formData.related_entity_type === 'supplier' ? 'اختر المورد...' : 
                                                      'اختر العميل...'}
                                                 </option>
                                                 
-                                                {formData.related_entity_type === 'general' && localCategories.map(c => (
-                                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                                {formData.related_entity_type === 'general' && filteredCategories.map(c => (
+                                                    <option key={c.id} value={c.id} className="dark:bg-slate-800">{c.name}</option>
                                                 ))}
 
                                                 {formData.related_entity_type === 'supplier' && (
                                                     (Array.isArray(suppliers) && suppliers.length > 0) ? (
                                                         suppliers.map(s => (
-                                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                                            <option key={s.id} value={s.id} className="dark:bg-slate-800">{s.name}</option>
                                                         ))
                                                     ) : (
-                                                        <option value="" disabled>لا يوجد موردين مسجلين</option>
+                                                        <option value="" disabled className="dark:bg-slate-800">لا يوجد موردين مسجلين</option>
                                                     )
                                                 )}
 
                                                 {formData.related_entity_type === 'customer' && (
                                                     (Array.isArray(customers) && customers.length > 0) ? (
                                                         customers.map(c => (
-                                                            <option key={c.id} value={c.id}>{c.name}</option>
+                                                            <option key={c.id} value={c.id} className="dark:bg-slate-800">{c.name}</option>
                                                         ))
                                                     ) : (
-                                                        <option value="" disabled>لا يوجد عملاء مسجلين</option>
+                                                        <option value="" disabled className="dark:bg-slate-800">لا يوجد عملاء مسجلين</option>
                                                     )
                                                 )}
                                             </select>
-                                            <div className="absolute right-3 top-3.5 text-slate-400">
+                                            <div className="absolute right-3 top-3.5 text-slate-400 dark:text-slate-500">
                                                 {formData.related_entity_type === 'general' ? <Tag className="w-5 h-5"/> : 
                                                  formData.related_entity_type === 'supplier' ? <Users className="w-5 h-5"/> : 
                                                  <User className="w-5 h-5"/>}
@@ -425,47 +629,47 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                     {/* Account Selection */}
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">نوع الحساب</label>
+                                            <label className={labelClasses}>نوع الحساب</label>
                                             <select
                                                 name="account_type"
                                                 value={formData.account_type} onChange={handleChange}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                className={inputClasses}
                                             >
-                                                <option value="safe">خزنة نقدية</option>
-                                                <option value="bank">حساب بنكي</option>
+                                                <option value="safe" className="dark:bg-slate-800">خزنة نقدية</option>
+                                                <option value="bank" className="dark:bg-slate-800">حساب بنكي</option>
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-slate-700 mb-2">اختر الحساب</label>
+                                            <label className={labelClasses}>اختر الحساب</label>
                                             <select
                                                 name="account_id"
                                                 value={formData.account_id} onChange={handleChange}
-                                                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                className={inputClasses}
                                                 required
                                             >
-                                                <option value="">-- اختر --</option>
+                                                <option value="" className="dark:bg-slate-800">-- اختر --</option>
                                                 {(formData.account_type === 'safe' ? safes : banks).map(acc => (
-                                                    <option key={acc.id} value={acc.id}>{acc.name}</option>
+                                                    <option key={acc.id} value={acc.id} className="dark:bg-slate-800">{acc.name}</option>
                                                 ))}
                                             </select>
                                         </div>
                                     </div>
 
-                                    {/* Bank Reference Number - Optional, only for Bank Account */}
+                                    {/* Bank Reference Number */}
                                     {formData.account_type === 'bank' && (
                                         <motion.div 
                                             initial={{ opacity: 0, y: -10 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            className="bg-blue-50/50 p-3 rounded-xl border border-blue-100"
+                                            className="bg-blue-50/50 dark:bg-blue-500/5 p-3 rounded-xl ring-1 ring-blue-200/30 dark:ring-blue-500/10 backdrop-blur-sm"
                                         >
-                                            <label className="block text-xs font-bold text-blue-700 mb-2">رقم العملية (اختياري)</label>
+                                            <label className="block text-xs font-bold text-blue-700 dark:text-blue-400 mb-2">رقم العملية (اختياري)</label>
                                             <div className="relative">
                                                 <input
                                                     type="text"
                                                     name="reference_number"
                                                     value={formData.reference_number}
                                                     onChange={handleChange}
-                                                    className="w-full pl-4 pr-10 py-2 bg-white border border-blue-200 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm"
+                                                    className="w-full pl-4 pr-10 py-2 bg-white/80 dark:bg-white/5 border border-blue-200/40 dark:border-blue-500/10 rounded-lg outline-none focus:ring-2 focus:ring-blue-500/20 font-bold text-sm dark:text-white dark:placeholder-slate-500 backdrop-blur-sm transition-all"
                                                     placeholder="أدخل رقم التحويل أو الشيك..."
                                                 />
                                                 <div className="absolute right-3 top-2.5 text-blue-400">
@@ -475,19 +679,14 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                                         </motion.div>
                                     )}
 
-                                    {/* Category - Only show if Type is General */}
-                                    {/* If Supplier/Customer, we assume the 'Related Entity ID' is effectively the category/payee logic */}
-                                    {/* Category - Only show if Type is General */}
-
-
                                     {/* Description */}
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">الوصف / البيان</label>
+                                        <label className={labelClasses}>الوصف / البيان</label>
                                         <textarea
                                             name="description"
                                             value={formData.description} onChange={handleChange}
                                             rows="3"
-                                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            className={inputClasses}
                                             placeholder="اكتب تفاصيل العملية هنا..."
                                             required
                                         ></textarea>
@@ -497,23 +696,57 @@ export default function AddTransactionModal({ isOpen, onClose, type, categories,
                             </div>
 
                             {/* Footer */}
-                            <div className="p-6 border-t bg-slate-50 flex gap-3">
+                            <div className="p-5 bg-slate-50/80 dark:bg-white/[0.03] border-t border-slate-100/50 dark:border-white/[0.04] flex gap-3 backdrop-blur-sm">
                                 <button
-                                    onClick={onClose}
-                                    className="flex-1 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl font-bold hover:bg-slate-100 transition-colors"
+                                    onClick={handleClose}
+                                    className="flex-1 px-6 py-3 bg-white/80 dark:bg-white/10 ring-1 ring-black/[0.04] dark:ring-white/[0.06] text-slate-700 dark:text-slate-300 rounded-xl font-bold hover:bg-slate-100 dark:hover:bg-white/15 transition-all"
                                 >
                                     إلغاء
                                 </button>
                                 <button
                                     type="submit"
                                     form="transaction-form"
-                                    className={`flex-1 px-6 py-3 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 ${
-                                        isIncome ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' : 'bg-gradient-to-r from-rose-500 to-rose-600'
-                                    }`}
+                                    className={`flex-1 px-6 py-3 text-white rounded-xl font-bold shadow-lg ${colors.glow} hover:-translate-y-0.5 hover:shadow-xl transition-all flex items-center justify-center gap-2 bg-gradient-to-r ${colors.gradient}`}
                                 >
                                     <Save className="w-5 h-5" /> حفظ العملية
                                 </button>
                             </div>
+
+                            {/* Success Overlay */}
+                            <AnimatePresence>
+                                {showSuccess && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 dark:bg-black/60 backdrop-blur-sm rounded-2xl"
+                                    >
+                                        <motion.div
+                                            initial={{ scale: 0.5, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            exit={{ scale: 0.5, opacity: 0 }}
+                                            transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+                                            className="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4 mx-4"
+                                        >
+                                            <motion.div
+                                                initial={{ scale: 0 }}
+                                                animate={{ scale: 1 }}
+                                                transition={{ delay: 0.1, type: 'spring', damping: 10 }}
+                                                className={`p-4 rounded-full ${isIncome ? 'bg-emerald-100 dark:bg-emerald-500/20' : 'bg-rose-100 dark:bg-rose-500/20'}`}
+                                            >
+                                                <CheckCircle className={`w-12 h-12 ${isIncome ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} />
+                                            </motion.div>
+                                            <h3 className="text-xl font-black text-slate-800 dark:text-white">
+                                                {isIncome ? 'تم تسجيل الإيراد بنجاح ✓' : 'تم تسجيل المصروف بنجاح ✓'}
+                                            </h3>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+                                                يمكنك إدخال عملية جديدة أو الضغط على إلغاء
+                                            </p>
+                                        </motion.div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
                         </div>
                     </motion.div>
                 </>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Printer, Eye } from 'lucide-react';
 import { Card, Title, Text } from '@tremor/react';
 import { toast } from 'sonner';
+import { openPrintPreview, extractTableHTML, formatDateArabic } from './utils/printPreview';
 
 export default function TankSalesReport({ stationId }) {
     const [tanks, setTanks] = useState([]);
@@ -134,90 +135,12 @@ export default function TankSalesReport({ stationId }) {
                         {/* Preview Button */}
                         <button
                             onClick={() => {
-                                const printWindow = window.open('', '_blank');
-                                // Get the table content specifically
-                                const tableElement = document.querySelector('.overflow-x-auto');
-                                const content = tableElement ? tableElement.innerHTML : '<p>لا توجد بيانات</p>';
-                                printWindow.document.write(`
-                                    <html dir="rtl" lang="ar">
-                                    <head>
-                                        <title>معاينة تقرير مبيعات البير</title>
-                                        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-                                        <style>
-                                            * { box-sizing: border-box; margin: 0; padding: 0; }
-                                            body { 
-                                                font-family: 'Cairo', sans-serif; 
-                                                background: #f0f0f0; 
-                                                padding: 20px;
-                                                display: flex;
-                                                justify-content: center;
-                                            }
-                                            .a4-page {
-                                                width: 210mm;
-                                                min-height: 297mm;
-                                                background: white url('${window.BASE_URL || ''}/img/background.png') no-repeat center center;
-                                                background-size: cover;
-                                                padding: 8mm 15mm 15mm 15mm;
-                                                box-shadow: 0 0 20px rgba(0,0,0,0.15);
-                                                position: relative;
-                                            }
-                                            .report-header {
-                                                display: flex;
-                                                justify-content: space-between;
-                                                align-items: center;
-                                                border-bottom: 3px solid #374151;
-                                                padding-bottom: 15px;
-                                                margin-bottom: 20px;
-                                            }
-                                            .logo-section img {
-                                                height: 60px;
-                                                width: auto;
-                                            }
-                                            .title-section {
-                                                text-align: center;
-                                                flex: 1;
-                                            }
-                                            .title-section h1 {
-                                                font-size: 20px;
-                                                font-weight: 900;
-                                                color: #1f2937;
-                                                margin-bottom: 5px;
-                                            }
-                                            .title-section p {
-                                                font-size: 14px;
-                                                color: #6b7280;
-                                            }
-                                            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-                                            th, td { border: 1px solid #333; padding: 8px; text-align: center; font-size: 11px; }
-                                            th { background: #374151; color: white; font-weight: bold; }
-                                            tfoot td { font-weight: bold; }
-                                            .print\\:hidden { display: none !important; }
-                                            @media print {
-                                                body { background: white; padding: 0; }
-                                                .a4-page { box-shadow: none; padding: 10mm; }
-                                            }
-                                        </style>
-                                    </head>
-                                    <body>
-                                        <div class="a4-page">
-                                            <div class="report-header">
-                                                <div class="logo-section">
-                                                    <img src="${window.BASE_URL || ''}/img/logo.png" alt="Petro Diesel" />
-                                                </div>
-                                                <div class="title-section">
-                                                    <h1>تقرير مبيعات البير</h1>
-                                                    <p>التاريخ: ${new Date(date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                                                </div>
-                                                <div class="logo-section" style="visibility: hidden;">
-                                                    <img src="${window.BASE_URL || ''}/img/logo.png" alt="" />
-                                                </div>
-                                            </div>
-                                            ${content}
-                                        </div>
-                                    </body>
-                                    </html>
-                                `);
-                                printWindow.document.close();
+                                const content = extractTableHTML('.overflow-x-auto');
+                                openPrintPreview({
+                                    title: 'تقرير مبيعات البير رقم ' + (data?.tank?.name || ''),
+                                    subtitle: 'التاريخ: ' + formatDateArabic(date),
+                                    content
+                                });
                             }}
                             className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
                             title="معاينة التقرير"
@@ -251,9 +174,10 @@ export default function TankSalesReport({ stationId }) {
                                 <thead className="bg-slate-700 text-white font-bold dark:bg-white/10">
                                     <tr>
                                         <th className="p-3 border border-slate-600 dark:border-white/10">رقم المكنة</th>
-                                        <th className="p-3 border border-slate-600 dark:border-white/10">الاسم العامل</th>
-                                        <th className="p-3 border border-slate-600 dark:border-white/10">العداد الحالي</th>
+                                        <th className="p-3 border border-slate-600 dark:border-white/10">اسم العداد</th>
+                                        <th className="p-3 border border-slate-600 dark:border-white/10">اسم العامل</th>
                                         <th className="p-3 border border-slate-600 dark:border-white/10">العداد السابق</th>
+                                        <th className="p-3 border border-slate-600 dark:border-white/10">العداد الحالي</th>
                                         <th className="p-3 border border-slate-600 dark:border-white/10">عدد البيع لترات</th>
                                         <th className="p-3 border border-slate-600 dark:border-white/10 bg-blue-600">عدد البيع جالون</th>
                                         <th className="p-3 border border-slate-600 dark:border-white/10">سعر اللتر</th>
@@ -267,9 +191,10 @@ export default function TankSalesReport({ stationId }) {
                                             return (
                                                 <tr key={idx} className="hover:bg-slate-50 bg-white dark:bg-white/5 dark:hover:bg-white/10 text-slate-800 dark:text-slate-200">
                                                     <td className="p-2 border border-slate-300 font-bold dark:border-white/10">{sale.machine_name}</td>
+                                                    <td className="p-2 border border-slate-300 dark:border-white/10">{sale.counter_name}</td>
                                                     <td className="p-2 border border-slate-300 dark:border-white/10">{sale.worker_name}</td>
-                                                    <td className="p-2 border border-slate-300 font-mono dark:border-white/10">{formatNumber(sale.current_counter)}</td>
                                                     <td className="p-2 border border-slate-300 font-mono dark:border-white/10">{formatNumber(sale.previous_counter)}</td>
+                                                    <td className="p-2 border border-slate-300 font-mono dark:border-white/10">{formatNumber(sale.current_counter)}</td>
                                                     <td className="p-2 border border-slate-300 font-mono font-bold text-blue-700 dark:text-blue-400 dark:border-white/10">{formatNumber(sale.volume_sold)}</td>
                                                     <td className="p-2 border border-slate-300 font-mono font-bold text-blue-700 bg-blue-50 dark:text-blue-400 dark:border-white/10 dark:bg-blue-900/20">{formatNumber(gallons)}</td>
                                                     <td className="p-2 border border-slate-300 font-mono dark:border-white/10">{formatNumber(sale.price_per_liter)}</td>
@@ -279,7 +204,7 @@ export default function TankSalesReport({ stationId }) {
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan="8" className="p-8 text-center text-slate-400 border border-slate-300 dark:border-white/10 dark:bg-white/5">
+                                            <td colSpan="9" className="p-8 text-center text-slate-400 border border-slate-300 dark:border-white/10 dark:bg-white/5">
                                                 لا توجد مبيعات لهذا البير في هذا التاريخ
                                             </td>
                                         </tr>
@@ -289,7 +214,7 @@ export default function TankSalesReport({ stationId }) {
                                 <tfoot className="bg-slate-100 font-bold text-slate-800 dark:bg-white/5 dark:text-white">
                                     {/* Total Sales Row */}
                                     <tr className="border-t-2 border-slate-800 dark:border-white/10 bg-yellow-50 dark:bg-yellow-900/20">
-                                        <td colSpan="4" className="p-3 text-right border border-slate-300 dark:border-white/10 font-black">اجمالي البيع</td>
+                                        <td colSpan="5" className="p-3 text-right border border-slate-300 dark:border-white/10 font-black">اجمالي البيع</td>
                                         <td className="p-3 font-mono text-blue-700 text-lg border border-slate-300 dark:text-blue-400 dark:border-white/10">{formatNumber(data.summary.total_volume_sold)}</td>
                                         <td className="p-3 font-mono text-blue-700 text-lg border border-slate-300 bg-blue-50 dark:text-blue-400 dark:border-white/10 dark:bg-blue-900/20">{formatNumber(parseFloat(data.summary.total_volume_sold || 0) / 3.78541)}</td>
                                         <td className="p-3 border border-slate-300 dark:border-white/10"></td>
@@ -297,28 +222,37 @@ export default function TankSalesReport({ stationId }) {
                                     </tr>
                                     {/* Opening Balance - Tank quantity before sales */}
                                     <tr className="bg-white dark:bg-white/5">
-                                        <td colSpan="4" className="p-3 text-right border border-slate-300 dark:border-white/10">كمية البير السابقة قبل البيع</td>
+                                        <td colSpan="5" className="p-3 text-right border border-slate-300 dark:border-white/10">كمية البير السابقة قبل البيع</td>
                                         <td className="p-3 font-mono text-lg border border-slate-300 dark:border-white/10">{formatNumber(data.summary.opening_balance)}</td>
                                         <td className="p-3 font-mono text-lg border border-slate-300 bg-blue-50 dark:border-white/10 dark:bg-blue-900/20">{formatNumber(parseFloat(data.summary.opening_balance || 0) / 3.78541)}</td>
                                         <td colSpan="2" className="p-3 border border-slate-300 dark:border-white/10"></td>
                                     </tr>
+                                    {/* Purchases In - Only show if there are purchases */}
+                                    {parseFloat(data.summary.purchases_in || 0) > 0 && (
+                                    <tr className="bg-cyan-50 dark:bg-cyan-900/10">
+                                        <td colSpan="5" className="p-3 text-right border border-slate-300 dark:border-white/10 text-cyan-700 dark:text-cyan-400">كميات الوارد (مشتريات)</td>
+                                        <td className="p-3 font-mono text-lg border border-slate-300 text-cyan-700 dark:text-cyan-400 dark:border-white/10">+{formatNumber(data.summary.purchases_in)}</td>
+                                        <td className="p-3 font-mono text-lg border border-slate-300 bg-blue-50 text-cyan-700 dark:text-cyan-400 dark:border-white/10 dark:bg-blue-900/20">+{formatNumber(parseFloat(data.summary.purchases_in || 0) / 3.78541)}</td>
+                                        <td colSpan="2" className="p-3 border border-slate-300 dark:border-white/10"></td>
+                                    </tr>
+                                    )}
                                     {/* After Sales Before Calibration */}
                                     <tr className="bg-white dark:bg-white/5">
-                                        <td colSpan="4" className="p-3 text-right border border-slate-300 dark:border-white/10">الكمية البير بعد البيع وقبل المعايره</td>
+                                        <td colSpan="5" className="p-3 text-right border border-slate-300 dark:border-white/10">الكمية البير بعد البيع وقبل المعايره</td>
                                         <td className="p-3 font-mono text-lg border border-slate-300 dark:border-white/10">{formatNumber(data.summary.theoretical_closing)}</td>
                                         <td className="p-3 font-mono text-lg border border-slate-300 bg-blue-50 dark:border-white/10 dark:bg-blue-900/20">{formatNumber(parseFloat(data.summary.theoretical_closing || 0) / 3.78541)}</td>
                                         <td colSpan="2" className="p-3 border border-slate-300 dark:border-white/10"></td>
                                     </tr>
                                     {/* Calibrated Quantity After Sales */}
                                     <tr className="bg-white dark:bg-white/5">
-                                        <td colSpan="4" className="p-3 text-right border border-slate-300 dark:border-white/10">الكمية المعايرة بعد البيع</td>
+                                        <td colSpan="5" className="p-3 text-right border border-slate-300 dark:border-white/10">الكمية المعايرة بعد البيع</td>
                                         <td className="p-3 font-mono text-lg border border-slate-300 dark:border-white/10">{formatNumber(data.summary.actual_closing)}</td>
                                         <td className="p-3 font-mono text-lg border border-slate-300 bg-blue-50 dark:border-white/10 dark:bg-blue-900/20">{formatNumber(parseFloat(data.summary.actual_closing || 0) / 3.78541)}</td>
                                         <td colSpan="2" className="p-3 border border-slate-300 dark:border-white/10"></td>
                                     </tr>
                                     {/* Variance Row - Red for deficit, Green for surplus */}
                                     <tr className="bg-slate-200 dark:bg-white/10">
-                                        <td colSpan="4" className="p-3 text-right font-black border border-slate-300 dark:border-white/10">المعايره عجز زياده</td>
+                                        <td colSpan="5" className="p-3 text-right font-black border border-slate-300 dark:border-white/10">المعايره عجز زياده</td>
                                         <td className={`p-3 font-mono font-black text-xl border border-slate-300 dark:border-white/10 ${parseFloat(data.summary.variance || 0) < 0 ? 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20' : 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20'}`}>
                                             {parseFloat(data.summary.variance || 0) < 0 ? '-' : '+'}{formatNumber(Math.abs(parseFloat(data.summary.variance || 0)))}
                                         </td>

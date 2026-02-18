@@ -49,19 +49,22 @@ class FinanceController extends Controller
         $user = AuthHelper::user();
         $filters = [];
 
-        $safes = $this->safeModel->getAll();
-        $banks = $this->bankModel->getAll();
-        $recent_transactions = $this->transactionModel->getHistory($user['station_id'] ?? 1);
+        // Enforce station filtering
+        $stationId = $user['station_id'] ?? null;
+
+        // Super admin can see all? 
+        // If we want STRICT isolation even for admin when viewing "as station", we use station_id.
+        // If super admin should see all, we check role.
+        // Standard behavior: Filter by current active station_id.
+
+        $safes = $this->safeModel->getAll($stationId);
+        $banks = $this->bankModel->getAll($stationId);
+        $recent_transactions = $this->transactionModel->getHistory($stationId);
         $categories = $this->categoryModel->getAll();
 
-        // Use getAll without arguments for now as we confirmed station filtering might be excluding data
-        // or we want to guarantee data flow first.
-        // We know 'station_id' is 1 and supplier has station_id 1. So filtering should work?
-        // Let's stick to NO FILTER for safety.
-        // Match SupplierController logic: Use station_id from user, if null/empty -> fetches all
-        // DEBUG: Passing NULL to fetch ALL records regardless of station to rule out ID mismatch
-        $suppliers = $this->supplierModel->getAll(null);
-        $customers = $this->customerModel->getAll(null);
+        // Filter suppliers and customers by station
+        $suppliers = $this->supplierModel->getAll($stationId);
+        $customers = $this->customerModel->getAll($stationId);
 
         // Ensure they are arrays (fetchAll returns array or false)
         if (!is_array($suppliers)) $suppliers = [];
@@ -75,14 +78,6 @@ class FinanceController extends Controller
         error_log("FinanceController: Suppliers Count: " . count($suppliers));
         error_log("FinanceController: Customers Count: " . count($customers));
 
-        // Header Requirements
-        $allStations = [];
-        if (($user['role'] ?? '') === 'super_admin') {
-            $db = \App\Config\Database::connect();
-            $stmt = $db->query("SELECT id, name FROM stations ORDER BY name ASC");
-            $allStations = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        }
-
         $settings = $this->getSettings();
 
         $this->view('finance/index', [
@@ -94,7 +89,6 @@ class FinanceController extends Controller
             'categories' => $categories,
             'suppliers' => $suppliers,
             'customers' => $customers,
-            'allStations' => $allStations,
             'hide_topbar' => true,
             'additional_js' => '<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>',
             'additional_css' => '
@@ -135,25 +129,42 @@ class FinanceController extends Controller
 
     public function createSafe()
     {
-        $user = AuthHelper::user();
-        $name = $_POST['name'];
-        $balance = $_POST['balance'] ?? 0;
-        $scope = $_POST['account_scope'] ?? 'local';
+        try {
+            $user = AuthHelper::user();
+            $name = $_POST['name'] ?? '';
+            $balance = $_POST['balance'] ?? 0;
+            $scope = $_POST['account_scope'] ?? 'local';
 
-        $this->safeModel->create([
-            'station_id' => $user['station_id'] ?? 1,
-            'name' => $name,
-            'balance' => $balance,
-            'account_scope' => $scope
-        ]);
+            if (empty($name)) {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'اسم الخزنة مطلوب']);
+                exit;
+            }
 
-        if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+            $this->safeModel->create([
+                'station_id' => $user['station_id'] ?? 1,
+                'name' => $name,
+                'balance' => $balance,
+                'account_scope' => $scope
+            ]);
+
+            if (!empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') {
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'تم إنشاء الخزنة بنجاح']);
+                exit;
+            }
+
+            header('Location: ' . BASE_URL . '/finance');
+        } catch (\Throwable $e) {
             header('Content-Type: application/json');
-            echo json_encode(['success' => true, 'message' => 'Safe created successfully']);
+            echo json_encode([
+                'success' => false,
+                'message' => 'خطأ: ' . $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => basename($e->getFile())
+            ]);
             exit;
         }
-
-        header('Location: ' . BASE_URL . '/finance');
     }
 
     public function createBank()
@@ -595,7 +606,7 @@ class FinanceController extends Controller
     public function banks()
     {
         $user = AuthHelper::user();
-        $banks = $this->bankModel->getAll();
+        $banks = $this->bankModel->getAll($user['station_id'] ?? null);
 
         require_once __DIR__ . '/../Models/TransferRequest.php';
         $trModel = new \App\Models\TransferRequest();
@@ -623,7 +634,7 @@ class FinanceController extends Controller
     public function safes()
     {
         $user = AuthHelper::user();
-        $safes = $this->safeModel->getAll();
+        $safes = $this->safeModel->getAll($user['station_id'] ?? null);
 
         require_once __DIR__ . '/../Models/TransferRequest.php';
         $trModel = new \App\Models\TransferRequest();
@@ -651,8 +662,9 @@ class FinanceController extends Controller
     public function assets()
     {
         $user = AuthHelper::user();
-        $banks = $this->bankModel->getAll();
-        $safes = $this->safeModel->getAll();
+        $stationId = $user['station_id'] ?? null;
+        $banks = $this->bankModel->getAll($stationId);
+        $safes = $this->safeModel->getAll($stationId);
 
         $this->view('finance/assets', [
             'user' => $user,

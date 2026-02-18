@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Printer, Filter, Calendar, Search } from 'lucide-react';
+import { X, Printer, Filter, Calendar, Search, Eye } from 'lucide-react';
 import { toast } from 'sonner';
+import { openPrintPreview, extractTableHTML } from './utils/printPreview';
 
 export default function ReportsModal({ isOpen, onClose }) {
     const [filters, setFilters] = useState({
@@ -48,7 +49,13 @@ export default function ReportsModal({ isOpen, onClose }) {
     }, [isOpen, filters]);
 
     const handlePrint = () => {
-        window.print();
+        const tableEl = document.querySelector('.printable-content table');
+        const content = tableEl ? tableEl.outerHTML : '<p>لا توجد بيانات</p>';
+        openPrintPreview({
+            title: 'التقارير المالية',
+            subtitle: 'من ' + filters.start_date + ' إلى ' + filters.end_date,
+            content
+        });
     };
 
     const handleChange = (e) => {
@@ -86,7 +93,10 @@ export default function ReportsModal({ isOpen, onClose }) {
                                     </div>
                                 </div>
                                 <div className="flex gap-2 printable-hidden">
-                                    <button onClick={handlePrint} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 transition-colors">
+                                    <button onClick={handlePrint} className="p-2 bg-blue-100 border border-blue-200 text-blue-600 rounded-xl hover:bg-blue-200 transition-colors" title="معاينة">
+                                        <Eye className="w-5 h-5" />
+                                    </button>
+                                    <button onClick={() => window.print()} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 transition-colors" title="طباعة مباشرة">
                                         <Printer className="w-5 h-5" />
                                     </button>
                                     <button onClick={onClose} className="p-2 bg-white border border-slate-200 text-slate-600 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors">

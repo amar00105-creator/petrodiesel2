@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, Search, Filter, Fuel, Banknote, Truck } from 'lucide-react';
+import { Calendar, Search, Filter, Fuel, Banknote, Truck, Eye, Printer } from 'lucide-react';
 import { Card, Title, Text, Metric, Select, SelectItem, Grid } from '@tremor/react';
 import { toast } from 'sonner';
+import { openPrintPreview, extractTableHTML, formatDateArabic } from './utils/printPreview';
 
 export default function SupplierReport({ stationId }) {
     const [loading, setLoading] = useState(false);
@@ -140,6 +141,31 @@ export default function SupplierReport({ stationId }) {
                             <span className="font-bold text-lg whitespace-nowrap">كشف حساب مورد</span>
                         </div>
 
+                        {/* Preview & Print Buttons */}
+                        <button
+                            onClick={() => {
+                                const content = extractTableHTML('.overflow-x-auto');
+                                const selectedSupplier = suppliers.find(s => String(s.id) === String(filters.supplier_id));
+                                openPrintPreview({
+                                    title: 'كشف حساب مورد' + (selectedSupplier ? ' - ' + selectedSupplier.name : ''),
+                                    subtitle: 'من ' + formatDateArabic(filters.start_date) + ' إلى ' + formatDateArabic(filters.end_date),
+                                    content,
+                                    landscape: true
+                                });
+                            }}
+                            className="p-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-xl transition-colors dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                            title="معاينة التقرير"
+                        >
+                            <Eye className="w-5 h-5" />
+                        </button>
+                        <button
+                            onClick={() => window.print()}
+                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                            title="طباعة مباشرة"
+                        >
+                            <Printer className="w-5 h-5" />
+                        </button>
+
                         {/* Supplier Selector */}
                         <div className="w-full md:w-64 relative">
                             <Search className="w-4 h-4 text-slate-400 absolute right-3 top-3 pointer-events-none" />
@@ -256,6 +282,7 @@ export default function SupplierReport({ stationId }) {
                                         <th className="p-4 whitespace-nowrap">التاريخ</th>
                                         <th className="p-4 whitespace-nowrap">البيان</th>
                                         <th className="p-4 whitespace-nowrap">التصنيف</th>
+                                        <th className="p-4 whitespace-nowrap">السائق</th>
                                         <th className="p-4 whitespace-nowrap">الكمية</th>
                                         <th className="p-4 whitespace-nowrap">السعر</th>
                                         <th className="p-4 whitespace-nowrap text-emerald-600">المبلغ (المورد)</th>
@@ -283,12 +310,15 @@ export default function SupplierReport({ stationId }) {
                                                     <td className="p-4">
                                                         <span className={`px-2 py-1 rounded-full text-sm font-bold inline-flex items-center gap-1 ${
                                                             row.type === 'purchase' 
-                                                            ? 'bg-blue-100 text-blue-700' 
-                                                            : 'bg-emerald-100 text-emerald-700'
+                                                            ? (row.fuel_type && row.fuel_type.includes('بنزين') ? 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400')
+                                                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400'
                                                         }`}>
                                                             {row.type === 'purchase' ? <Fuel className="w-4 h-4"/> : <Banknote className="w-4 h-4"/>}
                                                             {row.category}
                                                         </span>
+                                                    </td>
+                                                    <td className="p-4 text-slate-600 dark:text-slate-300 font-bold">
+                                                        {row.driver_name || '-'}
                                                     </td>
                                                     <td className="p-4 font-mono text-lg text-slate-600 dark:text-slate-300">
                                                         {row.quantity ? formatNumber(row.quantity) : '-'}
@@ -311,7 +341,7 @@ export default function SupplierReport({ stationId }) {
                                             ))
                                         ) : (
                                             <tr>
-                                                <td colSpan="8" className="p-12 text-center text-slate-400">
+                                                <td colSpan="9" className="p-12 text-center text-slate-400">
                                                     لا توجد حركات في هذه الفترة
                                                 </td>
                                             </tr>
@@ -320,7 +350,7 @@ export default function SupplierReport({ stationId }) {
                                 </tbody>
                                 <tfoot className="bg-slate-900 text-white font-bold border-t-2 border-slate-700">
                                     <tr>
-                                        <td colSpan="5" className="p-4 text-left">الإجماليات الكلية:</td>
+                                        <td colSpan="6" className="p-4 text-left">الإجماليات الكلية:</td>
                                         <td className="p-4 text-emerald-400">{formatNumber(data.totals.total_paid)}</td>
                                         <td className="p-4 text-blue-400">{formatNumber(data.totals.total_purchased)}</td>
                                         <td className="p-4" dir="ltr">

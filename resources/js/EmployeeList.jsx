@@ -216,10 +216,10 @@ function EmployeeModal({ isOpen, onClose, mode, employee, onSuccess }) {
             <motion.div 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+                className="bg-white dark:bg-[#0F172A] dark:backdrop-blur-xl dark:border dark:border-white/10 rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
             >
-                <div className="bg-slate-50 p-4 border-b border-slate-100 flex justify-between items-center">
-                    <h3 className="font-bold text-lg text-navy-900">
+                <div className="bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10 p-4 flex justify-between items-center">
+                    <h3 className="font-bold text-lg text-navy-900 dark:text-white">
                         {mode === 'add' ? 'إضافة موظف جديد' : 'تعديل بيانات موظف'}
                     </h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-red-500 transition-colors">
@@ -229,39 +229,39 @@ function EmployeeModal({ isOpen, onClose, mode, employee, onSuccess }) {
                 
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">الاسم</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الاسم</label>
                         <input type="text" name="name" required defaultValue={employee?.name}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-white/5 dark:text-white dark:placeholder-slate-500" 
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">البريد الإلكتروني</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">البريد الإلكتروني</label>
                         <input type="email" name="email" defaultValue={employee?.email} placeholder="اختياري (سيتم توليده تلقائياً)"
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-white/5 dark:text-white dark:placeholder-slate-500" 
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">كلمة المرور</label>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">كلمة المرور</label>
                         <input type="password" name="password" required={mode === 'add'} placeholder={mode === 'edit' ? 'اتركها فارغة لعدم التغيير' : ''}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                            className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-white/5 dark:text-white dark:placeholder-slate-500" 
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">الصلاحية</label>
-                        <select name="role" defaultValue={employee?.role || 'viewer'} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
-                            <option value="viewer">مشاهد (Viewer)</option>
-                            <option value="manager">مدير (Manager)</option>
-                            <option value="admin">مسؤول (Admin)</option>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">الصلاحية</label>
+                        <select name="role" defaultValue={employee?.role || 'viewer'} className="w-full px-3 py-2 border border-slate-300 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-white/5 dark:text-white">
+                            <option value="viewer" className="dark:bg-slate-800">مشاهد (Viewer)</option>
+                            <option value="manager" className="dark:bg-slate-800">مدير (Manager)</option>
+                            <option value="admin" className="dark:bg-slate-800">مسؤول (Admin)</option>
                         </select>
                     </div>
 
                     <div className="pt-4 flex justify-end gap-2 text-sm font-bold">
                         <button type="button" onClick={onClose} 
-                            className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors">
+                            className="px-4 py-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors">
                             إلغاء
                         </button>
                         <button type="submit" 
-                            className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200">
+                            className="px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 dark:shadow-none">
                             حفظ البيانات
                         </button>
                     </div>

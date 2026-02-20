@@ -1,1 +1,38 @@
-ANTIGRAVITY
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Sync files via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: 162.0.215.16
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASS }}
+          server-dir: /
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/.env
+            **/node_modules/**
+            **/vendor/**
+            **/.agent/**
+            **/database/backup*
+            **/.gemini/**
+
+      - name: Fix Permissions
+        env:
+          FTP_HOST: 162.0.215.16
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASS: ${{ secrets.FTP_PASS }}
+        run: python .github/scripts/fix_permissions.py

@@ -10,10 +10,7 @@
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # Send Requests To Front Controller...
-    # Correct Base for Live Server (app.petrodiesel.net/public)
-    # RewriteBase /public/
-
+    # Send Requests To Front Controller
     RewriteRule ^index\.php$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f

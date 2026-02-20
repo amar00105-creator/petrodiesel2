@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Title, Text, TextInput, Select, SelectItem, Switch, Tab, TabGroup, TabList, Badge } from '@tremor/react';
-import { Settings as SettingsIcon, Fuel, Bell, Shield, Save, Globe, Server, UserCog, Database, Download, Plus, Trash2, Edit, Building2, Activity, DollarSign, FileText, Calendar } from 'lucide-react';
+import { Settings as SettingsIcon, Fuel, Bell, Shield, Save, Globe, Server, UserCog, Database, Download, Upload, Plus, Trash2, Edit, Building2, Activity, DollarSign, FileText, Calendar, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import StationList from './StationList';
 import RoleManager from './components/RoleManager';
 import UserManager from './components/UserManager';
 import ActivityLogPanel from './components/ActivityLogPanel';
+import AlertSettingsPanel from './components/AlertSettingsPanel';
 
 export default function Settings({ general = {}, fuel = {}, alerts = {}, roles = [], fuelTypes = [], stations = [], users = [], isSuperAdmin = false, userPermissions = [] }) {
     const [loading, setLoading] = useState(false);
@@ -26,6 +27,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
         { id: 'fuel', label: 'الوقود والأسعار', icon: Fuel, permission: 'settings.fuel' },
         { id: 'roles', label: 'الصلاحيات والأمان', icon: Shield, permission: 'settings.security', superAdminOnly: true },
         { id: 'activity', label: 'سجل العمليات', icon: Activity, permission: 'settings.activity' },
+        { id: 'alerts', label: 'التنبيهات', icon: Bell, permission: 'settings.general' },
         { id: 'backup', label: 'النسخ الاحتياطي', icon: Server, permission: 'settings.backup' },
     ];
 
@@ -38,6 +40,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
     
     // settings state
     const [generalSettings, setGeneralSettings] = useState(general);
+    const [alertSettings, setAlertSettings] = useState(alerts);
     
     // Dynamic Fuel Types
     const [fuelTypeList, setFuelTypeList] = useState(fuelTypes);
@@ -67,6 +70,14 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
             Object.entries(generalSettings).forEach(([k, v]) => formData.append(k, v));
             
             await fetch('/PETRODIESEL2/public/settings/update', { method: 'POST', body: formData });
+
+            // Save Alert Settings
+            if (alertSettings && Object.keys(alertSettings).length > 0) {
+                const alertFormData = new FormData();
+                alertFormData.append('section', 'alerts');
+                Object.entries(alertSettings).forEach(([k, v]) => alertFormData.append(k, v));
+                await fetch('/PETRODIESEL2/public/settings/update', { method: 'POST', body: alertFormData });
+            }
 
             // Save Fuel (Legacy settings if any, but now we use FuelType table)
             // If there are other fuel settings not in the table, keep this. 
@@ -340,7 +351,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     بيانات المؤسسة
                                 </Title>
                                 <div>
-                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">اسم المحطة</label>
+                                    <label className="text-sm font-bold text-slate-700 mb-1 block dark:text-slate-300 text-right">اسم المحطة / المنطقة</label>
                                     <TextInput 
                                         value={generalSettings.station_name || ''} 
                                         onChange={(e) => handleGeneralChange('station_name', e.target.value)}
@@ -814,14 +825,61 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                                     <Title className="dark:text-white">النسخ الاحتياطي للنظام</Title>
                                     <Text className="mt-2 dark:text-slate-400">قم بتحميل نسخة كاملة من قاعدة البيانات</Text>
                                 </div>
-                                <a 
-                                    href="/PETRODIESEL2/public/settings/backup" 
-                                    target="_blank"
-                                    className="px-6 py-3 bg-navy-900 text-white font-bold rounded-xl shadow-lg hover:bg-navy-800 transition-all flex items-center gap-2 dark:bg-indigo-600 dark:hover:bg-indigo-700"
-                                >
-                                    <Download className="w-5 h-5" />
-                                    تحميل نسخة احتياطية (SQL)
-                                </a>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <a 
+                                        href="/PETRODIESEL2/public/settings/backup" 
+                                        target="_blank"
+                                        className="px-6 py-3 bg-navy-900 text-white font-bold rounded-xl shadow-lg hover:bg-navy-800 transition-all flex items-center gap-2 dark:bg-indigo-600 dark:hover:bg-indigo-700"
+                                    >
+                                        <Download className="w-5 h-5" />
+                                        تحميل نسخة احتياطية (SQL)
+                                    </a>
+                                    <label
+                                        className="px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2 cursor-pointer dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                                    >
+                                        <Upload className="w-5 h-5" />
+                                        رفع نسخة محفوظة
+                                        <input 
+                                            type="file" 
+                                            accept=".sql" 
+                                            className="hidden"
+                                            onChange={async (e) => {
+                                                const file = e.target.files[0];
+                                                if (!file) return;
+                                                e.target.value = '';
+
+                                                if (!file.name.endsWith('.sql')) {
+                                                    toast.error('يجب أن يكون الملف بصيغة .sql');
+                                                    return;
+                                                }
+
+                                                if (!window.confirm(`⚠️ تحذير: سيتم استبدال جميع البيانات الحالية بالنسخة المحفوظة.\n\nالملف: ${file.name}\nالحجم: ${(file.size / 1024).toFixed(1)} KB\n\nهل أنت متأكد؟`)) {
+                                                    return;
+                                                }
+
+                                                const formData = new FormData();
+                                                formData.append('backup_file', file);
+
+                                                const toastId = toast.loading('جاري استعادة النسخة الاحتياطية...');
+
+                                                try {
+                                                    const res = await fetch(`${window.BASE_URL}/settings/restore`, {
+                                                        method: 'POST',
+                                                        body: formData,
+                                                    });
+                                                    const data = await res.json();
+                                                    if (data.success) {
+                                                        toast.success(data.message, { id: toastId, duration: 5000 });
+                                                    } else {
+                                                        toast.error(data.message || 'فشل في الاستعادة', { id: toastId });
+                                                    }
+                                                } catch (err) {
+                                                    toast.error('خطأ في الاتصال', { id: toastId });
+                                                }
+                                            }}
+                                        />
+                                    </label>
+                                </div>
                             </Card>
 
                             {/* Email Notification Settings */}
@@ -948,6 +1006,14 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                         <div className="mt-6">
                             <ActivityLogPanel />
                         </div>
+                    )}
+
+                            {currentTabId === 'alerts' && (
+                        <AlertSettingsPanel 
+                            alerts={alerts}
+                            currency={generalSettings.currency || 'SDG'}
+                            onSettingsChange={(updated) => setAlertSettings(updated)}
+                        />
                     )}
                         </>
                     );

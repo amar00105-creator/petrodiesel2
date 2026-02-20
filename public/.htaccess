@@ -11,9 +11,6 @@
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
     # Send Requests To Front Controller
-    # RewriteBase / is needed for live server (app.petrodiesel.net)
-    RewriteBase /
-
     RewriteRule ^index\.php$ - [L]
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f

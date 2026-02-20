@@ -75,7 +75,7 @@ export default function CustomerList({ customers = [], onUpdate, hideHeader = fa
                 <span className="font-bold text-navy-900 dark:text-white">{item.name}</span>
             </div>
         )},
-        { header: 'رقم الهاتف', accessor: 'phone', className: 'font-mono text-slate-600 dark:text-slate-300', render: (item) => (
+        { header: 'رقم الهاتف', accessor: 'phone', className: 'text-sm text-slate-600 dark:text-slate-300', render: (item) => (
             <div className="flex items-center gap-2">
                 <Phone className="w-3 h-3 text-slate-400"/> {item.phone || '-'}
             </div>
@@ -85,6 +85,18 @@ export default function CustomerList({ customers = [], onUpdate, hideHeader = fa
                 <MapPin className="w-3 h-3 text-slate-400"/> {item.address || '-'}
             </div>
         )},
+        { header: 'الرصيد الحالي', accessor: 'balance', render: (item) => {
+            const balance = parseFloat(item.balance) || 0;
+            const isNegative = balance < 0;
+            const isZero = balance === 0;
+            const color = isZero ? 'text-slate-400 dark:text-slate-500' : isNegative ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400';
+            const bgColor = isZero ? 'bg-slate-50 dark:bg-slate-800/50' : isNegative ? 'bg-red-50 dark:bg-red-900/20' : 'bg-emerald-50 dark:bg-emerald-900/20';
+            return (
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-bold text-sm ${color} ${bgColor}`}>
+                    {balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+            );
+        }},
         { header: 'الملاحظات', accessor: 'notes', className: 'max-w-xs truncate text-slate-500 dark:text-slate-400', render: (item) => item.notes || '-' }
     ];
 

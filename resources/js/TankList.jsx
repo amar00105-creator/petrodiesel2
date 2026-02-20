@@ -333,12 +333,13 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
 
             {/* Grid View */}
             {viewMode === 'grid' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-                    {filteredTanks.map(tank => (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    {filteredTanks.map((tank, idx) => (
                         <FuelTankCard 
                             key={tank.id} 
                             tank={tank} 
                             generalSettings={generalSettings}
+                            index={idx}
                             onEdit={() => handleEdit(tank)}
                             onDelete={() => initiateDelete(tank)}
                             onCalibrate={() => { setSelectedTank(tank); setCalibrationModalOpen(true); }}
@@ -357,61 +358,156 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                  <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-md dark:ring-white/10 dark:shadow-none">
                     <div className="overflow-x-auto">
                         <table className="w-full text-right">
-                            <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-slate-300">
+                            <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-white/10">
                                 <tr>
-                                    <th className="p-4 text-sm font-bold text-slate-600">اسم الخزان</th>
-                                    <th className="p-4 text-sm font-bold text-slate-600">المنتج</th>
-                                    <th className="p-4 text-sm font-bold text-slate-600 w-1/3">المستوى</th>
-                                    <th className="p-4 text-sm font-bold text-slate-600">السعة</th>
-                                    <th className="p-4 text-sm font-bold text-slate-600">الحالي</th>
-                                    <th className="p-4 text-sm font-bold text-slate-600 text-center">الإجراءات</th>
+                                    <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">اسم الخزان</th>
+                                    <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">نوع الوقود</th>
+                                    <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300 w-1/5">المنسوب</th>
+                                    <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">
+                                        <div className="flex flex-col items-center">
+                                            <span>السعة الكلية</span>
+                                            {(generalSettings.volume_display_mode === 'both') && (
+                                                <div className="flex gap-4 text-[10px] mt-0.5">
+                                                    <span className="text-lime-600 dark:text-lime-400">جالون</span>
+                                                    <span className="text-blue-600 dark:text-blue-400">لتر</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </th>
+                                    <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300">
+                                        <div className="flex flex-col items-center">
+                                            <span>الكمية الحالية</span>
+                                            {(generalSettings.volume_display_mode === 'both') && (
+                                                <div className="flex gap-4 text-[10px] mt-0.5">
+                                                    <span className="text-lime-600 dark:text-lime-400">جالون</span>
+                                                    <span className="text-blue-600 dark:text-blue-400">لتر</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </th>
+                                    <th className="p-4 text-sm font-bold text-slate-600 dark:text-slate-300 text-center">الإجراءات</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                                {filteredTanks.map((tank) => (
+                                {filteredTanks.map((tank) => {
+                                    // Fuel type color logic
+                                    const p = (tank.product || '').toLowerCase();
+                                    let fuelColor, fuelBg, fuelBorder, barColor;
+                                    if (p.includes('diesel') || p.includes('ديزل') || p.includes('جاز') || p.includes('سولار')) {
+                                        fuelColor = 'text-amber-700 dark:text-amber-300';
+                                        fuelBg = 'bg-amber-100 dark:bg-amber-500/15';
+                                        fuelBorder = 'border-amber-200 dark:border-amber-500/30';
+                                        barColor = 'bg-amber-500';
+                                    } else if (p.includes('95') || p.includes('ممتاز') || p.includes('super')) {
+                                        fuelColor = 'text-rose-700 dark:text-rose-300';
+                                        fuelBg = 'bg-rose-100 dark:bg-rose-500/15';
+                                        fuelBorder = 'border-rose-200 dark:border-rose-500/30';
+                                        barColor = 'bg-rose-500';
+                                    } else if (p.includes('91') || p.includes('عادي')) {
+                                        fuelColor = 'text-emerald-700 dark:text-emerald-300';
+                                        fuelBg = 'bg-emerald-100 dark:bg-emerald-500/15';
+                                        fuelBorder = 'border-emerald-200 dark:border-emerald-500/30';
+                                        barColor = 'bg-emerald-500';
+                                    } else if (p.includes('غاز') || p.includes('gas') || p.includes('سودا')) {
+                                        fuelColor = 'text-violet-700 dark:text-violet-300';
+                                        fuelBg = 'bg-violet-100 dark:bg-violet-500/15';
+                                        fuelBorder = 'border-violet-200 dark:border-violet-500/30';
+                                        barColor = 'bg-violet-500';
+                                    } else {
+                                        fuelColor = 'text-blue-700 dark:text-blue-300';
+                                        fuelBg = 'bg-blue-100 dark:bg-blue-500/15';
+                                        fuelBorder = 'border-blue-200 dark:border-blue-500/30';
+                                        barColor = 'bg-blue-500';
+                                    }
+
+                                    const mode = generalSettings.volume_display_mode || 'liters';
+                                    const fmtL = (v) => parseFloat(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+                                    const fmtG = (v) => (v / 4.5).toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+                                    return (
                                     <tr key={tank.id} className="hover:bg-blue-50/30 transition-colors group dark:hover:bg-white/5">
-                                        <td className="p-4 font-bold text-navy-900 flex items-center gap-3 dark:text-white">
-                                            <div className="p-2 bg-slate-100 rounded-lg dark:bg-white/10"><Droplet className="w-5 h-5 text-blue-500" /></div>
-                                            {tank.name}
-                                        </td>
-                                        <td className="p-4"><Badge size="xs" color="slate">{tank.product}</Badge></td>
-                                        <td className="p-4 flex items-center gap-2">
-                                            <span className="text-xs font-bold w-10">{tank.percentage}%</span>
-                                            <div className="w-full bg-slate-100 rounded-full h-2">
-                                                <div className="bg-blue-500 h-2 rounded-full" style={{ width: `${tank.percentage}%` }}></div>
+                                        {/* Tank Name */}
+                                        <td className="p-4 font-bold text-slate-800 dark:text-white">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${fuelBg} border ${fuelBorder}`}>
+                                                    <Droplet className={`w-5 h-5 ${fuelColor}`} />
+                                                </div>
+                                                <span>{tank.name}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4 font-mono dark:text-slate-300">
-                                            {generalSettings.volume_display_mode === 'gallons' ? (tank.total_cap / 4.5).toLocaleString(undefined, { maximumFractionDigits: 0 }) : tank.total_cap.toLocaleString()}
+                                        {/* Fuel Type - Colored Badge */}
+                                        <td className="p-4">
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold border ${fuelColor} ${fuelBg} ${fuelBorder}`}>
+                                                {tank.product}
+                                            </span>
                                         </td>
-                                        <td className="p-4 font-mono font-bold dark:text-white">
-                                            {formatVolume(tank.current)}
+                                        {/* Level Bar */}
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs font-black w-10 ${tank.percentage < 10 ? 'text-red-600 dark:text-red-400' : tank.percentage < 20 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-300'}`}>
+                                                    {tank.percentage}%
+                                                </span>
+                                                <div className="w-full bg-slate-100 dark:bg-white/10 rounded-full h-2.5">
+                                                    <motion.div 
+                                                        className={`${barColor} h-2.5 rounded-full`} 
+                                                        initial={{ width: 0 }}
+                                                        animate={{ width: `${tank.percentage}%` }}
+                                                        transition={{ duration: 1, ease: "easeOut" }}
+                                                    />
+                                                </div>
+                                            </div>
                                         </td>
+                                        {/* Capacity */}
+                                        <td className="p-4">
+                                            <div className="flex items-center justify-center gap-4 text-slate-600 dark:text-slate-300 font-bold">
+                                                {(mode === 'both' || mode === 'gallons') && (
+                                                    <span>{fmtG(tank.total_cap)} <span className="text-[10px] text-lime-600 dark:text-lime-400">جالون</span></span>
+                                                )}
+                                                {(mode === 'both' || mode === 'liters') && (
+                                                    <span>{fmtL(tank.total_cap)} <span className="text-[10px] text-blue-600 dark:text-blue-400">لتر</span></span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        {/* Current Volume */}
+                                        <td className="p-4">
+                                            <div className={`flex items-center justify-center gap-4 font-black ${tank.percentage < 10 ? 'text-red-600 dark:text-red-400' : tank.percentage < 20 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-800 dark:text-white'}`}>
+                                                {(mode === 'both' || mode === 'gallons') && (
+                                                    <span>{fmtG(tank.current)} <span className="text-[10px] font-normal text-lime-600 dark:text-lime-400">جالون</span></span>
+                                                )}
+                                                {(mode === 'both' || mode === 'liters') && (
+                                                    <span>{fmtL(tank.current)} <span className="text-[10px] font-normal text-blue-600 dark:text-blue-400">لتر</span></span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        {/* Actions */}
                                         <td className="p-4 text-center">
-                                            <div className="flex justify-center gap-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex justify-center gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button 
                                                     onClick={() => { setSelectedTank(tank); setCalibrationModalOpen(true); }}
-                                                    className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                                                    className="p-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-500/15 rounded-lg transition-colors"
                                                     title="معايرة"
                                                 >
                                                     <Ruler className="w-4 h-4"/>
                                                 </button>
                                                 <button 
                                                     onClick={() => handleEdit(tank)}
-                                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                                                    className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/15 rounded-lg transition-colors"
+                                                    title="تعديل"
                                                 >
                                                     <Edit className="w-4 h-4"/>
                                                 </button>
                                                 <button 
                                                     onClick={() => initiateDelete(tank)}
-                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                                    className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15 rounded-lg transition-colors"
+                                                    title="حذف"
                                                 >
                                                     <Trash2 className="w-4 h-4"/>
                                                 </button>
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>

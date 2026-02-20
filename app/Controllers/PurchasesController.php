@@ -574,7 +574,7 @@ class PurchasesController extends Controller
                     $offloads = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                     foreach ($offloads as $offload) {
-                        $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume - ? WHERE id = ?");
+                        $stmt = $db->prepare("UPDATE tanks SET current_volume = GREATEST(0, current_volume - ?) WHERE id = ?");
                         $stmt->execute([$offload['quantity'], $offload['tank_id']]);
                     }
 
@@ -654,7 +654,7 @@ class PurchasesController extends Controller
                     $offloads = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                     foreach ($offloads as $offload) {
-                        $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume - ? WHERE id = ?");
+                        $stmt = $db->prepare("UPDATE tanks SET current_volume = GREATEST(0, current_volume - ?) WHERE id = ?");
                         $stmt->execute([$offload['quantity'], $offload['tank_id']]);
                     }
 

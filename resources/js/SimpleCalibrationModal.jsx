@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog } from '@tremor/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Droplets, Ruler, Save, Loader2, ArrowUpDown, StickyNote, Clock, History } from 'lucide-react';
 import { toast } from 'sonner';
 import SuccessAnimation from './SuccessAnimation';
 
 /**
- * Simplified Calibration Modal
- * Allows manual entry of actual tank quantity with automatic variance calculation
+ * Professional Glassmorphism Calibration Modal
+ * Features: glass edges, dark/light mode, fuel type icon with color, English numbers
  */
 const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
     const [actualQuantity, setActualQuantity] = useState('');
@@ -13,6 +14,29 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
     const [variance, setVariance] = useState(0);
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [lastCalibration, setLastCalibration] = useState(null);
+
+    // Fetch last calibration when modal opens
+    useEffect(() => {
+        if (isOpen && tank?.id) {
+            fetchLastCalibration();
+        }
+    }, [isOpen, tank?.id]);
+
+    const fetchLastCalibration = async () => {
+        try {
+            const res = await fetch(`${window.BASE_URL}/calibrations/history?tank_id=${tank.id}`);
+            const data = await res.json();
+            if (data.success && data.calibrations && data.calibrations.length > 0) {
+                setLastCalibration(data.calibrations[0]); // First = most recent
+            } else {
+                setLastCalibration(null);
+            }
+        } catch (e) {
+            console.warn('Could not fetch calibration history', e);
+            setLastCalibration(null);
+        }
+    };
 
     // Calculate variance automatically
     useEffect(() => {
@@ -32,6 +56,7 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
             setActualQuantity('');
             setNotes('');
             setVariance(0);
+            setLastCalibration(null);
         }
     }, [isOpen]);
 
@@ -41,7 +66,7 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
             return;
         }
 
-        if (parseFloat(actualQuantity) > parseFloat(tank.capacity_liters)) {
+        if (parseFloat(actualQuantity) > parseFloat(tank.capacity_liters || tank.total_cap)) {
             toast.error('الكمية تتجاوز سعة الخزان!');
             return;
         }
@@ -63,7 +88,6 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
 
             if (data.success) {
                 setShowSuccess(true);
-                // Close modal and refresh after animation
                 setTimeout(() => {
                     if (onSuccess) onSuccess();
                     onClose();
@@ -81,123 +105,331 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
 
     if (!tank) return null;
 
+    // Format numbers in English
+    const fmt = (n) => parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    const fmtFixed = (n) => parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // Format date/time in English
+    const formatDateTime = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        const date = d.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        return { date, time };
+    };
+
+    // Fuel type detection & theming
+    const productName = tank.product || tank.name || '';
+    const isDiesel = productName.includes('Diesel') || productName.includes('ديزل') || productName.includes('جاز');
+    const isPetrol = productName.includes('بنزين') || productName.includes('Petrol') || productName.includes('91') || productName.includes('95');
+
+    const fuelTheme = isDiesel ? {
+        gradient: 'from-blue-500 to-cyan-600',
+        lightGradient: 'from-blue-50 to-cyan-50',
+        darkGradient: 'from-blue-950/60 to-cyan-950/60',
+        border: 'border-blue-300/50 dark:border-blue-500/30',
+        iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-600',
+        textColor: 'text-blue-600 dark:text-blue-400',
+        shadowColor: 'shadow-blue-500/25',
+        glowColor: 'rgba(59, 130, 246, 0.15)',
+        label: 'ديزل / جاز',
+    } : isPetrol ? {
+        gradient: 'from-orange-500 to-amber-600',
+        lightGradient: 'from-orange-50 to-amber-50',
+        darkGradient: 'from-orange-950/60 to-amber-950/60',
+        border: 'border-orange-300/50 dark:border-orange-500/30',
+        iconBg: 'bg-gradient-to-br from-orange-500 to-amber-600',
+        textColor: 'text-orange-600 dark:text-orange-400',
+        shadowColor: 'shadow-orange-500/25',
+        glowColor: 'rgba(249, 115, 22, 0.15)',
+        label: 'بنزين',
+    } : {
+        gradient: 'from-emerald-500 to-teal-600',
+        lightGradient: 'from-emerald-50 to-teal-50',
+        darkGradient: 'from-emerald-950/60 to-teal-950/60',
+        border: 'border-emerald-300/50 dark:border-emerald-500/30',
+        iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-600',
+        textColor: 'text-emerald-600 dark:text-emerald-400',
+        shadowColor: 'shadow-emerald-500/25',
+        glowColor: 'rgba(16, 185, 129, 0.15)',
+        label: 'وقود',
+    };
+
+    const currentVolume = parseFloat(tank.current_volume || tank.current || 0);
+    const capacity = parseFloat(tank.capacity_liters || tank.total_cap || 0);
+    const fillPct = capacity > 0 ? ((currentVolume / capacity) * 100).toFixed(1) : 0;
+
     return (
         <>
-            <Dialog open={isOpen} onClose={onClose} static={true}>
-            <div className="p-6 bg-white rounded-lg max-w-2xl mx-auto">
-                {/* Header */}
-                <div className="mb-6">
-                    <h2 className="text-2xl font-bold text-slate-800">معايرة الخزان</h2>
-                    <p className="text-slate-500 mt-1">{tank.name}</p>
-                </div>
-
-                {/* Current Volume Info */}
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm text-blue-700 font-medium">الرصيد الحالي في النظام</span>
-                        <span className="text-2xl font-bold text-blue-900">
-                            {parseFloat(tank.current_volume || tank.current || 0).toLocaleString('ar-SA')} لتر
-                        </span>
-                    </div>
-                    <div className="mt-2 text-xs text-blue-600">
-                        السعة: {parseFloat(tank.capacity_liters || tank.total_cap || 0).toLocaleString('ar-SA')} لتر
-                    </div>
-                </div>
-
-                {/* Actual Quantity Input */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                        الكمية الفعلية المقاسة (لتر) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type="number"
-                        step="0.01"
-                        value={actualQuantity}
-                        onChange={(e) => setActualQuantity(e.target.value)}
-                        placeholder="أدخل الكمية المقاسة يدوياً"
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                        disabled={loading}
-                        autoFocus
-                    />
-                </div>
-
-                {/* Variance Display - Always visible */}
-                <div className={`mb-6 p-4 rounded-lg border-2 transition-all ${
-                    actualQuantity && variance > 0 
-                        ? 'bg-green-50 border-green-300' 
-                        : actualQuantity && variance < 0 
-                            ? 'bg-red-50 border-red-300' 
-                            : 'bg-gray-50 border-gray-300'
-                }`}>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">الفرق (العجز/الزيادة)</span>
-                        <div className="text-right">
-                            <div className={`text-3xl font-bold ${
-                                actualQuantity && variance > 0 
-                                    ? 'text-green-700' 
-                                    : actualQuantity && variance < 0 
-                                        ? 'text-red-700' 
-                                        : 'text-gray-700'
-                            }`}>
-                                {variance > 0 && '+'}{variance.toFixed(2)} لتر
-                            </div>
-                            <div className={`text-sm mt-1 ${
-                                actualQuantity && variance > 0 
-                                    ? 'text-green-600' 
-                                    : actualQuantity && variance < 0 
-                                        ? 'text-red-600' 
-                                        : 'text-gray-600'
-                            }`}>
-                                {actualQuantity ? (variance > 0 ? '✓ زيادة' : variance < 0 ? '✗ عجز' : '= متطابق') : 'سيظهر بعد إدخال الكمية'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Notes */}
-                <div className="mb-6">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                        ملاحظات (اختياري)
-                    </label>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="أي ملاحظات أو توضيحات إضافية..."
-                        rows="3"
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                        disabled={loading}
-                    />
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-3 justify-end">
-                    <button
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
                         onClick={onClose}
-                        disabled={loading}
-                        className="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                     >
-                        إلغاء
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={loading || !actualQuantity}
-                        className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    >
-                        {loading && (
-                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-                            </svg>
-                        )}
-                        حفظ المعايرة
-                    </button>
-                </div>
-            </div>
-            </Dialog>
-            
-            {/* Success Animation - Outside Dialog for proper z-index */}
-            <SuccessAnimation 
-                isVisible={showSuccess} 
+                        {/* Backdrop */}
+                        <div className="absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm" />
+
+                        {/* Modal */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="relative w-full max-w-3xl rounded-3xl overflow-hidden"
+                        >
+                            {/* Glass Layer - Light: white / Dark: deep slate */}
+                            <div className="absolute inset-0 bg-white/90 dark:bg-slate-900/95 backdrop-blur-xl" />
+
+                            {/* Glass Border Glow */}
+                            <div className="absolute inset-0 rounded-3xl border border-white/40 dark:border-white/[0.06]" />
+                            <div className={`absolute inset-0 rounded-3xl ring-1 ring-inset ${fuelTheme.border}`} />
+
+                            {/* Decorative Glow Blob */}
+                            <div className="absolute -top-20 -right-20 w-60 h-60 rounded-full blur-3xl opacity-20 dark:opacity-[0.07]"
+                                 style={{ background: `radial-gradient(circle, ${fuelTheme.glowColor}, transparent 70%)` }}
+                            />
+
+                            {/* Content */}
+                            <div className="relative z-10">
+
+                                {/* Header */}
+                                <div className={`flex items-center justify-between px-8 py-4 border-b border-slate-200/60 dark:border-white/[0.06] bg-gradient-to-r ${fuelTheme.lightGradient} dark:bg-none dark:bg-slate-800/50`}>
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-11 h-11 rounded-2xl ${fuelTheme.iconBg} flex items-center justify-center shadow-lg ${fuelTheme.shadowColor}`}>
+                                            <Ruler className="w-5 h-5 text-white" strokeWidth={2.2} />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-black text-slate-800 dark:text-white">معايرة الخزان</h2>
+                                            <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold">{tank.name}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Fuel Type Badge - Top Left Corner */}
+                                    <div className="flex items-center gap-3">
+                                        <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r ${fuelTheme.gradient} text-white shadow-lg ${fuelTheme.shadowColor}`}>
+                                            <Droplets className="w-4 h-4" />
+                                            <span className="text-sm font-bold">{fuelTheme.label}</span>
+                                        </div>
+                                        <button
+                                            onClick={onClose}
+                                            className="p-2 rounded-xl bg-white/60 dark:bg-white/[0.06] border border-slate-200/50 dark:border-white/[0.08] text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-700 dark:hover:text-white transition-all"
+                                        >
+                                            <X className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Body */}
+                                <div className="px-8 py-5 space-y-4">
+
+                                    {/* Current Volume Card - Reduced height 25% */}
+                                    <div className="relative overflow-hidden rounded-2xl px-5 py-3 bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${fuelTheme.lightGradient} dark:bg-none opacity-50 dark:opacity-0`} />
+                                        <div className="relative z-10">
+                                            <div className="flex items-center justify-between mb-1.5">
+                                                <span className={`text-xs font-bold ${fuelTheme.textColor} uppercase tracking-wider`}>الرصيد الحالي في النظام</span>
+                                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r ${fuelTheme.gradient} text-white shadow-sm`}>
+                                                    {fillPct}%
+                                                </span>
+                                            </div>
+                                            <div className="flex items-baseline gap-2">
+                                                <span className="text-2xl font-black text-slate-800 dark:text-white font-mono" dir="ltr">
+                                                    {fmt(currentVolume)}
+                                                </span>
+                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">لتر</span>
+                                            </div>
+                                            {/* Progress Bar */}
+                                            <div className="mt-2 h-2 bg-slate-200/60 dark:bg-white/[0.06] rounded-full overflow-hidden">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${Math.min(fillPct, 100)}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                    className={`h-full bg-gradient-to-r ${fuelTheme.gradient} rounded-full shadow-sm`}
+                                                />
+                                            </div>
+                                            <div className="flex justify-between mt-1 text-[10px] font-mono text-slate-400 dark:text-slate-500">
+                                                <span>0</span>
+                                                <span>السعة: {fmt(capacity)} لتر</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Actual Quantity Input */}
+                                    <div>
+                                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                            <Ruler className="w-4 h-4" />
+                                            الكمية الفعلية المقاسة (لتر)
+                                            <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            value={actualQuantity}
+                                            onChange={(e) => setActualQuantity(e.target.value)}
+                                            placeholder="أدخل الكمية المقاسة يدوياً"
+                                            className="w-full px-5 py-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] border-2 border-slate-200/60 dark:border-white/[0.08] focus:ring-2 focus:ring-offset-0 focus:border-transparent transition-all text-lg font-mono font-bold text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 outline-none"
+                                            disabled={loading}
+                                            autoFocus
+                                        />
+                                    </div>
+
+                                    {/* Variance Display */}
+                                    <div className={`relative overflow-hidden rounded-2xl p-5 border-2 transition-all duration-500 ${
+                                        actualQuantity && variance > 0
+                                            ? 'bg-emerald-50/80 dark:bg-emerald-500/[0.07] border-emerald-300/60 dark:border-emerald-500/20'
+                                            : actualQuantity && variance < 0
+                                                ? 'bg-rose-50/80 dark:bg-rose-500/[0.07] border-rose-300/60 dark:border-rose-500/20'
+                                                : 'bg-white/40 dark:bg-white/[0.02] border-slate-200/50 dark:border-white/[0.06]'
+                                    }`}>
+                                        {/* Decorative Icon */}
+                                        <div className="absolute top-3 left-3 opacity-10 dark:opacity-[0.05]">
+                                            <ArrowUpDown className="w-12 h-12" />
+                                        </div>
+
+                                        <div className="relative z-10 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                                    actualQuantity && variance > 0
+                                                        ? 'bg-emerald-500/20 dark:bg-emerald-500/10'
+                                                        : actualQuantity && variance < 0
+                                                            ? 'bg-rose-500/20 dark:bg-rose-500/10'
+                                                            : 'bg-slate-200/50 dark:bg-white/[0.05]'
+                                                }`}>
+                                                    <ArrowUpDown className={`w-5 h-5 ${
+                                                        actualQuantity && variance > 0
+                                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                                            : actualQuantity && variance < 0
+                                                                ? 'text-rose-600 dark:text-rose-400'
+                                                                : 'text-slate-400 dark:text-slate-600'
+                                                    }`} />
+                                                </div>
+                                                <div>
+                                                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">الفرق (العجز/الزيادة)</span>
+                                                    <div className={`text-xs mt-0.5 font-semibold ${
+                                                        actualQuantity && variance > 0
+                                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                                            : actualQuantity && variance < 0
+                                                                ? 'text-rose-600 dark:text-rose-400'
+                                                                : 'text-slate-400 dark:text-slate-500'
+                                                    }`}>
+                                                        {actualQuantity ? (variance > 0 ? '✓ زيادة عن الرصيد' : variance < 0 ? '✗ عجز في الرصيد' : '= متطابق مع الرصيد') : 'سيظهر بعد إدخال الكمية'}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-left">
+                                                <div className={`text-3xl font-black font-mono ${
+                                                    actualQuantity && variance > 0
+                                                        ? 'text-emerald-700 dark:text-emerald-400'
+                                                        : actualQuantity && variance < 0
+                                                            ? 'text-rose-700 dark:text-rose-400'
+                                                            : 'text-slate-600 dark:text-slate-500'
+                                                }`} dir="ltr">
+                                                    {variance > 0 && '+'}{fmtFixed(variance)}
+                                                </div>
+                                                <div className="text-xs text-slate-400 dark:text-slate-500 text-left font-bold">لتر</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Previous Calibration - Red themed */}
+                                    {lastCalibration && (
+                                        <div className="relative overflow-hidden rounded-2xl px-5 py-3.5 bg-red-50/60 dark:bg-red-500/[0.06] border border-red-200/60 dark:border-red-500/15">
+                                            <div className="absolute top-3 left-3 opacity-[0.06]">
+                                                <History className="w-10 h-10" />
+                                            </div>
+                                            <div className="relative z-10 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-xl bg-red-500/15 dark:bg-red-500/10 flex items-center justify-center">
+                                                        <Clock className="w-4 h-4 text-red-600 dark:text-red-400" />
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-sm font-bold text-red-700 dark:text-red-400">المعايرة السابقة</span>
+                                                        <div className="flex items-center gap-3 mt-0.5">
+                                                            {formatDateTime(lastCalibration.created_at) && (
+                                                                <>
+                                                                    <span className="text-xs font-mono font-bold text-red-600 dark:text-red-300" dir="ltr">
+                                                                        {formatDateTime(lastCalibration.created_at).date}
+                                                                    </span>
+                                                                    <span className="text-red-300 dark:text-red-600">|</span>
+                                                                    <span className="text-xs font-mono font-bold text-red-600 dark:text-red-300" dir="ltr">
+                                                                        {formatDateTime(lastCalibration.created_at).time}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="text-left">
+                                                    <div className="text-xl font-black font-mono text-red-700 dark:text-red-400" dir="ltr">
+                                                        {fmt(lastCalibration.actual_quantity)}
+                                                    </div>
+                                                    <div className="text-[10px] text-red-500 dark:text-red-500 text-left font-bold">
+                                                        الفرق: <span dir="ltr">{parseFloat(lastCalibration.variance) > 0 ? '+' : ''}{fmtFixed(lastCalibration.variance)}</span> لتر
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Notes */}
+                                    <div>
+                                        <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                            <StickyNote className="w-4 h-4" />
+                                            ملاحظات (اختياري)
+                                        </label>
+                                        <textarea
+                                            value={notes}
+                                            onChange={(e) => setNotes(e.target.value)}
+                                            placeholder="أي ملاحظات أو توضيحات إضافية..."
+                                            rows="2"
+                                            className="w-full px-5 py-3 rounded-2xl bg-white/70 dark:bg-white/[0.03] border border-slate-200/60 dark:border-white/[0.06] focus:ring-2 focus:ring-offset-0 focus:border-transparent transition-all text-sm text-slate-700 dark:text-slate-300 placeholder-slate-400 dark:placeholder-slate-600 resize-none outline-none"
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Footer Actions */}
+                                <div className="flex items-center justify-between px-8 py-4 border-t border-slate-200/60 dark:border-white/[0.06] bg-slate-50/50 dark:bg-slate-800/30">
+                                    <div className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                                        سيتم تحديث رصيد الخزان تلقائياً
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={onClose}
+                                            disabled={loading}
+                                            className="px-6 py-2.5 rounded-xl bg-white/80 dark:bg-white/[0.05] border border-slate-200/60 dark:border-white/[0.08] text-slate-600 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-white/10 transition-all disabled:opacity-50"
+                                        >
+                                            إلغاء
+                                        </button>
+                                        <button
+                                            onClick={handleSubmit}
+                                            disabled={loading || !actualQuantity}
+                                            className={`px-7 py-2.5 rounded-xl bg-gradient-to-r ${fuelTheme.gradient} text-white font-bold text-sm shadow-lg ${fuelTheme.shadowColor} hover:shadow-xl hover:scale-[1.02] transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2`}
+                                        >
+                                            {loading ? (
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                            ) : (
+                                                <Save className="w-4 h-4" />
+                                            )}
+                                            حفظ المعايرة
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Success Animation */}
+            <SuccessAnimation
+                isVisible={showSuccess}
                 message="تمت المعايرة بنجاح! 🎊"
                 onComplete={() => setShowSuccess(false)}
             />

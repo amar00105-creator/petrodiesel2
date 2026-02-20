@@ -1,162 +1,341 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Droplet, Ruler, Edit, Trash2 } from 'lucide-react';
+import { Droplet, Ruler, Edit, Trash2, Fuel, Gauge } from 'lucide-react';
 
 const FuelTankCard = ({ 
   tank, 
   onEdit, 
   onDelete, 
   onCalibrate,
-  generalSettings = {}
+  generalSettings = {},
+  index = 0
 }) => {
   const { name, product, percentage, total_cap, current } = tank;
   const mode = generalSettings.volume_display_mode || 'liters';
 
-  // Color Theme Logic
-  const isDiesel = product && (product.includes('Diesel') || product.includes('ديزل') || product.includes('جاز'));
-  
-  const theme = isDiesel ? {
-     primary: "blue",
-     liquid: "bg-blue-600",
-     border: "border-blue-500/20",
-     shadow: "rgba(59, 130, 246, 0.5)",
-     text: "text-blue-400"
-  } : {
-     primary: "orange",
-     liquid: "bg-orange-600",
-     border: "border-orange-500/20",
-     shadow: "rgba(249, 115, 22, 0.5)", 
-     text: "text-orange-400"
+  // Dynamic color theming based on fuel type
+  const getTheme = () => {
+    const p = (product || '').toLowerCase();
+    if (p.includes('diesel') || p.includes('ديزل') || p.includes('جاز') || p.includes('سولار')) {
+      return {
+        gradient: 'from-amber-500 to-orange-600',
+        glow: 'rgba(245, 158, 11, 0.4)',
+        wave: '#f59e0b',
+        waveLight: '#fbbf24',
+        accent: 'text-amber-400',
+        accentBg: 'bg-amber-500/10 border-amber-500/20',
+        badge: 'bg-amber-500/20 text-amber-300 border-amber-400/30',
+        ring: 'ring-amber-500/20',
+      };
+    }
+    if (p.includes('95') || p.includes('ممتاز') || p.includes('super')) {
+      return {
+        gradient: 'from-rose-500 to-pink-600',
+        glow: 'rgba(244, 63, 94, 0.4)',
+        wave: '#f43f5e',
+        waveLight: '#fb7185',
+        accent: 'text-rose-400',
+        accentBg: 'bg-rose-500/10 border-rose-500/20',
+        badge: 'bg-rose-500/20 text-rose-300 border-rose-400/30',
+        ring: 'ring-rose-500/20',
+      };
+    }
+    if (p.includes('91') || p.includes('عادي')) {
+      return {
+        gradient: 'from-emerald-500 to-teal-600',
+        glow: 'rgba(16, 185, 129, 0.4)',
+        wave: '#10b981',
+        waveLight: '#34d399',
+        accent: 'text-emerald-400',
+        accentBg: 'bg-emerald-500/10 border-emerald-500/20',
+        badge: 'bg-emerald-500/20 text-emerald-300 border-emerald-400/30',
+        ring: 'ring-emerald-500/20',
+      };
+    }
+    if (p.includes('غاز') || p.includes('gas') || p.includes('سودا')) {
+      return {
+        gradient: 'from-violet-500 to-purple-600',
+        glow: 'rgba(139, 92, 246, 0.4)',
+        wave: '#8b5cf6',
+        waveLight: '#a78bfa',
+        accent: 'text-violet-400',
+        accentBg: 'bg-violet-500/10 border-violet-500/20',
+        badge: 'bg-violet-500/20 text-violet-300 border-violet-400/30',
+        ring: 'ring-violet-500/20',
+      };
+    }
+    // Default: Blue
+    return {
+      gradient: 'from-blue-500 to-cyan-600',
+      glow: 'rgba(59, 130, 246, 0.4)',
+      wave: '#3b82f6',
+      waveLight: '#60a5fa',
+      accent: 'text-blue-400',
+      accentBg: 'bg-blue-500/10 border-blue-500/20',
+      badge: 'bg-blue-500/20 text-blue-300 border-blue-400/30',
+      ring: 'ring-blue-500/20',
+    };
   };
 
-  const neonPulse = {
-    initial: { opacity: 0.6, shadowBlur: "10px" },
-    animate: { 
-      opacity: [0.6, 1, 0.6], 
-      boxShadow: [
-        `0 0 10px ${theme.shadow}`, 
-        `0 0 20px ${theme.shadow}`, 
-        `0 0 10px ${theme.shadow}`
-      ] 
-    },
-  };
+  const theme = getTheme();
 
-  // Format volume - always show liters first, then gallons below
-  const formatCurrent = () => {
-    const gallons = current / 4.5;
-    if (mode === 'gallons') {
-      return <span>{gallons.toLocaleString(undefined, { maximumFractionDigits: 1 })} <span className="text-emerald-300 text-xs">جالون</span></span>;
-    }
-    if (mode === 'both') {
-      return (
-        <div className="flex flex-col items-center leading-tight">
-          <span className="text-white">{parseFloat(current).toLocaleString()} <span className="text-emerald-300 text-xs">لتر</span></span>
-          <span className="text-gray-400 text-sm">{gallons.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-emerald-300/70 text-xs">جالون</span></span>
-        </div>
-      );
-    }
-    return <span>{parseFloat(current).toLocaleString()} <span className="text-emerald-300 text-xs">لتر</span></span>;
-  };
+  // Status
+  const isLow = percentage < 20;
+  const isCritical = percentage < 10;
 
-  const formatCapacity = () => {
-    const gallons = total_cap / 4.5;
-    if (mode === 'gallons') {
-      return <span>{gallons.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-amber-300 text-xs">جالون</span></span>;
-    }
-    if (mode === 'both') {
-      return (
-        <div className="flex flex-col items-center leading-tight">
-          <span>{parseFloat(total_cap).toLocaleString()} <span className="text-amber-300 text-xs">لتر</span></span>
-          <span className="text-gray-500 text-sm">{gallons.toLocaleString(undefined, { maximumFractionDigits: 0 })} <span className="text-amber-300/70 text-xs">جالون</span></span>
-        </div>
-      );
-    }
-    return <span>{parseFloat(total_cap).toLocaleString()} <span className="text-amber-300 text-xs">لتر</span></span>;
-  };
+  // Numeric formatters
+  const fmtLiters = (v) => parseFloat(v).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const fmtGallons = (v) => (v / 4.5).toLocaleString(undefined, { maximumFractionDigits: 0 });
+
+  // Wave SVG for liquid surface
+  const WaveSurface = () => (
+    <svg className="absolute top-0 left-0 w-full" viewBox="0 0 200 12" preserveAspectRatio="none" style={{ height: '12px', transform: 'translateY(-6px)' }}>
+      <motion.path
+        d="M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 V12 H0 Z"
+        fill={theme.wave}
+        initial={{ d: "M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 V12 H0 Z" }}
+        animate={{ 
+          d: [
+            "M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 V12 H0 Z",
+            "M0 6 Q25 12 50 6 T100 6 T150 6 T200 6 V12 H0 Z",
+            "M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 V12 H0 Z"
+          ]
+        }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        opacity={0.8}
+      />
+      <motion.path
+        d="M0 6 Q25 12 50 6 T100 6 T150 6 T200 6 V12 H0 Z"
+        fill={theme.waveLight}
+        initial={{ d: "M0 6 Q25 12 50 6 T100 6 T150 6 T200 6 V12 H0 Z" }}
+        animate={{ 
+          d: [
+            "M0 6 Q25 12 50 6 T100 6 T150 6 T200 6 V12 H0 Z",
+            "M0 6 Q25 0 50 6 T100 6 T150 6 T200 6 V12 H0 Z",
+            "M0 6 Q25 12 50 6 T100 6 T150 6 T200 6 V12 H0 Z"
+          ]
+        }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        opacity={0.3}
+      />
+    </svg>
+  );
 
   return (
     <motion.div 
-      whileHover={{ scale: 1.02, translateY: -5 }}
-      transition={{ type: "spring", stiffness: 300 }}
-      className={`relative w-full h-80 rounded-3xl border border-white/10 bg-black/60 backdrop-blur-xl overflow-hidden group flex flex-col justify-between p-4 ${theme.border}`}
+      initial={{ opacity: 0, y: 30, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.5, delay: index * 0.08, ease: "easeOut" }}
+      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+      className={`relative rounded-2xl overflow-hidden ring-1 ${theme.ring} group`}
+      style={{
+        background: 'linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,41,59,0.9))',
+        backdropFilter: 'blur(20px)',
+        boxShadow: `0 8px 32px -4px rgba(0,0,0,0.3), 0 0 20px -5px ${theme.glow}, 0 0 0 1px rgba(255,255,255,0.05), inset 0 1px 0 rgba(255,255,255,0.05)`,
+      }}
     >
+      {/* Glassmorphism colored border overlay */}
+      <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ 
+        background: `linear-gradient(135deg, ${theme.wave}22 0%, transparent 40%, transparent 60%, ${theme.wave}15 100%)`,
+        border: `1px solid ${theme.wave}30`,
+      }} />
+      {/* Glassmorphism light overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-white/[0.08] to-transparent pointer-events-none" />
       
-      {/* Neon Side Lines */}
-      <motion.div 
-        variants={neonPulse}
-        initial="initial"
-        animate="animate"
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        className={`absolute inset-y-0 left-0 w-1 bg-${theme.primary}-500 z-20`}
+      {/* Content wrapper */}
+      <div className="relative z-10 flex flex-col h-full" style={{ minHeight: '320px' }}>
+        
+        {/* === TOP: Tank Name + Product Badge === */}
+        <div className="px-4 pt-4 pb-2 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className={`p-2 rounded-xl ${theme.accentBg} border backdrop-blur-sm shrink-0`}>
+              <Droplet className={`w-4 h-4 ${theme.accent}`} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-white text-sm leading-tight truncate">{name}</h3>
+              <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-md ${theme.badge} border mt-0.5`}>
+                {product}
+              </span>
+            </div>
+          </div>
+
+          {/* Percentage Badge (small, top-right) */}
+          <div className={`shrink-0 px-3 py-1.5 rounded-xl text-base font-black ${
+            isCritical ? 'bg-red-500/25 text-red-300 border border-red-500/40' :
+            isLow ? 'bg-amber-500/25 text-amber-300 border border-amber-500/40' :
+            'bg-white/15 text-white border border-white/20'
+          }`}>
+            {percentage}%
+          </div>
+        </div>
+
+        {/* === CENTER: Tank Visual with Fuel Level === */}
+        <div className="flex-1 flex items-center justify-center px-4 py-2">
+          <div className="relative w-full max-w-[112px] mx-auto" style={{ aspectRatio: '1/1.3' }}>
+
+            {/* Tank body */}
+            <div 
+              className="absolute inset-0 rounded-2xl border-2 border-white/15 overflow-hidden"
+              style={{
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.2) 100%)',
+                boxShadow: `inset 0 0 30px rgba(0,0,0,0.3), inset 0 2px 0 rgba(255,255,255,0.05)`,
+              }}
+            >
+              {/* Ruler/gauge marks on the side */}
+              <div className="absolute left-1.5 top-2 bottom-2 w-px flex flex-col justify-between pointer-events-none z-10">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-1">
+                    <div className="w-2 h-px bg-white/30" />
+                  </div>
+                ))}
+              </div>
+
+              {/* Liquid fill */}
+              <motion.div
+                className="absolute bottom-0 left-0 w-full"
+                initial={{ height: 0 }}
+                animate={{ height: `${Math.max(2, percentage)}%` }}
+                transition={{ duration: 1.8, ease: [0.16, 1, 0.3, 1], delay: index * 0.08 + 0.2 }}
+                style={{ 
+                  background: `linear-gradient(180deg, ${theme.waveLight}cc, ${theme.wave})`,
+                }}
+              >
+                {/* Wave on top */}
+                <WaveSurface />
+                
+                {/* Shimmer effect inside liquid */}
+                <motion.div 
+                  className="absolute inset-0 opacity-20"
+                  style={{
+                    background: `linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.4) 50%, transparent 60%)`,
+                    backgroundSize: '200% 200%',
+                  }}
+                  animate={{
+                    backgroundPosition: ['200% 200%', '-200% -200%'],
+                  }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                />
+
+                {/* Bubble particles */}
+                {percentage > 5 && (
+                  <>
+                    <motion.div
+                      className="absolute w-1.5 h-1.5 rounded-full bg-white/30"
+                      style={{ left: '30%', bottom: '20%' }}
+                      animate={{ y: [0, -20, 0], opacity: [0.3, 0.6, 0.3] }}
+                      transition={{ duration: 3, repeat: Infinity, delay: 0.5 }}
+                    />
+                    <motion.div
+                      className="absolute w-1 h-1 rounded-full bg-white/20"
+                      style={{ left: '60%', bottom: '40%' }}
+                      animate={{ y: [0, -15, 0], opacity: [0.2, 0.5, 0.2] }}
+                      transition={{ duration: 2.5, repeat: Infinity, delay: 1.2 }}
+                    />
+                    <motion.div
+                      className="absolute w-0.5 h-0.5 rounded-full bg-white/25"
+                      style={{ left: '45%', bottom: '10%' }}
+                      animate={{ y: [0, -25, 0], opacity: [0.2, 0.4, 0.2] }}
+                      transition={{ duration: 3.5, repeat: Infinity, delay: 2 }}
+                    />
+                  </>
+                )}
+              </motion.div>
+
+              {/* Glass reflection overlay */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%, rgba(255,255,255,0.02) 100%)',
+                }}
+              />
+            </div>
+
+            {/* Tank cap/top */}
+            <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-10 h-2 rounded-t-lg bg-white/10 border border-white/10 border-b-0" />
+          </div>
+        </div>
+
+        {/* === VOLUME INFO (Table layout) === */}
+        <div className="px-4 pb-2">
+          <div className="bg-white/[0.07] rounded-xl p-3 border border-white/[0.1] backdrop-blur-sm">
+            {/* Column headers - centered above number columns */}
+            <div className={`grid gap-x-3 items-center mb-2 ${mode === 'both' ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'}`}>
+              <span></span>
+              {(mode === 'both' || mode === 'gallons') && (
+                <span className="text-[11px] text-lime-400 font-semibold text-center border-b border-lime-500/20 pb-1">جالون</span>
+              )}
+              {(mode === 'both' || mode === 'liters') && (
+                <span className="text-[11px] text-blue-400 font-semibold text-center border-b border-blue-500/20 pb-1">لتر</span>
+              )}
+            </div>
+
+            {/* Current Volume Row */}
+            <div className={`grid gap-x-3 items-center py-1.5 ${mode === 'both' ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'}`}>
+              <span className="text-[11px] text-cyan-300 font-bold whitespace-nowrap">الكمية الحالية</span>
+              {(mode === 'both' || mode === 'gallons') && (
+                <span className={`text-lg font-black text-center ${isCritical ? 'text-red-300' : isLow ? 'text-amber-300' : 'text-white'}`}>
+                  {fmtGallons(current)}
+                </span>
+              )}
+              {(mode === 'both' || mode === 'liters') && (
+                <span className={`text-lg font-black text-center ${isCritical ? 'text-red-300' : isLow ? 'text-amber-300' : 'text-white'}`}>
+                  {fmtLiters(current)}
+                </span>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="h-px bg-white/[0.1] my-0.5" />
+
+            {/* Capacity Row */}
+            <div className={`grid gap-x-3 items-center py-1.5 ${mode === 'both' ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'}`}>
+              <span className="text-[11px] text-slate-200 font-medium whitespace-nowrap">السعة الكلية</span>
+              {(mode === 'both' || mode === 'gallons') && (
+                <span className="text-lg font-bold text-white/90 text-center">{fmtGallons(total_cap)}</span>
+              )}
+              {(mode === 'both' || mode === 'liters') && (
+                <span className="text-lg font-bold text-white/90 text-center">{fmtLiters(total_cap)}</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* === BOTTOM: Actions Bar === */}
+        <div className="px-4 pb-3 pt-1 flex items-center justify-center gap-1.5">
+          <button 
+            onClick={onCalibrate}
+            className="flex-[1.4] flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 hover:border-purple-500/50 transition-all active:scale-95"
+            title="معايرة"
+          >
+            <Ruler className="w-3.5 h-3.5" />
+            <span>معايرة</span>
+          </button>
+          <button 
+            onClick={onEdit}
+            className="flex-[0.6] flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 hover:border-blue-500/50 transition-all active:scale-95"
+            title="تعديل"
+          >
+            <Edit className="w-3.5 h-3.5" />
+          </button>
+          <button 
+            onClick={onDelete}
+            className="py-2 px-3 rounded-xl text-[11px] font-bold text-red-300 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 hover:border-red-500/50 transition-all active:scale-95"
+            title="حذف"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+      </div>
+
+      {/* Ambient glow at bottom */}
+      <motion.div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-20 rounded-full blur-3xl pointer-events-none"
+        style={{ background: theme.glow }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: percentage > 10 ? 0.15 : 0.05 }}
+        transition={{ duration: 1, delay: index * 0.08 + 0.5 }}
       />
-      <motion.div 
-        variants={neonPulse}
-        initial="initial"
-        animate="animate"
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className={`absolute inset-y-0 right-0 w-1 bg-${theme.primary}-500 z-20`}
-      />
-
-      {/* Background Liquid Animation */}
-      <div className="absolute inset-0 w-full h-full z-0">
-          <motion.div 
-            className={`absolute bottom-0 left-0 w-full ${theme.liquid} opacity-20`}
-            initial={{ height: 0 }}
-            animate={{ height: `${percentage}%` }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-          />
-           <motion.div 
-            className={`absolute bottom-0 left-0 w-full ${theme.liquid} opacity-40 blur-md`}
-            initial={{ height: 0 }}
-            animate={{ height: `${percentage}%` }}
-            transition={{ duration: 1.5, ease: "easeOut", delay: 0.1 }}
-          />
-      </div>
-
-      {/* Header */}
-      <div className="w-full flex justify-between items-start z-10">
-         <div className="flex flex-col items-start">
-             <div className="flex items-center gap-2">
-                 <Droplet className={`w-6 h-6 ${theme.text}`} />
-                 <h3 className={`font-black text-xl text-white drop-shadow-md whitespace-nowrap`}>{name}</h3>
-             </div>
-             <span className={`text-sm font-bold ${theme.text} uppercase bg-black/40 px-2 py-0.5 rounded mt-1 border border-white/5`}>{product}</span>
-         </div>
-         
-         {/* Actions */}
-         <div className="flex flex-col gap-2">
-             <button onClick={onCalibrate} className="p-2 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 transition-all" title="معايرة">
-                <Ruler className="w-4 h-4" />
-             </button>
-             <button onClick={onEdit} className="p-2 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 transition-all" title="تعديل">
-                <Edit className="w-4 h-4" />
-             </button>
-             <button onClick={onDelete} className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all" title="حذف">
-                <Trash2 className="w-4 h-4" />
-             </button>
-         </div>
-      </div>
-
-      {/* Main Stats (Center) */}
-      <div className="flex-1 flex flex-col justify-center items-center z-10">
-          <div className="text-5xl font-black text-white drop-shadow-lg tracking-tighter">
-              {percentage}%
-          </div>
-          <span className="text-sm text-cyan-300 font-bold tracking-widest mt-1">النسبة</span>
-      </div>
-
-      {/* Footer Details */}
-      <div className="w-full z-10 grid grid-cols-2 gap-2 bg-black/50 p-4 rounded-xl border border-white/10 backdrop-blur-sm">
-          <div className="flex flex-col items-center border-r border-white/20">
-              <span className="text-sm text-cyan-300 font-bold mb-1">الكمية الحالية</span>
-              <span className="text-xl font-mono font-bold text-white">{formatCurrent()}</span>
-          </div>
-          <div className="flex flex-col items-center">
-              <span className="text-sm text-amber-300 font-bold mb-1">السعة الكلية</span>
-              <span className="text-xl font-mono font-bold text-gray-200">{formatCapacity()}</span>
-          </div>
-      </div>
-
     </motion.div>
   );
 };

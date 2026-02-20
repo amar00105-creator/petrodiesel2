@@ -418,7 +418,7 @@ export default function Dashboard({ data, categories, safes, banks, suppliers, c
                                 <GlassQuickAction label="بيع جديد" desc="تسجيل بيع" icon={Plus} color="emerald" link="/sales/create" t={t} />
                                 <GlassQuickAction label="استلام وقود" desc="مشتريات" icon={Truck} color="blue" link="/purchases/create" t={t} />
                                 <GlassQuickAction label="مصروف" desc="نثريات" icon={Banknote} color="red" onClick={() => setActiveModal('expense')} t={t} />
-                                <GlassQuickAction label="إغلاق وردية" desc="تقرير اليوم" icon={Clock} color="indigo" link="/shift/close" t={t} />
+                                <GlassQuickAction label="تقفيل اليوم" desc="تقرير اليوم" icon={Clock} color="indigo" link="/reports?tab=daily_closing" t={t} />
                                 <GlassQuickAction label="مبيعات الآبار" desc="تقرير تفصيلي" icon={Fuel} color="orange" link="/reports?tab=sales&subtab=tank_sales" t={t} />
                                 <GlassQuickAction label="كشف حساب" desc="خزنة / بنك" icon={FileText} color="purple" link="/reports?tab=financial&subtab=statement&group=fuel_type" t={t} />
                             </div>

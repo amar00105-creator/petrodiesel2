@@ -96,6 +96,20 @@ class Tank extends Model
         $fields = "";
         $params = [':id' => $id];
 
+        // Enforce volume bounds if current_volume is being updated
+        if (isset($data['current_volume'])) {
+            $data['current_volume'] = max(0, (float)$data['current_volume']); // Never negative
+
+            // Clamp to capacity if we know it
+            $tank = $this->find($id);
+            if ($tank) {
+                $capacity = (float)$tank['capacity_liters'];
+                if ($capacity > 0 && $data['current_volume'] > $capacity) {
+                    $data['current_volume'] = $capacity;
+                }
+            }
+        }
+
         foreach ($data as $key => $value) {
             if (in_array($key, $allowed)) {
                 $fields .= "$key = :$key, ";

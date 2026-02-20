@@ -42,6 +42,46 @@ if (!$timezoneSet) {
     \App\Config\Database::setTimezone($offset);
 }
 
+// ═══════════ Tank Volume Safeguard (runs once per day) ═══════════
+// 1. Fix any existing negative volumes
+// 2. Create MySQL trigger to prevent future negatives
+try {
+    $safeguardFile = sys_get_temp_dir() . '/petrodiesel_tank_safeguard_' . date('Ymd') . '.lock';
+    if (!file_exists($safeguardFile)) {
+        $db = $db ?? \App\Config\Database::connect();
+
+        // Fix existing negative volumes
+        $db->exec("UPDATE tanks SET current_volume = 0 WHERE current_volume < 0");
+
+        // Fix volumes exceeding capacity
+        $db->exec("UPDATE tanks SET current_volume = capacity_liters WHERE current_volume > capacity_liters AND capacity_liters > 0");
+
+        // Create BEFORE UPDATE trigger to enforce bounds permanently
+        try {
+            $db->exec("DROP TRIGGER IF EXISTS trg_tank_volume_bounds");
+            $db->exec("
+                CREATE TRIGGER trg_tank_volume_bounds
+                BEFORE UPDATE ON tanks
+                FOR EACH ROW
+                BEGIN
+                    IF NEW.current_volume < 0 THEN
+                        SET NEW.current_volume = 0;
+                    END IF;
+                    IF NEW.capacity_liters > 0 AND NEW.current_volume > NEW.capacity_liters THEN
+                        SET NEW.current_volume = NEW.capacity_liters;
+                    END IF;
+                END
+            ");
+        } catch (\Exception $triggerEx) {
+            // Trigger may already exist or user lacks TRIGGER privilege
+        }
+
+        @file_put_contents($safeguardFile, date('Y-m-d H:i:s'));
+    }
+} catch (\Exception $e) {
+    // Silence errors - safeguard is best-effort
+}
+
 // Autoloader
 spl_autoload_register(function ($class) {
     // Project-specific namespace prefix
@@ -229,6 +269,7 @@ $router->add('POST', '/settings/save_fuel', 'SettingsController', 'saveFuel');
 $router->add('POST', '/settings/delete_fuel', 'SettingsController', 'deleteFuel');
 $router->add('POST', '/settings/save_role', 'SettingsController', 'saveRole');
 $router->add('GET', '/settings/backup', 'SettingsController', 'backup');
+$router->add('POST', '/settings/restore', 'SettingsController', 'restore');
 $router->add('POST', '/settings/create_user', 'SettingsController', 'createUser');
 $router->add('POST', '/settings/save_user', 'SettingsController', 'saveUser');
 $router->add('POST', '/settings/delete_role', 'SettingsController', 'deleteRole');
@@ -267,10 +308,6 @@ $router->add('POST', '/pumps/updatePump', 'PumpController', 'updatePump'); // Fo
 // Export Routes
 $router->add('GET', '/export/financial-flow-pdf', 'ExportController', 'exportFinancialFlowPDF');
 $router->add('GET', '/export/financial-flow-excel', 'ExportController', 'exportFinancialFlowExcel');
-
-// Temp Debug Logging
-$logVal = date('[Y-m-d H:i:s] ') . $_SERVER['REQUEST_METHOD'] . ' ' . $_SERVER['REQUEST_URI'] . "\n";
-file_put_contents(__DIR__ . '/request_debug.txt', $logVal, FILE_APPEND);
 
 // Dispatch
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

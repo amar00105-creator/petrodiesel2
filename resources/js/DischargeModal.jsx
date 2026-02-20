@@ -174,7 +174,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                     <motion.div 
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         onClick={step !== 'success' ? onClose : undefined}
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50"
+                        className="fixed inset-0 bg-slate-900/60 dark:bg-black/70 backdrop-blur-sm z-50"
                     />
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.95 }} 
@@ -182,38 +182,47 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                         exit={{ opacity: 0, scale: 0.95 }}
                         className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
                     >
-                        <div className="bg-white dark:bg-slate-900 pointer-events-auto rounded-2xl shadow-xl dark:shadow-black/50 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden dark:ring-1 dark:ring-white/10">
+                        <div 
+                            className="bg-white pointer-events-auto rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden dark:ring-1 dark:ring-white/15"
+                            style={{
+                                ...(document.documentElement.classList.contains('dark') ? {
+                                    background: 'linear-gradient(145deg, rgba(15,23,42,0.97), rgba(30,41,59,0.95))',
+                                    backdropFilter: 'blur(24px)',
+                                    boxShadow: '0 25px 60px -12px rgba(0,0,0,0.5), 0 0 30px -10px rgba(59,130,246,0.15), inset 0 1px 0 rgba(255,255,255,0.05)',
+                                } : {})
+                            }}
+                        >
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-white flex justify-between items-center shrink-0">
+                            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-600/90 dark:to-indigo-600/80 p-5 text-white flex justify-between items-center shrink-0" style={{ backdropFilter: 'blur(10px)' }}>
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                    <div className="p-2 bg-white/20 dark:bg-white/10 rounded-xl backdrop-blur-sm border border-white/10">
                                         <Truck className="w-6 h-6" />
                                     </div>
                                     <div>
                                         <h2 className="text-xl font-bold">تفريغ شحنة وقود</h2>
-                                        <p className="text-blue-100 text-sm">
+                                        <p className="text-blue-100 dark:text-blue-200/70 text-sm">
                                             {step === 'select' ? 'اختر الشحنة المراد تفريغها' : step === 'success' ? 'تم التفريغ بنجاح' : `توزيع شحنة #${selectedShipment?.invoice_number}`}
                                         </p>
                                     </div>
                                 </div>
                                 {step !== 'success' && (
-                                    <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors"><X className="w-6 h-6" /></button>
+                                    <button onClick={onClose} className="p-1.5 hover:bg-white/10 rounded-lg transition-colors border border-transparent hover:border-white/20"><X className="w-5 h-5" /></button>
                                 )}
                             </div>
 
                             {/* Body */}
-                            <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-900/80">
+                            <div className="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-transparent">
                                 
                                 {/* Step 1: Select Shipment */}
                                 {step === 'select' && (
                                     <div className="flex flex-col h-full">
-                                        <div className="p-4 bg-white dark:bg-slate-800/50 border-b border-slate-200 dark:border-white/10">
+                                        <div className="p-4 bg-white dark:bg-white/[0.04] border-b border-slate-200 dark:border-white/[0.08]">
                                             <div className="relative">
                                                 <Search className="absolute right-3 top-3 w-5 h-5 text-slate-400 dark:text-slate-500" />
                                                 <input 
                                                     type="text" 
                                                     placeholder="بحث برقم الفاتورة أو اسم المورد..." 
-                                                    className="w-full pl-4 pr-10 p-2.5 rounded-xl border border-slate-200 dark:border-white/10 dark:bg-slate-800/60 dark:text-slate-200 dark:placeholder-slate-500 focus:border-blue-500 dark:focus:border-blue-500/50 outline-none"
+                                                    className="w-full pl-4 pr-10 p-2.5 rounded-xl border border-slate-200 dark:border-white/[0.1] dark:bg-white/[0.04] dark:text-slate-200 dark:placeholder-slate-500 focus:border-blue-500 dark:focus:border-blue-500/50 outline-none transition-colors"
                                                     value={searchTerm}
                                                     onChange={(e) => setSearchTerm(e.target.value)}
                                                 />
@@ -239,7 +248,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                                                     initial={{ opacity: 0, y: 10 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     onClick={() => handleSelectShipment(shipment)}
-                                                    className="bg-white dark:bg-white/[0.04] backdrop-blur-sm p-3 rounded-xl border border-slate-200/80 dark:border-white/[0.08] hover:border-blue-400 dark:hover:border-blue-500/40 hover:shadow-lg dark:hover:shadow-blue-500/5 cursor-pointer transition-all group ring-1 ring-black/[0.02] dark:ring-white/[0.02]"
+                                                    className="bg-white dark:bg-white/[0.04] dark:backdrop-blur-xl p-3 rounded-xl border border-slate-200/80 dark:border-white/[0.08] hover:border-blue-400 dark:hover:border-blue-500/40 hover:shadow-lg dark:hover:shadow-blue-500/10 cursor-pointer transition-all group ring-1 ring-black/[0.02] dark:ring-white/[0.04]"
                                                 >
                                                     {/* All info in ONE row */}
                                                     <div className="flex items-center gap-3">
@@ -328,7 +337,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                                     return (
                                     <div className="flex-1 overflow-y-auto p-5">
                                         {/* ═══ Compact Shipment Info Header ═══ */}
-                                        <div className="bg-white/90 dark:bg-white/[0.04] backdrop-blur-xl p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.08] shadow-sm dark:shadow-none mb-5 ring-1 ring-black/[0.02] dark:ring-white/[0.02]">
+                                        <div className="bg-white/90 dark:bg-white/[0.05] dark:backdrop-blur-xl p-3 rounded-xl border border-slate-200/60 dark:border-white/[0.1] shadow-sm dark:shadow-none mb-5 ring-1 ring-black/[0.02] dark:ring-white/[0.04]">
                                             <div className="flex items-center gap-3 flex-wrap">
                                                 {/* Fuel Icon */}
                                                 <div 
@@ -391,7 +400,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                                                 const spacePercentage = ((availableSpace) / dist.capacity) * 100;
 
                                                 return (
-                                                    <div key={dist.id} className={`bg-white dark:bg-white/[0.04] backdrop-blur-sm p-4 rounded-xl border transition-all ring-1 ${isOverfilled ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 ring-red-500/10' : (dist.quantity > 0 ? 'border-blue-400/50 dark:border-blue-500/30 shadow-sm ring-blue-500/5' : 'border-slate-200/80 dark:border-white/[0.08] ring-black/[0.02] dark:ring-white/[0.02]')}`}>
+                                                    <div key={dist.id} className={`bg-white dark:bg-white/[0.04] dark:backdrop-blur-sm p-4 rounded-xl border transition-all ring-1 ${isOverfilled ? 'border-red-300 dark:border-red-500/30 bg-red-50 dark:bg-red-500/10 ring-red-500/10' : (dist.quantity > 0 ? 'border-blue-400/50 dark:border-blue-500/30 shadow-sm ring-blue-500/5 dark:ring-blue-500/10' : 'border-slate-200/80 dark:border-white/[0.08] ring-black/[0.02] dark:ring-white/[0.04]')}`}>
                                                         <div className="flex justify-between items-center mb-3">
                                                             <div className="flex items-center gap-2">
                                                                 <div className="font-bold text-sm text-slate-800 dark:text-white">{dist.name}</div>
@@ -451,7 +460,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                                                                 <input 
                                                                     type="number" 
                                                                     min="0"
-                                                                    className={`w-full p-2 pr-8 rounded-lg border outline-none font-bold text-center text-sm ${isOverfilled ? 'text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/30 dark:bg-red-500/10' : 'text-slate-800 dark:text-white border-slate-200 dark:border-white/10 dark:bg-slate-800/60 focus:border-blue-500 dark:focus:border-blue-500/50'}`}
+                                                                    className={`w-full p-2 pr-8 rounded-lg border outline-none font-bold text-center text-sm transition-colors ${isOverfilled ? 'text-red-600 dark:text-red-400 border-red-300 dark:border-red-500/30 dark:bg-red-500/10' : 'text-slate-800 dark:text-white border-slate-200 dark:border-white/[0.1] dark:bg-white/[0.04] focus:border-blue-500 dark:focus:border-blue-500/50'}`}
                                                                     value={dist.quantity || ''}
                                                                     placeholder="الكمية"
                                                                     onChange={(e) => handleDistributionChange(dist.id, e.target.value)}
@@ -686,11 +695,11 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
 
                             {/* Footer */}
                             {step !== 'success' && (
-                            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t dark:border-white/10 flex items-center gap-3 shrink-0">
+                            <div className="p-4 bg-slate-50 dark:bg-white/[0.03] border-t border-slate-200 dark:border-white/[0.08] flex items-center gap-3 shrink-0 backdrop-blur-sm">
                                 {step === 'distribute' && (
                                     <button 
                                         onClick={() => setStep('select')}
-                                        className="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all"
+                                        className="px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/[0.06] hover:shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-white/[0.1] transition-all"
                                     >
                                         رجوع
                                     </button>
@@ -705,14 +714,14 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                                             placeholder="رقم فاتورة المورد (اختياري)"
                                             value={supplierInvoiceNo}
                                             onChange={(e) => setSupplierInvoiceNo(e.target.value)}
-                                            className="w-full h-10 pr-9 pl-3 text-sm rounded-xl border border-slate-200/80 bg-white text-slate-700 placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:bg-slate-800/60 dark:border-white/10 dark:text-slate-200 dark:placeholder-slate-500 dark:focus:ring-blue-400/20 dark:focus:border-blue-500/50"
+                                            className="w-full h-10 pr-9 pl-3 text-sm rounded-xl border border-slate-200/80 bg-white text-slate-700 placeholder-slate-400 outline-none transition-all focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:bg-white/[0.04] dark:border-white/[0.1] dark:text-slate-200 dark:placeholder-slate-500 dark:focus:ring-blue-400/20 dark:focus:border-blue-500/50"
                                         />
                                     </div>
                                 )}
                                 
                                 {/* Spacer to push buttons to the left */}
                                 <div className="flex-1"></div>
-                                <button onClick={onClose} className={`px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10 hover:shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all ${step === 'distribute' ? 'hidden' : ''}`}>
+                                <button onClick={onClose} className={`px-6 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-white/[0.06] hover:shadow-sm border border-transparent hover:border-slate-200 dark:hover:border-white/[0.1] transition-all ${step === 'distribute' ? 'hidden' : ''}`}>
                                     إلغاء
                                 </button>
                                 
@@ -720,7 +729,7 @@ export default function DischargeModal({ isOpen, onClose, tanks = [] }) {
                                     <button 
                                         onClick={handleSubmit} 
                                         disabled={loading}
-                                        className="px-8 py-2.5 rounded-xl font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="px-8 py-2.5 rounded-xl font-bold bg-blue-600 dark:bg-blue-600/90 text-white hover:bg-blue-700 dark:hover:bg-blue-600 shadow-lg shadow-blue-200 dark:shadow-blue-500/20 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border border-transparent dark:border-blue-500/30"
                                     >
                                         {loading ? 'جاري الحفظ...' : (
                                             <>

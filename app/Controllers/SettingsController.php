@@ -206,14 +206,20 @@ class SettingsController extends Controller
         }
 
         // Simple Database Backup using mysqldump or PHP fallback
-        $dbConfig = require __DIR__ . '/../Config/Database.php'; // Assuming config availability
-        // Since we are in Controller, we might not have direct access to config array structure easily without parsing or using Config class if static.
-        // Let's assume standard XAMPP credentials for now or try to use loaded instance.
-
         $dbName = 'petrodiesel_db';
         $user = 'root';
         $pass = '';
         $host = 'localhost';
+        $cfgFile = __DIR__ . '/../Config/db_config.php';
+        if (file_exists($cfgFile)) {
+            $dbConfig = require $cfgFile;
+            if (is_array($dbConfig)) {
+                $dbName = $dbConfig['db_name'] ?? $dbName;
+                $user = $dbConfig['username'] ?? $user;
+                $pass = $dbConfig['password'] ?? $pass;
+                $host = $dbConfig['host'] ?? $host;
+            }
+        }
 
         $filename = 'backup_' . date('Y-m-d_H-i-s') . '.sql';
 
@@ -275,6 +281,96 @@ class SettingsController extends Controller
             }
             echo "\n\n\n";
         }
+    }
+
+    public function restore()
+    {
+        header('Content-Type: application/json');
+
+        // CRITICAL: Only super admin can restore
+        if (!AuthHelper::isSuperAdmin()) {
+            echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه استعادة النسخ الاحتياطية']);
+            exit;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            exit;
+        }
+
+        // Check file upload
+        if (!isset($_FILES['backup_file']) || $_FILES['backup_file']['error'] !== UPLOAD_ERR_OK) {
+            $errorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'الملف كبير جداً (تجاوز حد PHP)',
+                UPLOAD_ERR_FORM_SIZE => 'الملف كبير جداً',
+                UPLOAD_ERR_PARTIAL => 'تم رفع الملف جزئياً فقط',
+                UPLOAD_ERR_NO_FILE => 'لم يتم اختيار ملف',
+            ];
+            $errCode = $_FILES['backup_file']['error'] ?? UPLOAD_ERR_NO_FILE;
+            $msg = $errorMessages[$errCode] ?? 'خطأ في رفع الملف';
+            echo json_encode(['success' => false, 'message' => $msg]);
+            exit;
+        }
+
+        $file = $_FILES['backup_file'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        if ($ext !== 'sql') {
+            echo json_encode(['success' => false, 'message' => 'يجب أن يكون الملف بصيغة .sql']);
+            exit;
+        }
+
+        // Read SQL content
+        $sql = file_get_contents($file['tmp_name']);
+        if (empty($sql)) {
+            echo json_encode(['success' => false, 'message' => 'الملف فارغ']);
+            exit;
+        }
+
+        try {
+            $db = \App\Config\Database::connect();
+
+            // Disable foreign key checks
+            $db->exec("SET FOREIGN_KEY_CHECKS = 0");
+
+            // Split SQL into individual statements
+            $statements = array_filter(
+                array_map('trim', explode(";\n", $sql)),
+                fn($s) => !empty($s) && $s !== ';'
+            );
+
+            $executed = 0;
+            $errors = [];
+
+            foreach ($statements as $statement) {
+                $statement = trim($statement, " \t\n\r\0\x0B;");
+                if (empty($statement)) continue;
+
+                try {
+                    $db->exec($statement);
+                    $executed++;
+                } catch (\PDOException $e) {
+                    $errors[] = substr($e->getMessage(), 0, 100);
+                    // Continue with other statements
+                }
+            }
+
+            // Re-enable foreign key checks
+            $db->exec("SET FOREIGN_KEY_CHECKS = 1");
+
+            if ($executed > 0) {
+                $msg = "تم استعادة النسخة الاحتياطية بنجاح ({$executed} عملية)";
+                if (!empty($errors)) {
+                    $msg .= " مع " . count($errors) . " تحذيرات";
+                }
+                echo json_encode(['success' => true, 'message' => $msg, 'executed' => $executed, 'warnings' => count($errors)]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'لم يتم تنفيذ أي عملية. تأكد من صحة ملف النسخة الاحتياطية.', 'errors' => array_slice($errors, 0, 3)]);
+            }
+        } catch (\Exception $e) {
+            echo json_encode(['success' => false, 'message' => 'خطأ في الاستعادة: ' . $e->getMessage()]);
+        }
+        exit;
     }
 
     public function saveRole()

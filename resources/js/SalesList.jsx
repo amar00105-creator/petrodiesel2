@@ -201,21 +201,16 @@ export default function SalesList({ sales = [] }) {
     };
 
     const filteredSales = normalizedSales.filter(sale => {
-        const matchesSearch = 
-            sale.id.toString().includes(search) || 
-            sale.invoice_number.toString().includes(search) ||
-            sale.pump.toLowerCase().includes(search.toLowerCase());
-
-        // Dynamic Filtering Logic
         let matchesFilter = true;
         if (filterType && filterValue) {
-            if (filterType === 'pump') matchesFilter = sale.pump === filterValue;
+            if (filterType === 'invoice') matchesFilter = sale.invoice_number.toString().includes(filterValue) || sale.id.toString().includes(filterValue);
+            else if (filterType === 'pump') matchesFilter = sale.pump === filterValue;
             else if (filterType === 'fuel') matchesFilter = sale.fuel === filterValue;
             else if (filterType === 'method') matchesFilter = sale.method === filterValue;
             else if (filterType === 'safe') matchesFilter = (sale.raw_safe === filterValue || sale.raw_bank === filterValue);
         }
 
-        return matchesSearch && matchesFilter;
+        return matchesFilter;
     });
 
     const resetFilters = () => {
@@ -249,116 +244,105 @@ export default function SalesList({ sales = [] }) {
             />
             {/* Header & Actions */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <Title className="text-3xl font-bold text-navy-900 font-cairo dark:text-white">سجل المبيعات</Title>
-                    <Text className="text-slate-500 dark:text-slate-400">استعراض وإدارة جميع عمليات بيع الوقود</Text>
-                </div>
-                <div className="flex gap-6">
-                    <button onClick={() => window.location.href=`${window.BASE_URL}/sales/create`} className="button">
-                        <span className="text_button">فاتورة جديدة</span>
-                        <div className="dots_border"></div>
-                        <svg
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            height="24"
-                            width="24"
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="sparkle"
-                        >
-                            <path
-                                className="path"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="1.5"
-                                d="M12 4.5v15m7.5-7.5h-15"
-                            ></path>
-                        </svg>
-                    </button>
-                    <Button variant="secondary" icon={Download} className="rounded-xl font-bold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 hover:text-slate-900 transition-all shadow-sm dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:border-white/10 dark:hover:bg-white/10">تصدير Excel</Button>
-                    <Button variant="primary" icon={FileText} className="rounded-xl font-bold bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 transition-all shadow-sm dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:border-white/10 dark:hover:bg-white/10">تقرير يومي</Button>
-                </div>
             </div>
 
-            {/* Filters Bar */}
-            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:backdrop-blur-xl dark:border-0 dark:ring-0 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-                    {/* Search - Spans 3 columns */}
-                    <div className="md:col-span-3 relative">
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">البحث</label>
-                        <div className="relative">
-                            <Search className="absolute right-3 top-2.5 text-slate-400 w-5 h-5"/>
-                            <TextInput 
-                                placeholder="بحث برقم العملية..." 
-                                className="pl-4 pr-10 py-2 rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white w-full transition-all focus:ring-2 focus:ring-blue-500/50 placeholder:text-slate-400 shadow-sm"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                            />
+            {/* Filters & Actions Bar */}
+            <Card className="rounded-2xl shadow-sm ring-1 ring-slate-200 dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-1 dark:ring-white/5 dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]">
+                <div className="flex flex-col lg:flex-row gap-4 items-end justify-between">
+                    
+                    {/* Filters Section */}
+                    <div className="flex flex-wrap items-end gap-3 flex-grow">
+                        {/* Filter Type */}
+                        <div className="w-[48%] sm:w-72 relative">
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 dark:text-slate-400 absolute -top-5 right-1">نوع الفلترة</label>
+                            <select 
+                                value={filterType} 
+                                onChange={(e) => { setFilterType(e.target.value); setFilterValue(''); }} 
+                                className="w-full px-4 py-2 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-700 outline-none transition-all focus:ring-2 focus:ring-blue-500/50 dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-0 dark:text-white dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_32px_0_rgba(0,0,0,0.3)] hover:dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_32px_0_rgba(0,0,0,0.4)]"
+                            >
+                                <option value="" className="dark:bg-[#1e293b]">🎯 اختر الفلترة</option>
+                                <option value="invoice" className="dark:bg-[#1e293b]">📄 رقم العملية</option>
+                                <option value="pump" className="dark:bg-[#1e293b]">⛽ الماكينة</option>
+                                <option value="fuel" className="dark:bg-[#1e293b]">💧 الوقود</option>
+                                <option value="method" className="dark:bg-[#1e293b]">💳 الدفع</option>
+                                <option value="safe" className="dark:bg-[#1e293b]">🏦 الخزنة / البنك</option>
+                            </select>
                         </div>
-                    </div>
 
-                    {/* Filter Type - Spans 3 columns */}
-                    <div className="md:col-span-3">
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">نوع الفلترة</label>
-                        <Select 
-                            placeholder="اختر نوع الفلترة" 
-                            value={filterType} 
-                            onValueChange={(val) => { setFilterType(val); setFilterValue(''); }} 
-                            className="rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white shadow-sm"
-                        >
-                            <SelectItem value="pump" icon={Fuel}>الماكينة (Pump)</SelectItem>
-                            <SelectItem value="fuel" icon={Droplets}>نوع الوقود (Fuel)</SelectItem>
-                            <SelectItem value="method" icon={CreditCard}>طريقة الدفع (Method)</SelectItem>
-                            <SelectItem value="safe" icon={Wallet}>الخزنة / البنك (Safe/Bank)</SelectItem>
-                        </Select>
-                    </div>
-
-                    {/* Filter Value - Spans 3 columns */}
-                    <div className="md:col-span-3">
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">
-                            {filterType ? 'القيمة المحددة' : 'اختر النوع أولاً'}
-                        </label>
-                        <Select 
-                            placeholder="اختر القيمة..." 
-                            value={filterValue} 
-                            onValueChange={setFilterValue} 
-                            disabled={!filterType}
-                            className="rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white shadow-sm disabled:opacity-50"
-                        >
-                            {getFilterOptions().map((opt, idx) => (
-                                <SelectItem key={idx} value={opt} icon={Database}>
-                                    {opt}
-                                </SelectItem>
-                            ))}
-                        </Select>
-                    </div>
-
-                    {/* Date - Spans 2 columns */}
-                    <div className="md:col-span-2 relative">
-                        <label className="block text-xs font-bold text-slate-500 mb-1.5 dark:text-slate-400">التاريخ</label>
-                        <div className="relative w-full">
-                            <Calendar className="absolute right-3 top-2.5 text-slate-400 w-5 h-5"/>
-                            <TextInput type="date" className="pl-4 pr-10 py-2 rounded-xl bg-white/5 backdrop-blur-xl border-0 text-white w-full transition-all focus:ring-2 focus:ring-blue-500/50 shadow-sm" />
+                        {/* Filter Value */}
+                        <div className="w-[48%] sm:w-[336px] relative">
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 dark:text-slate-400 absolute -top-5 right-1">
+                                {filterType ? 'القيمة' : 'اختر النوع'}
+                            </label>
+                            {filterType === 'invoice' ? (
+                                <div className="relative">
+                                    <Search className="absolute right-3 top-2.5 text-slate-400 w-4 h-4"/>
+                                    <input 
+                                        type="text"
+                                        placeholder="بحث برقم العملية..." 
+                                        value={filterValue}
+                                        onChange={(e) => setFilterValue(e.target.value)}
+                                        className="w-full pl-4 pr-10 py-2 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-700 outline-none transition-all focus:ring-2 focus:ring-blue-500/50 dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-0 dark:text-white dark:placeholder:text-white/40 dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_32px_0_rgba(0,0,0,0.3)] hover:dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_32px_0_rgba(0,0,0,0.4)]"
+                                    />
+                                </div>
+                            ) : (
+                                <select 
+                                    value={filterValue} 
+                                    onChange={(e) => setFilterValue(e.target.value)} 
+                                    disabled={!filterType}
+                                    className="w-full px-4 py-2 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-700 outline-none transition-all focus:ring-2 focus:ring-blue-500/50 dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-0 dark:text-white dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_32px_0_rgba(0,0,0,0.3)] hover:dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_32px_0_rgba(0,0,0,0.4)] disabled:opacity-40"
+                                >
+                                    <option value="" className="dark:bg-[#1e293b]">اختر القيمة...</option>
+                                    {getFilterOptions().map((opt, idx) => (
+                                        <option key={idx} value={opt} className="dark:bg-[#1e293b]">{opt}</option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
-                    </div>
 
-                     {/* Reset Button - Spans 1 column */}
-                     <div className="md:col-span-1 flex justify-end">
+                        {/* Date */}
+                        <div className="w-[48%] sm:w-72 relative">
+                            <label className="block text-[10px] font-bold text-slate-500 mb-1 dark:text-slate-400 absolute -top-5 right-1">التاريخ</label>
+                            <div className="relative w-full">
+                                <Calendar className="absolute right-3 top-2.5 text-slate-400 w-4 h-4"/>
+                                <input 
+                                    type="date" 
+                                    className="w-full pl-4 pr-10 py-2 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-700 outline-none transition-all focus:ring-2 focus:ring-blue-500/50 dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-0 dark:text-white dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_32px_0_rgba(0,0,0,0.3)] hover:dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_32px_0_rgba(0,0,0,0.4)]" 
+                                    style={{ colorScheme: 'dark' }}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Reset Button */}
                         <button 
                             onClick={resetFilters}
                             title="إعادة تعيين الفلاتر"
-                            className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-red-600 transition-colors dark:bg-white/10 dark:text-slate-300 dark:hover:bg-white/20"
+                            className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-red-600 transition-colors dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-0 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.15),0_8px_32px_0_rgba(0,0,0,0.3)] hover:dark:shadow-[inset_0_1px_1px_rgba(255,255,255,0.25),0_8px_32px_0_rgba(0,0,0,0.4)]"
                         >
-                            <RefreshCw className={`w-5 h-5 ${filterType || search ? 'text-red-500' : ''}`} />
+                            <RefreshCw className={`w-5 h-5 ${(filterType || filterValue) ? 'text-red-500 dark:text-red-400' : ''}`} />
                         </button>
+                    </div>
+
+                    {/* Actions Section */}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <button onClick={() => window.location.href=`${window.BASE_URL}/sales/create`} className="button scale-90 origin-right">
+                            <span className="text_button">فاتورة جديدة</span>
+                            <div className="dots_border"></div>
+                            <svg fill="none" viewBox="0 0 24 24" height="24" width="24" xmlns="http://www.w3.org/2000/svg" className="sparkle">
+                                <path className="path" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.5v15m7.5-7.5h-15"></path>
+                            </svg>
+                        </button>
+                        <Button variant="secondary" icon={Download} className="rounded-xl text-sm py-1.5 px-3 font-bold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 hover:text-slate-900 transition-all shadow-sm dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:border-0 dark:ring-1 dark:ring-white/10 dark:hover:bg-white/10">تصدير Excel</Button>
+                        <Button variant="primary" icon={FileText} className="rounded-xl text-sm py-1.5 px-3 font-bold bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 transition-all shadow-sm dark:bg-blue-600/80 dark:backdrop-blur-xl dark:text-white dark:border-0 dark:ring-1 dark:ring-blue-500/50 dark:hover:bg-blue-500">تقرير يومي</Button>
                     </div>
                 </div>
             </Card>
 
             {/* Data Table */}
-            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-xl dark:border dark:border-white/5 dark:ring-0 dark:shadow-sm">
+            <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-1 dark:ring-white/5 dark:shadow-sm">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-right">
-                        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-white/10 dark:text-slate-300">
+                    <table className="w-full text-right bg-transparent">
+                        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-b dark:border-white/5 dark:text-slate-300">
                             <tr>
                                 <th className="p-4 text-sm font-bold text-slate-600">رقم #</th>
                                 <th className="p-4 text-sm font-bold text-slate-600">التاريخ والوقت</th>

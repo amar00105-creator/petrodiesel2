@@ -39,6 +39,8 @@ export default function Reports({ user }) {
             }
         } else if (tab === 'warehouse') {
             setActiveTab(1);
+        } else if (tab === 'daily_closing') {
+            setActiveTab(4);
         }
     }, []);
 

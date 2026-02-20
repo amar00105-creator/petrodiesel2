@@ -22,11 +22,11 @@ class SalesController extends Controller
     {
         $this->checkAndFixDatabase();
         $user = AuthHelper::user();
-        // Get all assigned stations for the current user
-        $stationIds = AuthHelper::getUserStationIds();
+        // Filter by current active station (respects station switcher)
+        $currentStationId = $user['station_id'];
 
         $saleModel = new Sale();
-        $sales = $saleModel->getAll($stationIds);
+        $sales = $saleModel->getAll($currentStationId);
 
         $this->view('sales/index', [
             'sales' => $sales,
@@ -388,7 +388,7 @@ class SalesController extends Controller
                 $tank = $stmt->fetch();
 
                 if ($tank) {
-                    $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume - ? WHERE id = ?");
+                    $stmt = $db->prepare("UPDATE tanks SET current_volume = GREATEST(0, current_volume - ?) WHERE id = ?");
                     $stmt->execute([$data['volume_sold'], $tank['id']]);
                 }
 
@@ -547,7 +547,7 @@ class SalesController extends Controller
                 $tank = $stmt->fetch();
 
                 if ($tank) {
-                    $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume + ? WHERE id = ?");
+                    $stmt = $db->prepare("UPDATE tanks SET current_volume = GREATEST(0, current_volume + ?) WHERE id = ?");
                     $stmt->execute([$sale['volume_sold'], $tank['id']]);
                 }
             }
@@ -635,7 +635,7 @@ class SalesController extends Controller
                 $tank = $stmt->fetch();
                 if ($tank) {
                     // Add back the sold volume
-                    $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume + ? WHERE id = ?");
+                    $stmt = $db->prepare("UPDATE tanks SET current_volume = GREATEST(0, current_volume + ?) WHERE id = ?");
                     $stmt->execute([$oldSale['volume_sold'], $tank['id']]);
                 }
             }
@@ -695,7 +695,7 @@ class SalesController extends Controller
             $tank = $stmt->fetch();
 
             if ($tank) {
-                $stmt = $db->prepare("UPDATE tanks SET current_volume = current_volume - ? WHERE id = ?");
+                $stmt = $db->prepare("UPDATE tanks SET current_volume = GREATEST(0, current_volume - ?) WHERE id = ?");
                 $stmt->execute([$data['volume_sold'], $tank['id']]);
             }
 

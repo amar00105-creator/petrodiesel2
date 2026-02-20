@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Printer, RefreshCw, Loader2, Brain, Clock } from 'lucide-react';
+import { Printer, RefreshCw, Loader2, Brain, Clock, Eye, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
 export default function DailyClosingReport({ stationId }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [showPreview, setShowPreview] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -95,6 +96,9 @@ export default function DailyClosingReport({ stationId }) {
                 <div className="flex gap-2">
                     <button onClick={fetchData} className="px-4 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/20 transition-all flex items-center gap-2 shadow-sm">
                         <RefreshCw className="w-4 h-4" /> تحديث
+                    </button>
+                    <button onClick={() => setShowPreview(true)} className="px-4 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 border border-emerald-300 dark:border-emerald-500/30 text-emerald-700 dark:text-emerald-400 font-bold text-sm hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-all flex items-center gap-2 shadow-sm">
+                        <Eye className="w-4 h-4" /> معاينة
                     </button>
                     <button onClick={handlePrint} className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:scale-[1.02] transition-all flex items-center gap-2">
                         <Printer className="w-4 h-4" /> طباعة
@@ -540,6 +544,184 @@ export default function DailyClosingReport({ stationId }) {
                 </div>
             </div>
 
+            {/* ═══ Preview Modal ═══ */}
+            {showPreview && (
+                <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-start justify-center overflow-y-auto print:hidden" onClick={() => setShowPreview(false)}>
+                    <div className="relative my-8 bg-white rounded-2xl shadow-2xl max-w-[240mm] w-full" onClick={(e) => e.stopPropagation()}>
+                        {/* Preview Header */}
+                        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-3 bg-white/95 backdrop-blur-xl border-b border-slate-200 rounded-t-2xl">
+                            <div className="flex items-center gap-2">
+                                <Eye className="w-5 h-5 text-emerald-600" />
+                                <span className="font-bold text-slate-800">معاينة قبل الطباعة</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => { setShowPreview(false); handlePrint(); }} className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:scale-[1.02] transition-all flex items-center gap-2">
+                                    <Printer className="w-4 h-4" /> طباعة
+                                </button>
+                                <button onClick={() => setShowPreview(false)} className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-all">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                        </div>
+                        {/* Preview Content - renders the same A4 layout */}
+                        <div style={{
+                            width: '210mm', minHeight: '297mm', padding: '15mm 18mm',
+                            fontFamily: "'Segoe UI', Tahoma, sans-serif",
+                            direction: 'rtl', color: '#1e293b', fontSize: '11px', lineHeight: '1.6',
+                            margin: '0 auto'
+                        }}>
+                            {/* Preview Header */}
+                            <div style={{ borderBottom: '3px solid #4f46e5', paddingBottom: '10px', marginBottom: '16px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <img src={logoUrl} alt="Logo" style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                                        <div>
+                                            <h1 style={{ fontSize: '22px', fontWeight: '900', color: '#1e1b4b', margin: 0 }}>تقرير تقفيل اليوم</h1>
+                                            <p style={{ fontSize: '12px', color: '#6366f1', fontWeight: '700', margin: '2px 0 0' }}>Daily Closing Report — AI Generated</p>
+                                        </div>
+                                    </div>
+                                    <div style={{ textAlign: 'left' }}>
+                                        <div style={{ fontSize: '14px', fontWeight: '800' }}>{data.station_name}</div>
+                                        <div style={{ fontSize: '11px', color: '#64748b' }}>{formatDate(data.date)}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Preview Sales Table */}
+                            <div style={{ marginBottom: '16px' }}>
+                                <h2 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px' }}>📊 ملخص المبيعات</h2>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e2e8f0' }}>
+                                    <thead>
+                                        <tr style={{ background: '#f1f5f9' }}>
+                                            <th style={thStyle}>نوع الوقود</th><th style={thStyle}>الكمية (لتر)</th><th style={thStyle}>المبلغ (ج.س)</th><th style={thStyle}>العمليات</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.sales.by_fuel.map((f, i) => (
+                                            <tr key={i} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                <td style={{ ...tdStyle, fontWeight: '700' }}>{f.fuel_name}</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace' }}>{fmtN(f.total_liters)}</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: '700' }}>{fmt(f.total_amount)}</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace' }}>{f.sale_count}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style={{ background: '#eef2ff', fontWeight: '800' }}>
+                                            <td style={tdStyle}>الإجمالي</td>
+                                            <td style={{ ...tdStyle, fontFamily: 'monospace' }}>{fmtN(data.sales.total_liters)}</td>
+                                            <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#4f46e5' }}>{fmt(data.sales.total_amount)}</td>
+                                            <td style={{ ...tdStyle, fontFamily: 'monospace' }}>{data.sales.total_count}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            {/* Preview Financial + Cash */}
+                            <div style={{ display: 'flex', gap: '14px', marginBottom: '16px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <h2 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px' }}>💵 الموقف المالي</h2>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e2e8f0' }}>
+                                        <tbody>
+                                            <tr style={{ background: '#f0fdf4', borderBottom: '1px solid #e2e8f0' }}>
+                                                <td style={{ ...tdStyle, fontWeight: '700' }}>إجمالي الإيرادات</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#16a34a', fontWeight: '700' }}>{fmt(data.financial.total_income)}</td>
+                                            </tr>
+                                            <tr style={{ background: '#fef2f2', borderBottom: '1px solid #e2e8f0' }}>
+                                                <td style={{ ...tdStyle, fontWeight: '700' }}>إجمالي المصروفات</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#dc2626', fontWeight: '700' }}>{fmt(data.financial.total_expenses)}</td>
+                                            </tr>
+                                            {data.financial.expenses_breakdown.map((e, i) => (
+                                                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ ...tdStyle, paddingRight: '24px', color: '#64748b', fontSize: '10px' }}>↳ {e.category_name}</td>
+                                                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontSize: '10px', color: '#94a3b8' }}>{fmt(e.total_amount)}</td>
+                                                </tr>
+                                            ))}
+                                            <tr style={{ background: netProfit >= 0 ? '#ecfdf5' : '#fef2f2', borderTop: '2px solid #e2e8f0' }}>
+                                                <td style={{ ...tdStyle, fontWeight: '800', fontSize: '12px' }}>صافي الربح/الخسارة</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: '900', fontSize: '13px', color: netProfit >= 0 ? '#059669' : '#dc2626' }}>{netProfit >= 0 ? '+' : ''}{fmt(netProfit)}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <h2 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px' }}>🏦 الأرصدة النقدية</h2>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e2e8f0' }}>
+                                        <thead><tr style={{ background: '#f1f5f9' }}><th style={thStyle}>الحساب</th><th style={thStyle}>الرصيد</th></tr></thead>
+                                        <tbody>
+                                            {data.cash.safes.map((s, i) => (
+                                                <tr key={`s${i}`} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                    <td style={{ ...tdStyle, fontWeight: '600' }}>🔐 {s.name}</td>
+                                                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: '700', color: '#2563eb' }}>{fmt(s.balance)}</td>
+                                                </tr>
+                                            ))}
+                                            {data.cash.banks.map((b, i) => (
+                                                <tr key={`b${i}`} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                                                    <td style={{ ...tdStyle, fontWeight: '600' }}>🏦 {b.name}</td>
+                                                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: '700', color: '#7c3aed' }}>{fmt(b.balance)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr style={{ background: '#eef2ff', fontWeight: '800' }}>
+                                                <td style={tdStyle}>الإجمالي</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#4f46e5' }}>{fmt(data.cash.total_cash)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+
+                            {/* Preview Inventory */}
+                            <div style={{ marginBottom: '16px' }}>
+                                <h2 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px' }}>⛽ مخزون الوقود</h2>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #e2e8f0' }}>
+                                    <thead><tr style={{ background: '#f1f5f9' }}>
+                                        <th style={thStyle}>الخزان</th><th style={thStyle}>الصنف</th><th style={thStyle}>الحجم</th><th style={thStyle}>السعة</th><th style={thStyle}>النسبة</th><th style={thStyle}>القيمة</th><th style={thStyle}>يكفي لـ</th>
+                                    </tr></thead>
+                                    <tbody>
+                                        {data.inventory.map((t, i) => (
+                                            <tr key={i} style={{ borderBottom: '1px solid #e2e8f0', background: t.fill_pct < 15 ? '#fef2f2' : 'transparent' }}>
+                                                <td style={{ ...tdStyle, fontWeight: '700' }}>{t.name}</td>
+                                                <td style={tdStyle}>{t.fuel}</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: '700' }}>{fmtN(t.volume)}</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace', color: '#64748b' }}>{fmtN(t.capacity)}</td>
+                                                <td style={{ ...tdStyle, fontWeight: '700', color: t.fill_pct < 20 ? '#dc2626' : '#64748b' }}>{t.fill_pct}%</td>
+                                                <td style={{ ...tdStyle, fontFamily: 'monospace' }}>{fmt(t.value)}</td>
+                                                <td style={{ ...tdStyle, fontWeight: '700', color: t.days_remaining !== null && t.days_remaining <= 3 ? '#dc2626' : '#64748b' }}>{t.days_remaining !== null ? `${t.days_remaining} يوم` : '—'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Preview AI Notes */}
+                            <div>
+                                <h2 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px' }}>🤖 ملاحظات الذكاء الاصطناعي</h2>
+                                <div style={{ border: '1px solid #c7d2fe', borderRadius: '8px', overflow: 'hidden' }}>
+                                    {data.ai_notes.map((note, i) => (
+                                        <div key={i} style={{
+                                            padding: '10px 14px', borderBottom: i < data.ai_notes.length - 1 ? '1px solid #e0e7ff' : 'none',
+                                            background: note.type === 'warning' ? '#fffbeb' : note.type === 'success' ? '#f0fdf4' : '#f8fafc',
+                                            display: 'flex', alignItems: 'flex-start', gap: '8px'
+                                        }}>
+                                            <span style={{ fontSize: '16px', flexShrink: 0 }}>{note.icon}</span>
+                                            <span style={{ fontSize: '11px', fontWeight: '600', color: note.type === 'warning' ? '#92400e' : note.type === 'success' ? '#166534' : '#334155', lineHeight: '1.7' }}>{note.text}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Preview Footer */}
+                            <div style={{ marginTop: '20px', paddingTop: '10px', borderTop: '2px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8' }}>
+                                <span>تم التوليد بواسطة نظام بترودييزل — تقرير ذكي تلقائي</span>
+                                <span>PetroDiesel ERP v2.0 • {data.date}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Print CSS */}
             <style>{`
                 @media print {
@@ -553,7 +735,8 @@ export default function DailyClosingReport({ stationId }) {
                     }
                     @page { size: A4; margin: 0; }
                 }
-            `}</style>
+            `}
+            </style>
         </div>
     );
 }

@@ -9,12 +9,65 @@
   
   /* Dark mode styling for native select dropdowns */
   .dark select {
-    background-color: #1e293b !important; /* slate-800 */
-    color: #e2e8f0 !important; /* slate-200 */
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 
+      inset 0 1px 1px rgba(255, 255, 255, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+  }
+  
+  .dark select:hover,
+  .dark select:focus {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    box-shadow: 
+      inset 0 1px 1px rgba(255, 255, 255, 0.15),
+      0 4px 20px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  /* Dark mode styling for native date inputs */
+  .dark input[type="date"] {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 
+      inset 0 1px 1px rgba(255, 255, 255, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    transition: all 0.3s ease;
+  }
+  
+  .dark input[type="date"]:hover,
+  .dark input[type="date"]:focus {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    box-shadow: 
+      inset 0 1px 1px rgba(255, 255, 255, 0.15),
+      0 4px 20px rgba(59, 130, 246, 0.1) !important;
+  }
+  
+  /* Dark mode styling for text inputs in filter bars */
+  .dark input[type="text"] {
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 
+      inset 0 1px 1px rgba(255, 255, 255, 0.1),
+      0 4px 16px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.3s ease;
+  }
+  
+  .dark input[type="text"]:hover,
+  .dark input[type="text"]:focus {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    box-shadow: 
+      inset 0 1px 1px rgba(255, 255, 255, 0.15),
+      0 4px 20px rgba(59, 130, 246, 0.1) !important;
   }
   
   .dark select option {
-    background-color: #1e293b !important; /* slate-800 */
+    background-color: #1e293b !important;
     color: #ffffff !important;
     padding: 8px;
   }
@@ -22,7 +75,7 @@
   .dark select option:hover,
   .dark select option:focus,
   .dark select option:checked {
-    background-color: #334155 !important; /* slate-700 */
+    background-color: #334155 !important;
     color: #ffffff !important;
   }
   

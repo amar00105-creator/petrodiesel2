@@ -35,12 +35,12 @@ class CalibrationController extends Controller
 
         try {
             $data = json_decode(file_get_contents('php://input'), true);
-            $user = AuthHelper::user();
-
-            if (!$user) {
-                echo json_encode(['success' => false, 'message' => 'غير مصرح']);
+            if (!AuthHelper::can('calibration.create')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية إضافة معايرة']);
                 return;
             }
+
+            $user = AuthHelper::user();
 
             // Validate input
             $tankId = $data['tank_id'] ?? null;
@@ -110,10 +110,8 @@ class CalibrationController extends Controller
 
         try {
             $data = json_decode(file_get_contents('php://input'), true);
-            $user = AuthHelper::user();
-
-            if (!$user) {
-                echo json_encode(['success' => false, 'message' => 'غير مصرح']);
+            if (!AuthHelper::can('calibration.edit')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية تعديل المعايرة']);
                 return;
             }
 
@@ -183,10 +181,8 @@ class CalibrationController extends Controller
         header('Content-Type: application/json');
 
         try {
-            $user = AuthHelper::user();
-
-            if (!$user) {
-                echo json_encode(['success' => false, 'message' => 'غير مصرح']);
+            if (!AuthHelper::can('calibration.delete')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية حذف المعايرة']);
                 return;
             }
 
@@ -233,8 +229,12 @@ class CalibrationController extends Controller
         header('Content-Type: application/json');
 
         try {
-            $tankId = $_GET['tank_id'] ?? null;
+            if (!AuthHelper::can('calibration.view')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية عرض السجلات']);
+                return;
+            }
 
+            $tankId = $_GET['tank_id'] ?? null;
             if (!$tankId) {
                 echo json_encode(['success' => false, 'message' => 'معرف الخزان مطلوب']);
                 return;
@@ -262,6 +262,10 @@ class CalibrationController extends Controller
         header('Content-Type: application/json');
 
         try {
+            if (!AuthHelper::can('calibration.view')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح']);
+                return;
+            }
             $calibrations = $this->calibrationModel->getAll();
 
             echo json_encode([

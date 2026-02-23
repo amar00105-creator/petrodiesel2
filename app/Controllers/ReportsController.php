@@ -53,21 +53,23 @@ class ReportsController extends Controller
     {
         $user = AuthHelper::user();
 
-
         // Check if it's an API request for stats
         if (isset($_GET['action']) && $_GET['action'] === 'get_stats') {
+            if (!AuthHelper::can('reports.stats.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getStats();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_sources') {
+            if (!AuthHelper::can('reports.stats.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getSources();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_categories') {
+            if (!AuthHelper::can('reports.stats.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getCategories();
             return;
@@ -75,83 +77,99 @@ class ReportsController extends Controller
 
 
         if (isset($_GET['action']) && $_GET['action'] === 'financial_flow') {
+            if (!AuthHelper::can('reports.financial.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getFinancialFlow();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_detailed_daily_sales') {
+            if (!AuthHelper::can('reports.sales.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getDetailedDailySales();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_tank_sales') {
+            if (!AuthHelper::can('reports.inventory.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getTankSalesReport();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_supplier_report') {
+            if (!AuthHelper::can('reports.supplier.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getSupplierReport();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_customer_report') {
+            if (!AuthHelper::can('reports.customer.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getCustomerReport();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_all_suppliers') {
+            if (!AuthHelper::can('reports.supplier.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getAllSuppliersReport();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_profit_loss') {
+            if (!AuthHelper::can('reports.financial.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getProfitLoss();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_loss_report') {
+            if (!AuthHelper::can('reports.inventory.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getLossReport();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_pump_performance') {
+            if (!AuthHelper::can('reports.sales.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getPumpPerformance();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_worker_performance') {
+            if (!AuthHelper::can('reports.hr.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getWorkerPerformance();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_monthly_comparison') {
+            if (!AuthHelper::can('reports.financial.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getMonthlyComparison();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_tank_transaction_report') {
+            if (!AuthHelper::can('reports.inventory.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getTankTransactionReport();
             return;
         }
 
         if (isset($_GET['action']) && $_GET['action'] === 'get_daily_closing') {
+            if (!AuthHelper::can('reports.closing.view')) $this->unauthorized();
             while (ob_get_level()) ob_end_clean();
             $this->getDailyClosing();
             return;
         }
 
+
+        // No top-level gate — page loads for all authenticated users.
+        // Individual API actions (get_stats, financial_flow, etc.) enforce their own granular permissions.
 
         $this->view('reports/index', [
             'user' => $user,
@@ -573,9 +591,16 @@ class ReportsController extends Controller
                     'list' => $this->getWorkerStatsWithPayroll($workerStats, $startDate, $endDate, $stationId)
                 ]
             ];
-
             header('Content-Type: application/json');
-            echo json_encode($response);
+            $json = json_encode($response, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_UNICODE);
+            if ($json === false) {
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'JSON Encoding Error: ' . json_last_error_msg()
+                ]);
+            } else {
+                echo $json;
+            }
             exit;
         } catch (\Throwable $e) {
             header('Content-Type: application/json');
@@ -2890,18 +2915,34 @@ class ReportsController extends Controller
             $totalSafes = array_sum(array_column($safes, 'balance'));
             $totalBanks = array_sum(array_column($banks, 'balance'));
 
-            // ── 7. AI Smart Notes ──
+            // ── 7. AI Smart Notes — Enhanced Analysis Engine ──
             $notes = [];
 
-            // Note 1: Variance / Matching Status
+            // ─── Note 1: Variance / Matching Status ───
             $hasDeficit = false;
             foreach ($varianceDetails as $v) {
-                if ($v['variance'] < -5) { // > 5 liters deficit is notable
+                if ($v['variance'] < -5) {
                     $hasDeficit = true;
+                    $deficitAmt = abs($v['variance']);
+                    $deficitValue = round($deficitAmt * ($tankData[array_search($v['tank'], array_column($tankData, 'name'))]['price'] ?? 0), 2);
                     $notes[] = [
                         'type' => 'warning',
                         'icon' => '⚠️',
-                        'text' => "تنبيه: يوجد فرق (عجز) بمقدار " . abs($v['variance']) . " لتر في " . $v['fuel'] . " (" . $v['tank'] . "). يرجى فحص التوصيلات أو معايرة المضخة."
+                        'title' => 'عجز في المخزون',
+                        'text' => "يوجد فرق (عجز) بمقدار " . number_format($deficitAmt, 1) . " لتر في {$v['fuel']} ({$v['tank']}).",
+                        'metric' => number_format($deficitAmt, 1) . ' لتر',
+                        'action' => 'يرجى فحص التوصيلات والعدادات أو إجراء معايرة للمضخة فوراً.',
+                        'severity' => $deficitAmt > 50 ? 'high' : 'medium',
+                    ];
+                } elseif ($v['variance'] > 50) {
+                    $notes[] = [
+                        'type' => 'info',
+                        'icon' => '📈',
+                        'title' => 'فائض غير متوقع',
+                        'text' => "يوجد فائض بمقدار " . number_format($v['variance'], 1) . " لتر في {$v['fuel']} ({$v['tank']}). قد يكون بسبب معايرة حديثة أو تفريغ غير مسجل.",
+                        'metric' => '+' . number_format($v['variance'], 1) . ' لتر',
+                        'action' => 'تأكد من تسجيل جميع عمليات التفريغ والشحنات.',
+                        'severity' => 'medium',
                     ];
                 }
             }
@@ -2909,57 +2950,290 @@ class ReportsController extends Controller
                 $notes[] = [
                     'type' => 'success',
                     'icon' => '✅',
-                    'text' => "النظام يشير إلى مطابقة تامة بين مبيعات العدادات ونقص المخزون الفعلي. أداء العمليات مستقر."
+                    'title' => 'مطابقة تامة',
+                    'text' => "مبيعات العدادات تتطابق مع نقص المخزون الفعلي. أداء العمليات مستقر ولا توجد تسريبات.",
+                    'metric' => 'فرق ≈ 0',
+                    'action' => null,
+                    'severity' => 'low',
                 ];
             }
 
-            // Note 2: Stock Predictions
+            // ─── Note 2: Stock Predictions with details ───
             foreach ($tankData as $td) {
                 if ($td['days_remaining'] !== null && $td['days_remaining'] <= 3 && $td['days_remaining'] > 0) {
                     $hours = round($td['days_remaining'] * 24);
                     $notes[] = [
                         'type' => 'fuel',
                         'icon' => '⛽',
-                        'text' => "ذكاء المخزون: بناءً على معدل البيع الحالي، مخزون {$td['fuel']} ({$td['name']}) سينفد خلال {$hours} ساعة. يوصى بطلب شحنة جديدة الآن."
+                        'title' => 'تنبيه نفاد الوقود',
+                        'text' => "بناءً على معدل البيع الحالي ({$td['avg_daily_sales']} لتر/يوم)، مخزون {$td['fuel']} ({$td['name']}) سينفد خلال {$hours} ساعة تقريباً.",
+                        'metric' => $hours . ' ساعة',
+                        'action' => 'يوصى بطلب شحنة جديدة فوراً لتجنب انقطاع الخدمة.',
+                        'severity' => $hours <= 24 ? 'high' : 'medium',
                     ];
                 } elseif ($td['fill_pct'] < 15) {
                     $notes[] = [
                         'type' => 'fuel',
                         'icon' => '🔴',
-                        'text' => "مخزون {$td['fuel']} ({$td['name']}) منخفض جداً ({$td['fill_pct']}%). يجب التزويد فوراً."
+                        'title' => 'مخزون حرج',
+                        'text' => "مخزون {$td['fuel']} ({$td['name']}) منخفض جداً عند {$td['fill_pct']}% من السعة الكاملة.",
+                        'metric' => $td['fill_pct'] . '%',
+                        'action' => 'يجب التزويد فوراً — السعة المتبقية: ' . number_format($td['capacity'] - $td['volume'], 0) . ' لتر.',
+                        'severity' => 'high',
+                    ];
+                } elseif ($td['fill_pct'] < 30) {
+                    $notes[] = [
+                        'type' => 'fuel',
+                        'icon' => '🟡',
+                        'title' => 'مخزون منخفض',
+                        'text' => "مخزون {$td['fuel']} ({$td['name']}) عند {$td['fill_pct']}% من السعة. الوضع ليس حرجاً لكن يُفضل التخطيط للتزويد.",
+                        'metric' => $td['fill_pct'] . '%',
+                        'action' => 'خطط لطلب شحنة خلال الأيام القادمة.',
+                        'severity' => 'low',
                     ];
                 }
             }
 
-            // Note 3: Cash Flow
+            // ─── Note 3: Sales Efficiency — Compare with 7-day average ───
+            if ($totalSalesCount > 0) {
+                $avgSql7 = "
+                    SELECT COALESCE(AVG(daily_total), 0) as avg_amount, COALESCE(AVG(daily_count), 0) as avg_count
+                    FROM (
+                        SELECT sale_date, SUM(total_amount) as daily_total, COUNT(*) as daily_count
+                        FROM sales
+                        WHERE sale_date BETWEEN DATE_SUB(?, INTERVAL 7 DAY) AND DATE_SUB(?, INTERVAL 1 DAY)
+                ";
+                $avg7Params = [$today, $today];
+                if ($stationId !== 'all') {
+                    $avgSql7 .= " AND station_id = ?";
+                    $avg7Params[] = $stationId;
+                }
+                $avgSql7 .= " GROUP BY sale_date ) daily_agg";
+                $stmt = $db->prepare($avgSql7);
+                $stmt->execute($avg7Params);
+                $avg7 = $stmt->fetch(\PDO::FETCH_ASSOC);
+                $avg7Amount = floatval($avg7['avg_amount'] ?? 0);
+                $avg7Count = floatval($avg7['avg_count'] ?? 0);
+
+                if ($avg7Amount > 0) {
+                    $changePercent = round((($totalSalesAmount - $avg7Amount) / $avg7Amount) * 100, 1);
+                    if ($changePercent > 10) {
+                        $notes[] = [
+                            'type' => 'success',
+                            'icon' => '🚀',
+                            'title' => 'أداء مبيعات متميز',
+                            'text' => "مبيعات اليوم أعلى من متوسط 7 أيام بنسبة {$changePercent}%. اليوم: " . number_format($totalSalesAmount, 0) . " — المتوسط: " . number_format($avg7Amount, 0) . " ج.س.",
+                            'metric' => '+' . $changePercent . '%',
+                            'action' => 'استثمر هذا الأداء الإيجابي بتعزيز المخزون لضمان استمرارية المبيعات.',
+                            'severity' => 'low',
+                        ];
+                    } elseif ($changePercent < -15) {
+                        $notes[] = [
+                            'type' => 'warning',
+                            'icon' => '📉',
+                            'title' => 'انخفاض في المبيعات',
+                            'text' => "مبيعات اليوم أقل من متوسط 7 أيام بنسبة " . abs($changePercent) . "%. اليوم: " . number_format($totalSalesAmount, 0) . " — المتوسط: " . number_format($avg7Amount, 0) . " ج.س.",
+                            'metric' => $changePercent . '%',
+                            'action' => 'راجع الأسباب المحتملة: توقف مضخة، انقطاع تيار، أو ظروف خارجية.',
+                            'severity' => 'medium',
+                        ];
+                    } else {
+                        $notes[] = [
+                            'type' => 'info',
+                            'icon' => '📊',
+                            'title' => 'أداء مبيعات مستقر',
+                            'text' => "مبيعات اليوم (" . number_format($totalSalesAmount, 0) . " ج.س) ضمن المعدل الطبيعي مقارنة بمتوسط 7 أيام (" . number_format($avg7Amount, 0) . " ج.س).",
+                            'metric' => $changePercent >= 0 ? '+' . $changePercent . '%' : $changePercent . '%',
+                            'action' => null,
+                            'severity' => 'low',
+                        ];
+                    }
+                }
+            }
+
+            // ─── Note 4: Top Fuel Concentration ───
+            if (!empty($salesByFuel) && count($salesByFuel) > 1 && $totalSalesAmount > 0) {
+                $topFuel = $salesByFuel[0]; // Already sorted DESC by total_amount
+                $topPct = round(($topFuel['total_amount'] / $totalSalesAmount) * 100, 1);
+                if ($topPct >= 70) {
+                    $notes[] = [
+                        'type' => 'insight',
+                        'icon' => '🎯',
+                        'title' => 'تركّز المبيعات',
+                        'text' => "{$topFuel['fuel_name']} يمثل {$topPct}% من إجمالي المبيعات اليوم ({$topFuel['sale_count']} عملية بإجمالي " . number_format($topFuel['total_amount'], 0) . " ج.س).",
+                        'metric' => $topPct . '% حصة',
+                        'action' => 'تأكد من تخصيص مخزون كافٍ لهذا النوع وراقب أداء الأنواع الأخرى.',
+                        'severity' => 'low',
+                    ];
+                }
+            }
+
+            // ─── Note: Worker Spotlight (Added) ───
+            $workerPerformance = method_exists($this->saleModel, 'getWorkerPerformance')
+                ? $this->saleModel->getWorkerPerformance($today, $today, $stationId)
+                : [];
+
+            if (count($workerPerformance) > 1) {
+                usort($workerPerformance, fn($a, $b) => $b['total_amount'] <=> $a['amount']);
+                $topWorker = $workerPerformance[0];
+                $totalWAmount = array_sum(array_column($workerPerformance, 'total_amount'));
+                if ($totalWAmount > 0) {
+                    $wPct = round(($topWorker['total_amount'] / $totalWAmount) * 100, 1);
+                    if ($wPct >= 60) {
+                        $notes[] = [
+                            'type' => 'insight',
+                            'icon' => '👤',
+                            'title' => 'تميز في أداء العمال',
+                            'text' => "العامل ({$topWorker['worker_name']}) قام بتنفيذ {$wPct}% من إجمالي مبيعات اليوم.",
+                            'metric' => $wPct . '% جهود',
+                            'action' => 'شجّع بقية العمال على رفع الإنتاجية في الورديات القادمة.',
+                            'severity' => 'low',
+                        ];
+                    }
+                }
+            }
+
+            // ─── Note 5: Peak Hour Insight ───
+            if ($totalSalesCount > 0) {
+                $peakSql = "
+                    SELECT HOUR(sale_time) as sale_hour, COUNT(*) as cnt, SUM(total_amount) as hr_total
+                    FROM sales WHERE sale_date = ?
+                ";
+                $peakParams = [$today];
+                if ($stationId !== 'all') {
+                    $peakSql .= " AND station_id = ?";
+                    $peakParams[] = $stationId;
+                }
+                $peakSql .= " GROUP BY HOUR(sale_time) ORDER BY cnt DESC LIMIT 1";
+
+                try {
+                    $stmt = $db->prepare($peakSql);
+                    $stmt->execute($peakParams);
+                    $peak = $stmt->fetch(\PDO::FETCH_ASSOC);
+                    if ($peak && $peak['cnt'] > 1) {
+                        $hr = intval($peak['sale_hour']);
+                        $periodLabel = ($hr >= 5 && $hr < 12) ? 'الصباح' : (($hr >= 12 && $hr < 17) ? 'الظهيرة' : (($hr >= 17 && $hr < 21) ? 'المساء' : 'الليل'));
+                        $hrLabel = sprintf('%02d:00 - %02d:00', $hr, $hr + 1);
+                        $notes[] = [
+                            'type' => 'insight',
+                            'icon' => '⏰',
+                            'title' => 'ذروة المبيعات',
+                            'text' => "أعلى نشاط مبيعات كان في فترة {$periodLabel} ({$hrLabel}) بعدد {$peak['cnt']} عملية وإجمالي " . number_format($peak['hr_total'], 0) . " ج.س.",
+                            'metric' => $peak['cnt'] . ' عملية',
+                            'action' => 'تأكد من وجود عُمّال كافيين خلال هذه الفترة لتسريع الخدمة.',
+                            'severity' => 'low',
+                        ];
+                    }
+                } catch (\Exception $e) {
+                }
+            }
+
+            // ─── Note 6: Cash Flow Health & Comparison (Enhanced) ───
+            $yesterday = date('Y-m-d', strtotime('-1 day'));
+            $incSqlY = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income' AND DATE(date) = ?";
+            $expSqlY = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'expense' AND DATE(date) = ?";
+
+            $yParams = [$yesterday];
+            if ($stationId !== 'all') {
+                $incSqlY .= " AND station_id = ?";
+                $expSqlY .= " AND station_id = ?";
+                $yParams[] = $stationId;
+            }
+
+            $stmt = $db->prepare($incSqlY);
+            $stmt->execute($yParams);
+            $incY = $stmt->fetchColumn() ?: 0;
+            $stmt = $db->prepare($expSqlY);
+            $stmt->execute($yParams);
+            $expY = $stmt->fetchColumn() ?: 0;
+            $netYesterday = $incY - $expY;
+
             $netToday = $totalIncome - $totalExpenses;
             if ($netToday > 0) {
+                $statusText = "إيرادات اليوم (" . number_format($totalIncome, 0) . " ج.س) تفوق المصروفات. ";
+                if ($netYesterday > 0) {
+                    $trend = $netToday > $netYesterday ? 'تحسن' : 'تراجع طفيف';
+                    $statusText .= "يوجد {$trend} في صافي التدفق مقارنة بالأمس (" . number_format($netYesterday, 0) . " ج.س).";
+                }
                 $notes[] = [
-                    'type' => 'info',
+                    'type' => 'success',
                     'icon' => '💰',
-                    'text' => "التدفق النقدي لليوم إيجابي بمبلغ " . number_format($netToday, 2) . " ج.س. الوضع المالي مستقر."
+                    'title' => 'تدفق نقدي إيجابي',
+                    'text' => $statusText,
+                    'metric' => '+' . number_format($netToday, 0) . ' ج.س',
+                    'action' => null,
+                    'severity' => 'low',
                 ];
             } elseif ($netToday < 0) {
                 $notes[] = [
                     'type' => 'warning',
-                    'icon' => '📉',
-                    'text' => "التدفق النقدي لليوم سالب بمبلغ " . number_format(abs($netToday), 2) . " ج.س. المصروفات تجاوزت الإيرادات."
+                    'icon' => '💸',
+                    'title' => 'تدفق نقدي سالب',
+                    'text' => "المصروفات (" . number_format($totalExpenses, 0) . " ج.س) تجاوزت الإيرادات (" . number_format($totalIncome, 0) . " ج.س) اليوم.",
+                    'metric' => number_format($netToday, 0) . ' ج.س',
+                    'action' => 'راجع بنود المصروفات وحاول تأجيل المدفوعات غير العاجلة.',
+                    'severity' => abs($netToday) > 50000 ? 'high' : 'medium',
                 ];
             }
 
-            // Note 4: Sales performance
+            // ─── Note 7: Sales Performance Summary ───
             if ($totalSalesCount == 0) {
                 $notes[] = [
                     'type' => 'info',
                     'icon' => '📊',
-                    'text' => "لم يتم تسجيل أي مبيعات اليوم حتى الآن."
+                    'title' => 'لا توجد مبيعات',
+                    'text' => "لم يتم تسجيل أي عمليات بيع اليوم حتى الآن.",
+                    'metric' => '0 عملية',
+                    'action' => 'تحقق من أن العدادات تعمل بشكل صحيح وأن العمال يسجلون المبيعات.',
+                    'severity' => 'medium',
                 ];
             } elseif ($totalSalesCount > 0) {
                 $avgPerSale = $totalSalesAmount / $totalSalesCount;
+                $avgLitersPerSale = $totalSalesLiters / $totalSalesCount;
                 $notes[] = [
                     'type' => 'info',
-                    'icon' => '📊',
-                    'text' => "تم تنفيذ {$totalSalesCount} عملية بيع اليوم بمتوسط " . number_format($avgPerSale, 2) . " ج.س لكل عملية."
+                    'icon' => '📋',
+                    'title' => 'ملخص عمليات اليوم',
+                    'text' => "تم تنفيذ {$totalSalesCount} عملية بيع بإجمالي " . number_format($totalSalesLiters, 0) . " لتر. متوسط العملية: " . number_format($avgPerSale, 0) . " ج.س / " . number_format($avgLitersPerSale, 1) . " لتر.",
+                    'metric' => $totalSalesCount . ' عملية',
+                    'action' => null,
+                    'severity' => 'low',
+                ];
+            }
+
+            // ─── Note 8: Overall Recommendation ───
+            $highCount = count(array_filter($notes, fn($n) => ($n['severity'] ?? 'low') === 'high'));
+            $mediumCount = count(array_filter($notes, fn($n) => ($n['severity'] ?? 'low') === 'medium'));
+
+            if ($highCount > 0) {
+                $notes[] = [
+                    'type' => 'recommendation',
+                    'icon' => '🤖',
+                    'title' => 'التوصية العامة',
+                    'text' => "يوجد {$highCount} تنبيه(ات) عالية الأهمية تتطلب اهتماماً فورياً. يرجى معالجتها قبل نهاية اليوم.",
+                    'metric' => $highCount . ' عاجل',
+                    'action' => 'ابدأ بالتنبيهات ذات اللون الأحمر أولاً ثم انتقل للبرتقالية.',
+                    'severity' => 'high',
+                ];
+            } elseif ($mediumCount > 0) {
+                $notes[] = [
+                    'type' => 'recommendation',
+                    'icon' => '🤖',
+                    'title' => 'التوصية العامة',
+                    'text' => "توجد {$mediumCount} ملاحظة(ات) تحتاج متابعة. بشكل عام الأداء مقبول مع بعض نقاط التحسين.",
+                    'metric' => 'جيد',
+                    'action' => 'راجع التنبيهات ذات اللون البرتقالي وخطط لمعالجتها.',
+                    'severity' => 'medium',
+                ];
+            } else {
+                $notes[] = [
+                    'type' => 'recommendation',
+                    'icon' => '🤖',
+                    'title' => 'التوصية العامة',
+                    'text' => "أداء المحطة اليوم ممتاز! جميع المؤشرات ضمن المعدل الطبيعي ولا توجد مشاكل تتطلب تدخّل.",
+                    'metric' => 'ممتاز ★',
+                    'action' => null,
+                    'severity' => 'low',
                 ];
             }
 

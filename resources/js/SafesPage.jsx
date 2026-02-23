@@ -15,8 +15,9 @@ import {
 import AddAssetModal from './AddAssetModal';
 import GlobalTable from './components/GlobalTable';
 import { toast } from 'sonner';
+import { can } from './utils/permissions';
 
-export default function SafesPage({ safes = [], pendingRequests = [], currency = 'SDG' }) {
+export default function SafesPage({ safes = [], pendingRequests = [], currency = 'SDG', user }) {
     const [selectedSafe, setSelectedSafe] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     
@@ -81,9 +82,11 @@ export default function SafesPage({ safes = [], pendingRequests = [], currency =
             <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" title="العمليات">
                 <Activity className="w-4 h-4"/>
             </button>
+            {can(user, 'finance.delete') && (
             <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="حذف" onClick={() => toast.error('الحذف غير متاح حالياً')}>
                 <Trash2 className="w-4 h-4"/>
             </button>
+            )}
         </div>
     );
 
@@ -104,6 +107,7 @@ export default function SafesPage({ safes = [], pendingRequests = [], currency =
                         <p className="text-slate-500 mt-1">إدارة السيولة النقدية في الخزائن المحلية والعامة</p>
                     </div>
                     <div className="flex items-center gap-3">
+                        {can(user, 'finance.create') && (
                         <button 
                             onClick={() => setShowAddModal(true)}
                             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 active:scale-95"
@@ -111,6 +115,7 @@ export default function SafesPage({ safes = [], pendingRequests = [], currency =
                             <Sparkles className="w-5 h-5" />
                             إضافة خزينة جديدة
                         </button>
+                        )}
                     </div>
                 </div>
 

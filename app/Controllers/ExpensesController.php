@@ -15,6 +15,9 @@ class ExpensesController extends Controller
 
     public function index()
     {
+        if (!AuthHelper::can('finance.expenses.view')) {
+            $this->unauthorized();
+        }
         // Simple list or maybe part of accounting
         // For now, redirect to create or show list
         $user = AuthHelper::user();
@@ -29,6 +32,9 @@ class ExpensesController extends Controller
 
     public function create()
     {
+        if (!AuthHelper::can('finance.expenses.create')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $stationId = $user['station_id'];
 
@@ -46,6 +52,11 @@ class ExpensesController extends Controller
 
     public function get_entities()
     {
+        if (!AuthHelper::can('finance.expenses.view')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         header('Content-Type: application/json');
         $user = AuthHelper::user();
 
@@ -79,6 +90,9 @@ class ExpensesController extends Controller
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!AuthHelper::can('finance.expenses.create')) {
+                $this->unauthorized();
+            }
             $this->checkAndFixDatabase();
 
             $user = AuthHelper::user();
@@ -150,7 +164,7 @@ class ExpensesController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        if (!AuthHelper::can('expenses.delete')) {
+        if (!AuthHelper::can('finance.expenses.delete')) {
             echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             return;
         }
@@ -175,8 +189,8 @@ class ExpensesController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
-        if (!AuthHelper::can('expenses.edit')) {
-            // Assuming permission
+        if (!AuthHelper::can('finance.expenses.edit')) {
+            $this->unauthorized();
         }
 
         $data = $_POST;

@@ -18,6 +18,9 @@ class CategoryController extends Controller
 
     public function store()
     {
+        if (!AuthHelper::can('finance.edit')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $name = trim($_POST['name'] ?? '');
@@ -52,6 +55,9 @@ class CategoryController extends Controller
 
     public function update()
     {
+        if (!AuthHelper::can('finance.edit')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $id = $_POST['id'] ?? null;
@@ -80,6 +86,9 @@ class CategoryController extends Controller
 
     public function delete()
     {
+        if (!AuthHelper::can('finance.delete')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $id = $_POST['id'] ?? null;

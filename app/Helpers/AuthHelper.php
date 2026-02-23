@@ -79,14 +79,34 @@ class AuthHelper
             $_SESSION['active_station_id'] = $currentStationId; // Correct the session
         }
 
-        // Auto-select first station for Super Admin if none selected
-        if (!$currentStationId && self::isAdmin()) {
+        // Auto-select first station if none selected (for ANY logged-in user)
+        // This covers: super admins, and regular users with no station assigned
+        if (!$currentStationId) {
             $db = \App\Config\Database::connect();
             $stmt = $db->query("SELECT id FROM stations ORDER BY id ASC LIMIT 1");
             $firstStation = $stmt->fetch();
             if ($firstStation) {
                 $currentStationId = $firstStation['id'];
                 $_SESSION['active_station_id'] = $currentStationId; // Persist selection
+
+                // Also auto-assign this station to user_stations if not already assigned
+                $userId = $_SESSION['user_id'] ?? null;
+                if ($userId && !self::isSuperAdmin()) {
+                    try {
+                        $checkStmt = $db->prepare("SELECT COUNT(*) FROM user_stations WHERE user_id = ?");
+                        $checkStmt->execute([$userId]);
+                        if ($checkStmt->fetchColumn() == 0) {
+                            $insertStmt = $db->prepare("INSERT INTO user_stations (user_id, station_id) VALUES (?, ?)");
+                            $insertStmt->execute([$userId, $currentStationId]);
+                            // Also update legacy station_id
+                            $updateStmt = $db->prepare("UPDATE users SET station_id = ? WHERE id = ?");
+                            $updateStmt->execute([$currentStationId, $userId]);
+                        }
+                    } catch (\Exception $e) {
+                        // Silently fail - station display is still corrected
+                        error_log('AuthHelper: Auto-assign station failed: ' . $e->getMessage());
+                    }
+                }
             }
         }
 
@@ -96,8 +116,9 @@ class AuthHelper
             'role' => $_SESSION['user_role'] ?? 'guest',
             'station_id' => $currentStationId,
             'station_name' => self::getStationName($currentStationId),
-            'original_station_id' => $_SESSION['station_id'] ?? null, // Keep track of assigned station
-            'station_ids' => $assignedStations // Include all assigned for frontend check
+            'original_station_id' => $_SESSION['station_id'] ?? null,
+            'station_ids' => $assignedStations,
+            'permissions' => $_SESSION['permissions'] ?? []
         ];
     }
 
@@ -158,7 +179,22 @@ class AuthHelper
         }
 
         // Specific Permission check
-        return in_array($permission, $myPermissions);
+        if (in_array($permission, $myPermissions)) {
+            return true;
+        }
+
+        // Recursive fallback for granular permissions:
+        // If checking for 'reports.stats.view' and user has 'reports.stats' or 'reports', allow it.
+        $parts = explode('.', $permission);
+        while (count($parts) > 1) {
+            array_pop($parts);
+            $basePermission = implode('.', $parts);
+            if (in_array($basePermission, $myPermissions)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function requireLogin()

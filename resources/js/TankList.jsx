@@ -11,8 +11,9 @@ import DeleteConfirmationModal from './DeleteConfirmationModal';
 import TransferAndDeleteModal from './TransferAndDeleteModal';
 import SuccessAnimation from './SuccessAnimation';
 import FuelTankCard from './FuelTankCard';
+import { can } from './utils/permissions';
 
-export default function TankList({ tanks = [], suppliers = [], fuelSettings = [], generalSettings = {}, fuelTypes = [] }) {
+export default function TankList({ tanks = [], suppliers = [], fuelSettings = [], generalSettings = {}, fuelTypes = [], user }) {
     const [search, setSearch] = useState('');
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
     const [isDischargeOpen, setIsDischargeOpen] = useState(false);
@@ -194,18 +195,22 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                         >
                             <Ruler className="w-4 h-4"/>
                         </button>
+                        {can(user, 'tanks.edit') && (
                         <button 
                             onClick={() => handleEdit(tank)}
                             className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
                         >
                             <Edit className="w-4 h-4"/>
                         </button>
+                        )}
+                        {can(user, 'tanks.delete') && (
                         <button 
                             onClick={() => initiateDelete(tank)}
                             className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
                         >
                             <Trash2 className="w-4 h-4"/>
                         </button>
+                        )}
                     </div>
                 </div>
 
@@ -313,6 +318,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                         </span>
                     </Button>
 
+                    {can(user, 'tanks.create') && (
                     <Button 
                         variant="secondary" 
                         icon={Plus} 
@@ -321,6 +327,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                     >
                         إضافة خزان
                     </Button>
+                    )}
                     <button 
                         className="custom-btn btn dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700"
                         onClick={() => setIsDischargeOpen(true)}
@@ -340,8 +347,8 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                             tank={tank} 
                             generalSettings={generalSettings}
                             index={idx}
-                            onEdit={() => handleEdit(tank)}
-                            onDelete={() => initiateDelete(tank)}
+                            onEdit={can(user, 'tanks.edit') ? () => handleEdit(tank) : null}
+                            onDelete={can(user, 'tanks.delete') ? () => initiateDelete(tank) : null}
                             onCalibrate={() => { setSelectedTank(tank); setCalibrationModalOpen(true); }}
                         />
                     ))}
@@ -489,6 +496,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                                 >
                                                     <Ruler className="w-4 h-4"/>
                                                 </button>
+                                                {can(user, 'tanks.edit') && (
                                                 <button 
                                                     onClick={() => handleEdit(tank)}
                                                     className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/15 rounded-lg transition-colors"
@@ -496,6 +504,8 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                                 >
                                                     <Edit className="w-4 h-4"/>
                                                 </button>
+                                                )}
+                                                {can(user, 'tanks.delete') && (
                                                 <button 
                                                     onClick={() => initiateDelete(tank)}
                                                     className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15 rounded-lg transition-colors"
@@ -503,6 +513,7 @@ export default function TankList({ tanks = [], suppliers = [], fuelSettings = []
                                                 >
                                                     <Trash2 className="w-4 h-4"/>
                                                 </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

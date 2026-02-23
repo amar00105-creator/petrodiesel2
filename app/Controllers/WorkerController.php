@@ -15,6 +15,9 @@ class WorkerController extends Controller
 
     public function index()
     {
+        if (!AuthHelper::can('hr.view')) {
+            $this->unauthorized();
+        }
         $workerModel = new Worker();
         $stationId = AuthHelper::user()['station_id'];
         $workers = $workerModel->getAll($stationId);
@@ -27,6 +30,10 @@ class WorkerController extends Controller
 
     public function list_ajax()
     {
+        if (!AuthHelper::can('hr.view')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
         $stationId = AuthHelper::user()['station_id'];
         $workerModel = new Worker();
         $workers = $workerModel->getAll($stationId);
@@ -37,6 +44,10 @@ class WorkerController extends Controller
 
     public function create_ajax()
     {
+        if (!AuthHelper::can('hr.create')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             echo json_encode(['success' => false, 'message' => 'Invalid Request']);
             return;
@@ -78,6 +89,10 @@ class WorkerController extends Controller
     }
     public function update_ajax()
     {
+        if (!AuthHelper::can('hr.edit')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $id = $_POST['id'] ?? null;
@@ -114,6 +129,10 @@ class WorkerController extends Controller
 
     public function delete_ajax()
     {
+        if (!AuthHelper::can('hr.delete')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $id = $_POST['id'];

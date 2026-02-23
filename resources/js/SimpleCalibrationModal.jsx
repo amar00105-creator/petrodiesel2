@@ -15,6 +15,28 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [lastCalibration, setLastCalibration] = useState(null);
+    const [unit, setUnit] = useState(() => localStorage.getItem('calibration_unit') || 'liters');
+
+    const GALLON_FACTOR = 4.5; // 1 gallon = 4.5 liters
+    const toGallons = (liters) => liters / GALLON_FACTOR;
+    const toLiters = (gallons) => gallons * GALLON_FACTOR;
+    const unitLabel = unit === 'gallons' ? 'جالون' : 'لتر';
+
+    const handleUnitChange = (newUnit) => {
+        setUnit(newUnit);
+        localStorage.setItem('calibration_unit', newUnit);
+        // Convert existing input value to new unit
+        if (actualQuantity) {
+            const val = parseFloat(actualQuantity);
+            if (!isNaN(val)) {
+                if (newUnit === 'gallons') {
+                    setActualQuantity((val / GALLON_FACTOR).toFixed(2));
+                } else {
+                    setActualQuantity((val * GALLON_FACTOR).toFixed(2));
+                }
+            }
+        }
+    };
 
     // Fetch last calibration when modal opens
     useEffect(() => {
@@ -38,17 +60,18 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
         }
     };
 
-    // Calculate variance automatically
+    // Calculate variance automatically (always in the current display unit)
     useEffect(() => {
         if (actualQuantity && tank) {
-            const currentVolume = parseFloat(tank.current_volume || tank.current || 0);
+            const currentVolumeL = parseFloat(tank.current_volume || tank.current || 0);
+            const displayCurrent = unit === 'gallons' ? toGallons(currentVolumeL) : currentVolumeL;
             const actualQty = parseFloat(actualQuantity) || 0;
-            const diff = actualQty - currentVolume;
+            const diff = actualQty - displayCurrent;
             setVariance(isNaN(diff) ? 0 : diff);
         } else {
             setVariance(0);
         }
-    }, [actualQuantity, tank]);
+    }, [actualQuantity, tank, unit]);
 
     // Reset form when modal opens/closes
     useEffect(() => {
@@ -66,7 +89,10 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
             return;
         }
 
-        if (parseFloat(actualQuantity) > parseFloat(tank.capacity_liters || tank.total_cap)) {
+        // Convert input to liters for validation and saving
+        const inputInLiters = unit === 'gallons' ? toLiters(parseFloat(actualQuantity)) : parseFloat(actualQuantity);
+
+        if (inputInLiters > parseFloat(tank.capacity_liters || tank.total_cap)) {
             toast.error('الكمية تتجاوز سعة الخزان!');
             return;
         }
@@ -79,7 +105,7 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     tank_id: tank.id,
-                    actual_quantity: parseFloat(actualQuantity),
+                    actual_quantity: inputInLiters,
                     notes: notes
                 })
             });
@@ -155,9 +181,11 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
         label: 'وقود',
     };
 
-    const currentVolume = parseFloat(tank.current_volume || tank.current || 0);
-    const capacity = parseFloat(tank.capacity_liters || tank.total_cap || 0);
-    const fillPct = capacity > 0 ? ((currentVolume / capacity) * 100).toFixed(1) : 0;
+    const currentVolumeL = parseFloat(tank.current_volume || tank.current || 0);
+    const capacityL = parseFloat(tank.capacity_liters || tank.total_cap || 0);
+    const fillPct = capacityL > 0 ? ((currentVolumeL / capacityL) * 100).toFixed(1) : 0;
+    const displayVolume = unit === 'gallons' ? toGallons(currentVolumeL) : currentVolumeL;
+    const displayCapacity = unit === 'gallons' ? toGallons(capacityL) : capacityL;
 
     return (
         <>
@@ -228,6 +256,34 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
                                 {/* Body */}
                                 <div className="px-8 py-5 space-y-4">
 
+                                    {/* Unit Toggle */}
+                                    <div className="flex items-center justify-center gap-1 p-1 rounded-2xl bg-white/50 dark:bg-white/[0.04] border border-slate-200/50 dark:border-white/[0.08]">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleUnitChange('liters')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                                                unit === 'liters'
+                                                    ? `bg-gradient-to-r ${fuelTheme.gradient} text-white shadow-lg ${fuelTheme.shadowColor}`
+                                                    : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                                            }`}
+                                        >
+                                            <Droplets className="w-4 h-4" />
+                                            لتر
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleUnitChange('gallons')}
+                                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                                                unit === 'gallons'
+                                                    ? `bg-gradient-to-r ${fuelTheme.gradient} text-white shadow-lg ${fuelTheme.shadowColor}`
+                                                    : 'text-slate-500 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-white/[0.06]'
+                                            }`}
+                                        >
+                                            <Droplets className="w-4 h-4" />
+                                            جالون
+                                        </button>
+                                    </div>
+
                                     {/* Current Volume Card - Reduced height 25% */}
                                     <div className="relative overflow-hidden rounded-2xl px-5 py-3 bg-white/60 dark:bg-white/[0.03] backdrop-blur-sm border border-slate-200/50 dark:border-white/[0.06]">
                                         <div className={`absolute inset-0 bg-gradient-to-br ${fuelTheme.lightGradient} dark:bg-none opacity-50 dark:opacity-0`} />
@@ -240,9 +296,9 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
                                             </div>
                                             <div className="flex items-baseline gap-2">
                                                 <span className="text-2xl font-black text-slate-800 dark:text-white font-mono" dir="ltr">
-                                                    {fmt(currentVolume)}
+                                                    {fmt(displayVolume)}
                                                 </span>
-                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">لتر</span>
+                                                <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{unitLabel}</span>
                                             </div>
                                             {/* Progress Bar */}
                                             <div className="mt-2 h-2 bg-slate-200/60 dark:bg-white/[0.06] rounded-full overflow-hidden">
@@ -255,7 +311,7 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
                                             </div>
                                             <div className="flex justify-between mt-1 text-[10px] font-mono text-slate-400 dark:text-slate-500">
                                                 <span>0</span>
-                                                <span>السعة: {fmt(capacity)} لتر</span>
+                                                <span>السعة: {fmt(displayCapacity)} {unitLabel}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -264,7 +320,7 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
                                     <div>
                                         <label className="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                             <Ruler className="w-4 h-4" />
-                                            الكمية الفعلية المقاسة (لتر)
+                                            الكمية الفعلية المقاسة ({unitLabel})
                                             <span className="text-red-500">*</span>
                                         </label>
                                         <input
@@ -332,7 +388,7 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
                                                 }`} dir="ltr">
                                                     {variance > 0 && '+'}{fmtFixed(variance)}
                                                 </div>
-                                                <div className="text-xs text-slate-400 dark:text-slate-500 text-left font-bold">لتر</div>
+                                                <div className="text-xs text-slate-400 dark:text-slate-500 text-left font-bold">{unitLabel}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -367,10 +423,10 @@ const SimpleCalibrationModal = ({ tank, isOpen, onClose, onSuccess }) => {
                                                 </div>
                                                 <div className="text-left">
                                                     <div className="text-xl font-black font-mono text-red-700 dark:text-red-400" dir="ltr">
-                                                        {fmt(lastCalibration.actual_quantity)}
+                                                        {fmt(unit === 'gallons' ? toGallons(lastCalibration.actual_quantity) : lastCalibration.actual_quantity)}
                                                     </div>
                                                     <div className="text-[10px] text-red-500 dark:text-red-500 text-left font-bold">
-                                                        الفرق: <span dir="ltr">{parseFloat(lastCalibration.variance) > 0 ? '+' : ''}{fmtFixed(lastCalibration.variance)}</span> لتر
+                                                        الفرق: <span dir="ltr">{parseFloat(lastCalibration.variance) > 0 ? '+' : ''}{fmtFixed(unit === 'gallons' ? toGallons(lastCalibration.variance) : lastCalibration.variance)}</span> {unitLabel}
                                                     </div>
                                                 </div>
                                             </div>

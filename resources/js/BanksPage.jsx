@@ -15,8 +15,9 @@ import {
 import AddAssetModal from './AddAssetModal';
 import GlobalTable from './components/GlobalTable';
 import { toast } from 'sonner';
+import { can } from './utils/permissions';
 
-export default function BanksPage({ banks = [], pendingRequests = [], currency = 'SDG' }) {
+export default function BanksPage({ banks = [], pendingRequests = [], currency = 'SDG', user }) {
     const [selectedBank, setSelectedBank] = useState(null);
     const [showAddModal, setShowAddModal] = useState(false);
     
@@ -58,9 +59,11 @@ export default function BanksPage({ banks = [], pendingRequests = [], currency =
             <button className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition-colors" title="العمليات">
                 <Activity className="w-4 h-4"/>
             </button>
+            {can(user, 'finance.delete') && (
             <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="حذف" onClick={() => toast.error('الحذف غير متاح حالياً')}>
                 <Trash2 className="w-4 h-4"/>
             </button>
+            )}
         </div>
     );
 
@@ -193,7 +196,7 @@ export default function BanksPage({ banks = [], pendingRequests = [], currency =
                     data={banks}
                     columns={columns}
                     actions={actions}
-                    onAdd={() => setShowAddModal(true)}
+                    onAdd={can(user, 'finance.create') ? () => setShowAddModal(true) : undefined}
                     addButtonLabel="إضافة بنك جديد"
                     searchPlaceholder="بحث عن بنك..."
                     exportName="banks"

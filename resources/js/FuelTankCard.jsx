@@ -259,43 +259,49 @@ const FuelTankCard = ({
         <div className="px-4 pb-2">
           <div className="bg-white/[0.07] rounded-xl p-3 border border-white/[0.1] backdrop-blur-sm">
             {/* Column headers - centered above number columns */}
-            <div className={`grid gap-x-3 items-center mb-2 ${mode === 'both' ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'}`}>
-              <span></span>
-              {(mode === 'both' || mode === 'gallons') && (
-                <span className="text-[11px] text-lime-400 font-semibold text-center border-b border-lime-500/20 pb-1">جالون</span>
-              )}
-              {(mode === 'both' || mode === 'liters') && (
-                <span className="text-[11px] text-blue-400 font-semibold text-center border-b border-blue-500/20 pb-1">لتر</span>
-              )}
+            <div className="flex items-center mb-2">
+              <span className="shrink-0" style={{ width: '72px' }}></span>
+              <div className="flex-1 flex">
+                {(mode === 'both' || mode === 'gallons') && (
+                  <span className="flex-1 text-xs text-lime-400 font-bold text-center border-b border-lime-500/20 pb-1">جالون</span>
+                )}
+                {(mode === 'both' || mode === 'liters') && (
+                  <span className="flex-1 text-xs text-blue-400 font-bold text-center border-b border-blue-500/20 pb-1">لتر</span>
+                )}
+              </div>
             </div>
 
             {/* Current Volume Row */}
-            <div className={`grid gap-x-3 items-center py-1.5 ${mode === 'both' ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'}`}>
-              <span className="text-[11px] text-cyan-300 font-bold whitespace-nowrap">الكمية الحالية</span>
-              {(mode === 'both' || mode === 'gallons') && (
-                <span className={`text-lg font-black text-center ${isCritical ? 'text-red-300' : isLow ? 'text-amber-300' : 'text-white'}`}>
-                  {fmtGallons(current)}
-                </span>
-              )}
-              {(mode === 'both' || mode === 'liters') && (
-                <span className={`text-lg font-black text-center ${isCritical ? 'text-red-300' : isLow ? 'text-amber-300' : 'text-white'}`}>
-                  {fmtLiters(current)}
-                </span>
-              )}
+            <div className="flex items-center py-1.5">
+              <span className="shrink-0 text-[11px] text-cyan-300 font-bold whitespace-nowrap" style={{ width: '72px' }}>الكمية الحالية</span>
+              <div className="flex-1 flex">
+                {(mode === 'both' || mode === 'gallons') && (
+                  <span className={`flex-1 text-xl font-black text-center ${isCritical ? 'text-red-300' : isLow ? 'text-amber-300' : 'text-white'}`}>
+                    {fmtGallons(current)}
+                  </span>
+                )}
+                {(mode === 'both' || mode === 'liters') && (
+                  <span className={`flex-1 text-xl font-black text-center ${isCritical ? 'text-red-300' : isLow ? 'text-amber-300' : 'text-white'}`}>
+                    {fmtLiters(current)}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Divider */}
             <div className="h-px bg-white/[0.1] my-0.5" />
 
             {/* Capacity Row */}
-            <div className={`grid gap-x-3 items-center py-1.5 ${mode === 'both' ? 'grid-cols-[auto_1fr_1fr]' : 'grid-cols-[auto_1fr]'}`}>
-              <span className="text-[11px] text-slate-200 font-medium whitespace-nowrap">السعة الكلية</span>
-              {(mode === 'both' || mode === 'gallons') && (
-                <span className="text-lg font-bold text-white/90 text-center">{fmtGallons(total_cap)}</span>
-              )}
-              {(mode === 'both' || mode === 'liters') && (
-                <span className="text-lg font-bold text-white/90 text-center">{fmtLiters(total_cap)}</span>
-              )}
+            <div className="flex items-center py-1.5">
+              <span className="shrink-0 text-[11px] text-slate-200 font-medium whitespace-nowrap" style={{ width: '72px' }}>السعة الكلية</span>
+              <div className="flex-1 flex">
+                {(mode === 'both' || mode === 'gallons') && (
+                  <span className="flex-1 text-xl font-black text-white/90 text-center">{fmtGallons(total_cap)}</span>
+                )}
+                {(mode === 'both' || mode === 'liters') && (
+                  <span className="flex-1 text-xl font-black text-white/90 text-center">{fmtLiters(total_cap)}</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -304,26 +310,42 @@ const FuelTankCard = ({
         <div className="px-4 pb-3 pt-1 flex items-center justify-center gap-1.5">
           <button 
             onClick={onCalibrate}
-            className="flex-[1.4] flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold text-purple-300 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 hover:border-purple-500/50 transition-all active:scale-95"
+            className="flex-[1.4] flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[11px] font-bold text-white transition-all duration-300 active:scale-95 hover:scale-[1.03] hover:-translate-y-0.5"
             title="معايرة"
+            style={{
+              background: 'linear-gradient(135deg, #8b5cf6, #a855f7, #7c3aed)',
+              boxShadow: '0 4px 15px -3px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}
           >
             <Ruler className="w-3.5 h-3.5" />
             <span>معايرة</span>
           </button>
+          {onEdit && (
           <button 
             onClick={onEdit}
-            className="flex-[0.6] flex items-center justify-center gap-1 py-2 rounded-xl text-[11px] font-bold text-blue-300 bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 hover:border-blue-500/50 transition-all active:scale-95"
+            className="flex-[0.6] flex items-center justify-center gap-1 py-2.5 rounded-xl text-[11px] font-bold text-white transition-all duration-300 active:scale-95 hover:scale-[1.03] hover:-translate-y-0.5"
             title="تعديل"
+            style={{
+              background: 'linear-gradient(135deg, #3b82f6, #60a5fa, #2563eb)',
+              boxShadow: '0 4px 15px -3px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}
           >
             <Edit className="w-3.5 h-3.5" />
           </button>
+          )}
+          {onDelete && (
           <button 
             onClick={onDelete}
-            className="py-2 px-3 rounded-xl text-[11px] font-bold text-red-300 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 hover:border-red-500/50 transition-all active:scale-95"
+            className="py-2.5 px-3 rounded-xl text-[11px] font-bold text-white transition-all duration-300 active:scale-95 hover:scale-[1.03] hover:-translate-y-0.5"
             title="حذف"
+            style={{
+              background: 'linear-gradient(135deg, #ef4444, #f87171, #dc2626)',
+              boxShadow: '0 4px 15px -3px rgba(239, 68, 68, 0.5), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
+          )}
         </div>
 
       </div>

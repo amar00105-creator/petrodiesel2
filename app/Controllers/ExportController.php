@@ -18,6 +18,9 @@ class ExportController extends Controller
 
     public function exportFinancialFlowPDF()
     {
+        if (!AuthHelper::can('reports.financial.view')) {
+            $this->unauthorized();
+        }
         // Get report data using same logic as ReportsController
         $sourceType = $_GET['source_type'] ?? 'safe';
         $sourceId = $_GET['source_id'] ?? null;
@@ -39,6 +42,9 @@ class ExportController extends Controller
 
     public function exportFinancialFlowExcel()
     {
+        if (!AuthHelper::can('reports.financial.view')) {
+            $this->unauthorized();
+        }
         // Get report data
         $sourceType = $_GET['source_type'] ?? 'safe';
         $sourceId = $_GET['source_id'] ?? null;

@@ -319,6 +319,7 @@ try {
                 alerts: getData('alerts'),
                 roles: getData('roles'),
                 fuelTypes: getData('fuelTypes'),
+                ai: getData('ai'),
                 stations: getData('stations'),
                 users: getData('users'),
                 isSuperAdmin: getData('isSuperAdmin'),
@@ -405,10 +406,10 @@ try {
 
                 {/* Explicitly bypass Suspense for SafesPage to fix hydration error */}
                 {page === 'accounting-safes' ? (
-                    <SafesPage {...props} />
+                    <SafesPage {...props} user={user} />
                 ) : (
                     <React.Suspense fallback={<LoadingSpinner />}>
-                        <Component {...props} />
+                        <Component {...props} user={user} />
                     </React.Suspense>
                 )}
             </ErrorBoundary>

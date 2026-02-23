@@ -5,10 +5,11 @@ import { Search, Filter, Download, FileText, Trash2, Edit, ChevronLeft, ChevronR
 import { toast } from 'sonner';
 import { openPrintPreview, formatDateArabic } from './utils/printPreview';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import { can } from './utils/permissions';
 
 
 
-export default function SalesList({ sales = [] }) {
+export default function SalesList({ sales = [], user }) {
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState(''); // 'pump', 'fuel', 'method', 'safe', 'bank'
     const [filterValue, setFilterValue] = useState('');
@@ -325,6 +326,7 @@ export default function SalesList({ sales = [] }) {
 
                     {/* Actions Section */}
                     <div className="flex flex-wrap items-center gap-2">
+                        {can(user, 'sales.create') && (
                         <button onClick={() => window.location.href=`${window.BASE_URL}/sales/create`} className="button scale-90 origin-right">
                             <span className="text_button">فاتورة جديدة</span>
                             <div className="dots_border"></div>
@@ -332,6 +334,7 @@ export default function SalesList({ sales = [] }) {
                                 <path className="path" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4.5v15m7.5-7.5h-15"></path>
                             </svg>
                         </button>
+                        )}
                         <Button variant="secondary" icon={Download} className="rounded-xl text-sm py-1.5 px-3 font-bold bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200 hover:text-slate-900 transition-all shadow-sm dark:bg-white/5 dark:backdrop-blur-xl dark:text-white dark:border-0 dark:ring-1 dark:ring-white/10 dark:hover:bg-white/10">تصدير Excel</Button>
                         <Button variant="primary" icon={FileText} className="rounded-xl text-sm py-1.5 px-3 font-bold bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 transition-all shadow-sm dark:bg-blue-600/80 dark:backdrop-blur-xl dark:text-white dark:border-0 dark:ring-1 dark:ring-blue-500/50 dark:hover:bg-blue-500">تقرير يومي</Button>
                     </div>
@@ -342,19 +345,21 @@ export default function SalesList({ sales = [] }) {
             <Card className="rounded-2xl shadow-lg ring-1 ring-slate-200 overflow-hidden p-0 dark:bg-white/5 dark:backdrop-blur-2xl dark:border-0 dark:ring-1 dark:ring-white/5 dark:shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-right bg-transparent">
-                        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-white/5 dark:border-b dark:border-white/5 dark:text-slate-300">
-                            <tr>
-                                <th className="p-4 text-sm font-bold text-slate-600">رقم #</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">التاريخ والوقت</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">الماكينة / الصنف</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">العامل</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">نوع الوقود</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">الكمية (L)</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">المبلغ (SDG)</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">طريقة الدفع</th>
-                                <th className="p-4 text-sm font-bold text-slate-600">الحساب / العميل</th>
-                                <th className="p-4 text-sm font-bold text-slate-600 text-center">إجراءات</th>
+                        <thead className="bg-slate-50 border-b border-slate-200 dark:bg-transparent dark:border-b-0 dark:text-slate-300">
+                            <tr className="dark:bg-gradient-to-r dark:from-slate-800/90 dark:via-slate-800/70 dark:to-slate-800/90">
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-cyan-400">رقم #</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-blue-400">التاريخ والوقت</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-purple-400">الماكينة / الصنف</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-amber-400">العامل</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-orange-400">نوع الوقود</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-teal-400">الكمية (L)</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-emerald-400">المبلغ (SDG)</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-pink-400">طريقة الدفع</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 dark:text-indigo-400">الحساب / العميل</th>
+                                <th className="p-4 text-sm font-bold text-slate-600 text-center dark:text-rose-400">إجراءات</th>
                             </tr>
+                            {/* Glowing border line under header in dark mode */}
+                            <tr className="hidden dark:table-row"><td colSpan="10" className="p-0"><div className="h-px" style={{ background: 'linear-gradient(90deg, transparent, rgba(99,102,241,0.5), rgba(168,85,247,0.5), rgba(236,72,153,0.4), transparent)' }} /></td></tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                             {filteredSales.length === 0 && (
@@ -414,12 +419,16 @@ export default function SalesList({ sales = [] }) {
                                             <button onClick={() => handlePreview(sale)} className="p-1.5 hover:bg-blue-50 rounded-lg text-blue-600 transition-colors" title="معاينة">
                                                 <Eye className="w-4 h-4"/>
                                             </button>
+                                            {can(user, 'sales.edit') && (
                                             <button onClick={() => handleEdit(sale)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors" title="تعديل">
                                                 <Edit className="w-4 h-4"/>
                                             </button>
+                                            )}
+                                            {can(user, 'sales.delete') && (
                                             <button onClick={() => openDeleteModal(sale)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600 transition-colors" title="حذف">
                                                 <Trash2 className="w-4 h-4"/>
                                             </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

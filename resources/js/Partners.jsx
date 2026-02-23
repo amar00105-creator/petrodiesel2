@@ -8,9 +8,10 @@ import CustomerList from './CustomerList';
 import AddSupplierModal from './AddSupplierModal';
 import AddCustomerModal from './AddCustomerModal';
 import { openPrintPreview, extractTableHTML } from './utils/printPreview';
+import { can } from './utils/permissions';
 
 export default function Partners(props) {
-    const { suppliers = [], customers: initialCustomers = [] } = props;
+    const { suppliers = [], customers: initialCustomers = [], user } = props;
     
     // Manage customers in state to allow updates without reload
     const [customers, setCustomers] = useState(initialCustomers);
@@ -98,12 +99,14 @@ export default function Partners(props) {
                             >
                                 <span>تصدير</span>
                             </button>
+                            {can(user, 'partners.create') && (
                             <button 
                                 onClick={() => handleAdd()} 
                                 className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-600/20 text-sm"
                             >
                                 <span>{selectedIndex === 0 ? 'إضافة مورد' : 'إضافة عميل'}</span>
                             </button>
+                            )}
                              <button 
                                 onClick={() => handleExport('print')} 
                                 className="flex items-center gap-2 px-4 py-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl font-bold border border-blue-200 transition-colors text-sm dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-400 dark:hover:bg-blue-500/20"
@@ -132,7 +135,7 @@ export default function Partners(props) {
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <SupplierList suppliers={suppliers} hideHeader={true} />
+                                    <SupplierList suppliers={suppliers} hideHeader={true} user={user} />
                                 </motion.div>
                             )}
                             {selectedIndex === 1 && (
@@ -143,7 +146,7 @@ export default function Partners(props) {
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <CustomerList customers={customers} onUpdate={handleCustomerUpdate} hideHeader={true} />
+                                    <CustomerList customers={customers} onUpdate={handleCustomerUpdate} hideHeader={true} user={user} />
                                 </motion.div>
                             )}
                         </AnimatePresence>

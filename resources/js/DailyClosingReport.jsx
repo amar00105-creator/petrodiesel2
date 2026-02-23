@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Printer, RefreshCw, Loader2, Brain, Clock, Eye, X } from 'lucide-react';
+import { Printer, RefreshCw, Loader2, Brain, Clock, Eye, X, Lightbulb, AlertTriangle, TrendingUp, TrendingDown, CheckCircle2, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -72,12 +72,21 @@ export default function DailyClosingReport({ stationId }) {
     const netProfit = data.financial.net_profit;
     const logoUrl = `${window.BASE_URL || ''}/img/logo.png`;
 
-    // Note type styling
+    // Note type styling — expanded
     const noteStyles = {
-        warning: { bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200 dark:border-amber-500/30', text: 'text-amber-800 dark:text-amber-300' },
-        success: { bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-500/30', text: 'text-emerald-800 dark:text-emerald-300' },
-        fuel:    { bg: 'bg-orange-50 dark:bg-orange-500/10', border: 'border-orange-200 dark:border-orange-500/30', text: 'text-orange-800 dark:text-orange-300' },
-        info:    { bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/30', text: 'text-blue-800 dark:text-blue-300' },
+        warning:        { bg: 'bg-amber-50 dark:bg-amber-500/10', border: 'border-amber-200 dark:border-amber-500/30', text: 'text-amber-800 dark:text-amber-300', titleColor: 'text-amber-700 dark:text-amber-400', metricBg: 'bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300', bar: 'bg-amber-400', actionBg: 'bg-amber-50/80 dark:bg-amber-500/10' },
+        success:        { bg: 'bg-emerald-50 dark:bg-emerald-500/10', border: 'border-emerald-200 dark:border-emerald-500/30', text: 'text-emerald-800 dark:text-emerald-300', titleColor: 'text-emerald-700 dark:text-emerald-400', metricBg: 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300', bar: 'bg-emerald-400', actionBg: 'bg-emerald-50/80 dark:bg-emerald-500/10' },
+        fuel:           { bg: 'bg-orange-50 dark:bg-orange-500/10', border: 'border-orange-200 dark:border-orange-500/30', text: 'text-orange-800 dark:text-orange-300', titleColor: 'text-orange-700 dark:text-orange-400', metricBg: 'bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300', bar: 'bg-orange-400', actionBg: 'bg-orange-50/80 dark:bg-orange-500/10' },
+        info:           { bg: 'bg-blue-50 dark:bg-blue-500/10', border: 'border-blue-200 dark:border-blue-500/30', text: 'text-blue-800 dark:text-blue-300', titleColor: 'text-blue-700 dark:text-blue-400', metricBg: 'bg-blue-100 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300', bar: 'bg-blue-400', actionBg: 'bg-blue-50/80 dark:bg-blue-500/10' },
+        insight:        { bg: 'bg-violet-50 dark:bg-violet-500/10', border: 'border-violet-200 dark:border-violet-500/30', text: 'text-violet-800 dark:text-violet-300', titleColor: 'text-violet-700 dark:text-violet-400', metricBg: 'bg-violet-100 dark:bg-violet-500/20 text-violet-700 dark:text-violet-300', bar: 'bg-violet-400', actionBg: 'bg-violet-50/80 dark:bg-violet-500/10' },
+        recommendation: { bg: 'bg-indigo-50 dark:bg-indigo-500/10', border: 'border-indigo-200 dark:border-indigo-500/30', text: 'text-indigo-800 dark:text-indigo-300', titleColor: 'text-indigo-700 dark:text-indigo-400', metricBg: 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300', bar: 'bg-gradient-to-b from-indigo-400 to-purple-500', actionBg: 'bg-indigo-50/80 dark:bg-indigo-500/10' },
+    };
+
+    // Severity colors for the left bar
+    const severityBar = {
+        high: 'bg-gradient-to-b from-red-500 to-rose-600',
+        medium: 'bg-gradient-to-b from-amber-400 to-orange-500',
+        low: 'bg-gradient-to-b from-emerald-400 to-teal-500',
     };
 
     return (
@@ -347,36 +356,144 @@ export default function DailyClosingReport({ stationId }) {
                     </div>
                 </motion.div>
 
-                {/* ── AI Notes ── */}
+                {/* ── AI Notes — Premium Redesign ── */}
                 <motion.div variants={item}>
-                    <div className="relative overflow-hidden rounded-2xl bg-white/90 dark:bg-white/5 backdrop-blur-xl border border-indigo-200/50 dark:border-indigo-500/30 shadow-lg">
-                        <div className="px-6 py-4 border-b border-indigo-100/50 dark:border-indigo-500/20 bg-gradient-to-r from-indigo-50/80 to-purple-50/80 dark:from-indigo-500/10 dark:to-purple-500/10">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
-                                    <Brain className="w-4 h-4 text-white" />
+                    <div className="relative overflow-hidden rounded-3xl bg-white/40 dark:bg-white/[0.02] backdrop-blur-2xl border border-indigo-200/50 dark:border-indigo-500/20 shadow-2xl">
+                        {/* Animated background glow */}
+                        <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-[80px] pointer-events-none" />
+                        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-[80px] pointer-events-none" />
+
+                        {/* Header with counter badges */}
+                        <div className="px-8 py-6 border-b border-indigo-100/50 dark:border-indigo-500/15 bg-gradient-to-r from-indigo-50/50 via-purple-50/30 to-indigo-50/50 dark:from-indigo-500/10 dark:via-purple-500/5 dark:to-indigo-500/10">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 via-purple-600 to-indigo-700 flex items-center justify-center shadow-lg shadow-indigo-500/30 ring-4 ring-indigo-500/10">
+                                        <Sparkles className="w-7 h-7 text-white animate-pulse" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-xl text-slate-800 dark:text-white tracking-tight">تحليل بترودييزل الذكي</h3>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5 font-medium flex items-center gap-1.5">
+                                            <Brain className="w-3.5 h-3.5" /> تقرير مولّد بواسطة محرك التحليل المتقدم
+                                        </p>
+                                    </div>
                                 </div>
-                                <h3 className="font-black text-slate-800 dark:text-white">ملاحظات الذكاء الاصطناعي</h3>
+                                {/* Severity counts */}
+                                <div className="flex items-center gap-2">
+                                    {(() => {
+                                        const high = data.ai_notes.filter(n => n.severity === 'high').length;
+                                        const medium = data.ai_notes.filter(n => n.severity === 'medium').length;
+                                        return (
+                                            <div className="flex gap-2 bg-white/50 dark:bg-black/20 p-1 rounded-2xl border border-white/50 dark:border-white/5">
+                                                {high > 0 && <span className="px-3 py-1.5 rounded-xl text-[11px] font-black bg-red-500 text-white shadow-lg shadow-red-500/20">{high} عاجل</span>}
+                                                {medium > 0 && <span className="px-3 py-1.5 rounded-xl text-[11px] font-black bg-amber-500 text-white shadow-lg shadow-amber-500/20">{medium} تنبيه</span>}
+                                                <span className="px-3 py-1.5 rounded-xl text-[11px] font-bold bg-white/80 dark:bg-white/10 text-slate-600 dark:text-slate-300">{data.ai_notes.length} إجمالي</span>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
                             </div>
                         </div>
-                        <div className="p-5 space-y-3">
+
+                        {/* Notes List with staggered entrance */}
+                        <div className="p-6 sm:p-8 space-y-4">
                             {data.ai_notes.map((note, i) => {
                                 const style = noteStyles[note.type] || noteStyles.info;
+                                const barColor = severityBar[note.severity] || severityBar.low;
+                                const isRecommendation = note.type === 'recommendation';
+                                
+                                // Dynamic classification label
+                                const classification = note.severity === 'high' ? 'إجراء عاجل' : 
+                                                     note.severity === 'medium' ? 'تنبيه تشغيلي' : 
+                                                     isRecommendation ? 'توصية ذكية' : 'معلومة مفيدة';
+
                                 return (
                                     <motion.div 
                                         key={i}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.5 + i * 0.15 }}
-                                        className={`p-4 rounded-xl border ${style.bg} ${style.border} flex items-start gap-3`}
+                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                        whileInView={{ opacity: 1, scale: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: 0.1 * i, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                                        className={`group relative overflow-hidden rounded-2xl border ${style.border} transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${isRecommendation ? 'bg-indigo-50/30 dark:bg-indigo-500/5' : ''}`}
                                     >
-                                        <span className="text-xl flex-shrink-0 mt-0.5">{note.icon}</span>
-                                        <p className={`text-sm font-semibold leading-relaxed ${style.text}`}>{note.text}</p>
+                                        <div className="flex min-h-[110px]">
+                                            {/* Left Indicator bar */}
+                                            <div className={`w-2 flex-shrink-0 ${barColor}`} />
+                                            
+                                            {/* Body */}
+                                            <div className={`flex-1 p-5 ${style.bg} transition-colors duration-300 group-hover:bg-opacity-80`}>
+                                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shadow-inner ${style.metricBg} group-hover:scale-110 transition-transform`}>
+                                                            {note.icon}
+                                                        </div>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h4 className={`font-black text-base ${style.titleColor}`}>{note.title}</h4>
+                                                                <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter ${style.metricBg}`}>
+                                                                    {classification}
+                                                                </span>
+                                                            </div>
+                                                            {/* Metric subtitle if exists */}
+                                                            {note.metric && <p className={`text-[11px] font-bold ${style.text} opacity-60`}>{note.metric}</p>}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Impact Badge */}
+                                                    {note.metric && (
+                                                        <div className={`hidden sm:flex px-4 py-2 rounded-xl text-xs font-black items-center gap-2 ${style.metricBg} border border-white/20`}>
+                                                            <Sparkles className="w-3 h-3" />
+                                                            {note.metric}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Text Content */}
+                                                <div className="pr-2">
+                                                    <p className={`text-sm font-semibold leading-relaxed ${style.text}`}>
+                                                        {note.text}
+                                                    </p>
+                                                    
+                                                    {/* Action Button styled as info box */}
+                                                    {note.action && (
+                                                        <div className={`mt-4 p-4 rounded-xl ${style.actionBg} border border-black/[0.03] dark:border-white/[0.05] flex items-start gap-3 shadow-inner group-hover:border-white/10 transition-all`}>
+                                                            <div className="w-7 h-7 rounded-lg bg-amber-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                                <Lightbulb className="w-4 h-4 text-amber-500" />
+                                                            </div>
+                                                            <div>
+                                                                <span className="block text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase mb-0.5">خطوات مقترحة</span>
+                                                                <p className="text-xs font-bold text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                                                                    "{note.action}"
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </motion.div>
                                 );
                             })}
+                            
+                            {/* Recommendation Summary Section - Only if empty or special case */}
                             {data.ai_notes.length === 0 && (
-                                <div className="text-center py-6 text-slate-400 dark:text-slate-500">لا توجد ملاحظات خاصة لهذا اليوم.</div>
+                                <div className="text-center py-16 px-4">
+                                    <div className="w-20 h-20 bg-indigo-50 dark:bg-indigo-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <Sparkles className="w-10 h-10 text-indigo-300 dark:text-indigo-500/40" />
+                                    </div>
+                                    <h4 className="text-lg font-black text-slate-700 dark:text-slate-300">اليوم هادئ ومستقر</h4>
+                                    <p className="text-sm text-slate-400 dark:text-slate-500 font-bold mt-2 max-w-xs mx-auto">
+                                        لم يرصد محرك التحليل أي انحرافات أو مشكلات تتطلب لفت انتباهك حالياً.
+                                    </p>
+                                </div>
                             )}
+                        </div>
+                        
+                        {/* Summary Footer Bar */}
+                        <div className="px-8 py-4 bg-slate-50/50 dark:bg-black/20 border-t border-indigo-100/50 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 font-bold text-[10px] text-slate-400 uppercase tracking-widest">
+                            <span>محرك بترودييزل V2.5.0</span>
+                            <span className="flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" /> الحالة: جميع الأنظمة تعمل بكفاءة
+                            </span>
                         </div>
                     </div>
                 </motion.div>
@@ -520,20 +637,46 @@ export default function DailyClosingReport({ stationId }) {
                     </table>
                 </div>
 
-                {/* Print AI Notes */}
-                <div>
-                    <h2 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px' }}>🤖 ملاحظات الذكاء الاصطناعي</h2>
-                    <div style={{ border: '1px solid #c7d2fe', borderRadius: '8px', overflow: 'hidden' }}>
-                        {data.ai_notes.map((note, i) => (
-                            <div key={i} style={{
-                                padding: '10px 14px', borderBottom: i < data.ai_notes.length - 1 ? '1px solid #e0e7ff' : 'none',
-                                background: note.type === 'warning' ? '#fffbeb' : note.type === 'success' ? '#f0fdf4' : '#f8fafc',
-                                display: 'flex', alignItems: 'flex-start', gap: '8px'
-                            }}>
-                                <span style={{ fontSize: '16px', flexShrink: 0 }}>{note.icon}</span>
-                                <span style={{ fontSize: '11px', fontWeight: '600', color: note.type === 'warning' ? '#92400e' : note.type === 'success' ? '#166534' : '#334155', lineHeight: '1.7' }}>{note.text}</span>
-                            </div>
-                        ))}
+                {/* Print AI Notes — Enhanced */}
+                <div style={{ marginTop: '20px' }}>
+                    <h2 style={{ fontSize: '15px', fontWeight: '900', color: '#1e1b4b', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '18px' }}>🤖</span> تحليل الأداء الذكي ({data.ai_notes.length} ملاحظة)
+                    </h2>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                        {data.ai_notes.map((note, i) => {
+                            const sevColor = note.severity === 'high' ? '#ef4444' : note.severity === 'medium' ? '#f59e0b' : '#10b981';
+                            const bgColor = note.type === 'warning' ? '#fffbeb' : note.type === 'success' ? '#f0fdf4' : note.type === 'recommendation' ? '#eef2ff' : '#f8fafc';
+                            const titleColor = note.type === 'warning' ? '#92400e' : note.type === 'success' ? '#166534' : note.type === 'recommendation' ? '#3730a3' : '#1e40af';
+                            return (
+                                <div key={i} style={{ 
+                                    border: '1px solid #e2e8f0', 
+                                    borderRadius: '10px', 
+                                    overflow: 'hidden', 
+                                    background: bgColor, 
+                                    display: 'flex',
+                                    pageBreakInside: 'avoid'
+                                }}>
+                                    <div style={{ width: '5px', flexShrink: 0, background: sevColor }} />
+                                    <div style={{ padding: '12px 16px', flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                            <span style={{ fontSize: '12px', fontWeight: '800', color: titleColor, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <span style={{ fontSize: '14px' }}>{note.icon}</span> {note.title}
+                                            </span>
+                                            {note.metric && (
+                                                <span style={{ fontSize: '10px', fontWeight: '900', background: 'rgba(255,255,255,0.6)', padding: '2px 10px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)' }}>{note.metric}</span>
+                                            )}
+                                        </div>
+                                        <p style={{ fontSize: '11px', fontWeight: '600', color: '#334155', lineHeight: '1.6', margin: 0 }}>{note.text}</p>
+                                        {note.action && (
+                                            <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1', display: 'flex', gap: '6px', alignItems: 'start' }}>
+                                                <span style={{ fontSize: '12px' }}>💡</span>
+                                                <p style={{ fontSize: '10px', fontWeight: '700', color: '#64748b', margin: 0, fontStyle: 'italic' }}>{note.action}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -695,23 +838,47 @@ export default function DailyClosingReport({ stationId }) {
                                 </table>
                             </div>
 
-                            {/* Preview AI Notes */}
-                            <div>
-                                <h2 style={{ fontSize: '14px', fontWeight: '800', margin: '0 0 8px' }}>🤖 ملاحظات الذكاء الاصطناعي</h2>
-                                <div style={{ border: '1px solid #c7d2fe', borderRadius: '8px', overflow: 'hidden' }}>
-                                    {data.ai_notes.map((note, i) => (
-                                        <div key={i} style={{
-                                            padding: '10px 14px', borderBottom: i < data.ai_notes.length - 1 ? '1px solid #e0e7ff' : 'none',
-                                            background: note.type === 'warning' ? '#fffbeb' : note.type === 'success' ? '#f0fdf4' : '#f8fafc',
-                                            display: 'flex', alignItems: 'flex-start', gap: '8px'
-                                        }}>
-                                            <span style={{ fontSize: '16px', flexShrink: 0 }}>{note.icon}</span>
-                                            <span style={{ fontSize: '11px', fontWeight: '600', color: note.type === 'warning' ? '#92400e' : note.type === 'success' ? '#166534' : '#334155', lineHeight: '1.7' }}>{note.text}</span>
-                                        </div>
-                                    ))}
+                             {/* Preview AI Notes — Enhanced */}
+                             <div style={{ marginTop: '20px' }}>
+                                <h2 style={{ fontSize: '15px', fontWeight: '900', color: '#1e1b4b', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '18px' }}>🤖</span> تحليل الأداء الذكي ({data.ai_notes.length} ملاحظة)
+                                </h2>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
+                                    {data.ai_notes.map((note, i) => {
+                                        const sevColor = note.severity === 'high' ? '#ef4444' : note.severity === 'medium' ? '#f59e0b' : '#10b981';
+                                        const bgColor = note.type === 'warning' ? '#fffbeb' : note.type === 'success' ? '#f0fdf4' : note.type === 'recommendation' ? '#eef2ff' : '#f8fafc';
+                                        const titleColor = note.type === 'warning' ? '#92400e' : note.type === 'success' ? '#166534' : note.type === 'recommendation' ? '#3730a3' : '#1e40af';
+                                        return (
+                                            <div key={i} style={{ 
+                                                border: '1px solid #e2e8f0', 
+                                                borderRadius: '10px', 
+                                                overflow: 'hidden', 
+                                                background: bgColor, 
+                                                display: 'flex'
+                                            }}>
+                                                <div style={{ width: '5px', flexShrink: 0, background: sevColor }} />
+                                                <div style={{ padding: '12px 16px', flex: 1 }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                                        <span style={{ fontSize: '12px', fontWeight: '800', color: titleColor, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span style={{ fontSize: '14px' }}>{note.icon}</span> {note.title}
+                                                        </span>
+                                                        {note.metric && (
+                                                            <span style={{ fontSize: '10px', fontWeight: '900', background: 'rgba(255,255,255,0.6)', padding: '2px 10px', borderRadius: '12px', border: '1px solid rgba(0,0,0,0.05)' }}>{note.metric}</span>
+                                                        )}
+                                                    </div>
+                                                    <p style={{ fontSize: '11px', fontWeight: '600', color: '#334155', lineHeight: '1.6', margin: 0 }}>{note.text}</p>
+                                                    {note.action && (
+                                                        <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #cbd5e1', display: 'flex', gap: '6px', alignItems: 'start' }}>
+                                                            <span style={{ fontSize: '12px' }}>💡</span>
+                                                            <p style={{ fontSize: '10px', fontWeight: '700', color: '#64748b', margin: 0, fontStyle: 'italic' }}>{note.action}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
-
                             {/* Preview Footer */}
                             <div style={{ marginTop: '20px', paddingTop: '10px', borderTop: '2px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: '#94a3b8' }}>
                                 <span>تم التوليد بواسطة نظام بترودييزل — تقرير ذكي تلقائي</span>

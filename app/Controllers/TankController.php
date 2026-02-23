@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Models\FuelType;
 use App\Config\Constants;
 use App\Helpers\ViteHelper;
+use App\Helpers\AuthHelper;
 use App\Models\TankCalibration;
 
 class TankController extends Controller
@@ -28,6 +29,9 @@ class TankController extends Controller
 
     public function index()
     {
+        if (!AuthHelper::can('pumps.view')) {
+            $this->unauthorized();
+        }
         // Fixed: Restored tanks and suppliers fetching
         // List all tanks with their current status
         $user = \App\Helpers\AuthHelper::user();
@@ -51,7 +55,6 @@ class TankController extends Controller
             'fuelSettings' => $fuelSettings,
             'generalSettings' => $generalSettings,
             'fuelTypes' => $fuelTypes,
-            'fuelTypes' => $fuelTypes,
             'user' => $user,
             'additional_js' => $additional_js,
             'hide_topbar' => true
@@ -67,6 +70,9 @@ class TankController extends Controller
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!AuthHelper::can('pumps.create')) {
+                $this->unauthorized();
+            }
             header('Content-Type: application/json');
 
             // Get user's active station
@@ -110,6 +116,9 @@ class TankController extends Controller
     public function update()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!AuthHelper::can('pumps.edit')) {
+                $this->unauthorized();
+            }
             header('Content-Type: application/json');
 
             $input = json_decode(file_get_contents('php://input'), true);
@@ -142,6 +151,9 @@ class TankController extends Controller
     public function delete()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!AuthHelper::can('pumps.delete')) {
+                $this->unauthorized();
+            }
             header('Content-Type: application/json');
             $input = json_decode(file_get_contents('php://input'), true);
             $id = $input['id'] ?? $_POST['id'] ?? null;
@@ -181,6 +193,9 @@ class TankController extends Controller
 
     public function transfer()
     {
+        if (!AuthHelper::can('pumps.edit')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
@@ -222,6 +237,9 @@ class TankController extends Controller
 
     public function transfer_and_delete()
     {
+        if (!AuthHelper::can('pumps.delete')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
@@ -268,6 +286,9 @@ class TankController extends Controller
 
     public function calibration()
     {
+        if (!AuthHelper::can('calibration.view')) {
+            $this->unauthorized();
+        }
         $tanks = $this->tankModel->getAll();
         $this->view('tanks/calibration', [
             'tanks' => $tanks,
@@ -277,6 +298,9 @@ class TankController extends Controller
 
     public function saveCalibration()
     {
+        if (!AuthHelper::can('calibration.create')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
                 'tank_id' => $_POST['tank_id'],
@@ -298,6 +322,11 @@ class TankController extends Controller
      */
     public function getCalibrationPoints()
     {
+        if (!AuthHelper::can('calibration.view')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         header('Content-Type: application/json');
         $tankId = $_GET['tank_id'] ?? null;
 
@@ -317,6 +346,9 @@ class TankController extends Controller
      */
     public function addCalibrationPoint()
     {
+        if (!AuthHelper::can('calibration.edit')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
@@ -345,6 +377,9 @@ class TankController extends Controller
      */
     public function deleteCalibrationPoint()
     {
+        if (!AuthHelper::can('calibration.delete')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
@@ -440,7 +475,7 @@ class TankController extends Controller
                 'height_cm' => $result['height'],
                 'method' => $result['method']
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             echo json_encode(['success' => false, 'message' => 'خطأ في النظام']);
         }
     }
@@ -452,6 +487,9 @@ class TankController extends Controller
      */
     public function processSmartCalibration()
     {
+        if (!AuthHelper::can('calibration.create')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
@@ -585,7 +623,7 @@ class TankController extends Controller
             ];
 
             echo json_encode(['success' => true, 'result' => $result]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             error_log("Smart Calibration Error: " . $e->getMessage());
             echo json_encode(['success' => false, 'message' => 'حدث خطأ في النظام: ' . $e->getMessage()]);
         }

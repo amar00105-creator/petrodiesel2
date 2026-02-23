@@ -105,4 +105,20 @@ class Controller
     {
         return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
     }
+
+    public function unauthorized()
+    {
+        if ($this->isAjax()) {
+            while (ob_get_level()) ob_end_clean();
+            header('Content-Type: application/json');
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized Access']);
+            exit;
+        }
+
+        while (ob_get_level()) ob_end_clean();
+        http_response_code(403);
+        $this->view('errors/403', ['hide_topbar' => true]);
+        exit;
+    }
 }

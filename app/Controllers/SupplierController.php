@@ -15,6 +15,9 @@ class SupplierController extends Controller
 
     public function index()
     {
+        if (!AuthHelper::can('suppliers.view') && !AuthHelper::can('customers.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $supplierModel = new Supplier();
         $customerModel = new \App\Models\Customer();
@@ -33,6 +36,9 @@ class SupplierController extends Controller
 
     public function store()
     {
+        if (!AuthHelper::can('suppliers.create')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = $_POST;
 
@@ -48,6 +54,11 @@ class SupplierController extends Controller
     // API Endpoint for Ajax requests (Used in Purchases/Sales forms)
     public function api_create()
     {
+        if (!AuthHelper::can('suppliers.create')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         header('Content-Type: application/json');
 
         try {
@@ -84,6 +95,11 @@ class SupplierController extends Controller
 
     public function update_ajax()
     {
+        if (!AuthHelper::can('suppliers.edit')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            return;
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         // Clean any accidental output (whitespace, warnings)

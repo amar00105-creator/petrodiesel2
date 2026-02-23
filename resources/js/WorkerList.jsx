@@ -6,8 +6,9 @@ import AddWorkerModal from './AddWorkerModal';
 import EditWorkerModal from './EditWorkerModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { toast } from 'sonner';
+import { can } from './utils/permissions';
 
-const WorkerList = forwardRef(({ workers = [], search = '' }, ref) => {
+const WorkerList = forwardRef(({ workers = [], search = '', user }, ref) => {
     // Local state for immediate updates
     const [workerList, setWorkerList] = useState(Array.isArray(workers) ? workers : []);
     
@@ -153,8 +154,12 @@ const WorkerList = forwardRef(({ workers = [], search = '' }, ref) => {
                                     <td className="p-4 text-slate-500 dark:text-slate-400">{worker.station}</td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {can(user, 'workers.edit') && (
                                             <button onClick={() => handleEdit(worker)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-white/10 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+                                            )}
+                                            {can(user, 'workers.delete') && (
                                             <button onClick={() => openDeleteModal(worker)} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

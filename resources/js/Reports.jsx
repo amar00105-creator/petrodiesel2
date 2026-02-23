@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Printer, Filter, PieChart, TrendingUp, DollarSign, Droplets, Users, FileText, Briefcase, Activity, Truck, CheckCircle, Wallet, BarChart3, Gauge, Calendar, Brain } from 'lucide-react';
+import { Printer, Filter, PieChart, TrendingUp, DollarSign, Droplets, Users, FileText, Briefcase, Activity, Truck, CheckCircle, Wallet, BarChart3, Gauge, Calendar, Brain, Lock } from 'lucide-react';
 import { TabGroup, TabList, Tab, Title, Text, Card, Metric, Flex, BadgeDelta, Grid, Badge } from '@tremor/react';
 import { toast } from 'sonner';
+import { can } from './utils/permissions';
 import DailySalesReconciliation from './DailySalesReconciliation';
 import TankSalesReport from './TankSalesReport';
 import TankTransactionReport from './components/reports/TankTransactionReport';
@@ -58,6 +59,7 @@ export default function Reports({ user }) {
 
     // --- Data Fetching ---
     const fetchStats = async () => {
+        if (!can(user, 'reports.stats.view') && !can(user, 'reports.financial.view')) return;
         setLoading(true);
         try {
             const query = new URLSearchParams({
@@ -68,6 +70,7 @@ export default function Reports({ user }) {
             const response = await fetch(`${window.BASE_URL || ''}/reports?${query}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
+            if (!response.ok) { setLoading(false); return; }
             const result = await response.json();
             
             if (result.success) {
@@ -75,11 +78,10 @@ export default function Reports({ user }) {
                 console.log('📦 Warehouse Readings:', result?.warehouse?.readings);
                 setStats(result);
             } else {
-                toast.error('فشل تحميل البيانات');
+                console.error("Server Error:", result);
             }
         } catch (error) {
-            console.error(error);
-            toast.error('خطأ في الاتصال');
+            console.error("Network/Fetch Error:", error);
         } finally {
             setLoading(false);
         }
@@ -117,8 +119,12 @@ export default function Reports({ user }) {
         };
 
         const fetchCategories = async () => {
+             if (!can(user, 'reports.stats.view') && !can(user, 'reports.financial.view')) return;
              try {
-                const response = await fetch(`${window.BASE_URL || ''}/reports?action=get_categories`);
+                const response = await fetch(`${window.BASE_URL || ''}/reports?action=get_categories`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) return;
                 const result = await response.json();
                 if (result.success) {
                     setCategories(result.categories || []);
@@ -189,6 +195,25 @@ export default function Reports({ user }) {
     // Financial Cards - ENHANCED
     // Financial Sub-tabs
     const [financialTab, setFinancialTab] = useState(0); // 0: Usage, 1: Statement
+
+    // --- Restricted Section Renderer ---
+    const renderRestricted = (sectionName) => (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col items-center justify-center py-20 px-8"
+        >
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center mb-6 shadow-inner">
+                <Lock className="w-10 h-10 text-slate-400 dark:text-slate-500" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-600 dark:text-slate-300 mb-2">
+                {sectionName}
+            </h3>
+            <p className="text-slate-400 dark:text-slate-500 text-center max-w-md">
+                ليس لديك صلاحية للوصول إلى هذا القسم. يرجى التواصل مع المدير لمنحك الصلاحيات المطلوبة.
+            </p>
+        </motion.div>
+    );
 
     const renderFinancial = () => {
         console.log('[DEBUG-REPORTS] renderFinancial called, financialTab:', financialTab);
@@ -1509,15 +1534,13 @@ export default function Reports({ user }) {
 
                 {/* Content Grid */}
                 <div className="mt-8">
-                    {activeTab === 0 && renderFinancial()}
-                    {activeTab === 1 && renderWarehouse()}
-                    {activeTab === 2 && renderSales()}
-                    {activeTab === 3 && renderEmployees()}
-                    {/* GLOBAL REPORTS */}
-                    {activeTab === 4 && <DailyClosingReport stationId={filters.station_id} />}
-                    {/* GLOBAL REPORTS */}
-                    {activeTab === 5 && <SupplierReport stationId={filters.station_id} />}
-                    {activeTab === 6 && <CustomerReport stationId={filters.station_id} />}
+                    {activeTab === 0 && (can(user, 'reports.financial.view') ? renderFinancial() : renderRestricted('التقارير المالية'))}
+                    {activeTab === 1 && (can(user, 'reports.inventory.view') ? renderWarehouse() : renderRestricted('تقارير المستودعات'))}
+                    {activeTab === 2 && (can(user, 'reports.sales.view') ? renderSales() : renderRestricted('تقارير المبيعات'))}
+                    {activeTab === 3 && (can(user, 'reports.hr.view') ? renderEmployees() : renderRestricted('تقارير الموظفين'))}
+                    {activeTab === 4 && (can(user, 'reports.closing.view') ? <DailyClosingReport stationId={filters.station_id} /> : renderRestricted('تقفيل اليوم'))}
+                    {activeTab === 5 && (can(user, 'reports.supplier.view') ? <SupplierReport stationId={filters.station_id} /> : renderRestricted('تقرير مورد'))}
+                    {activeTab === 6 && (can(user, 'reports.customer.view') ? <CustomerReport stationId={filters.station_id} /> : renderRestricted('تقرير عميل'))}
                 </div>
             </TabGroup>
         </div>

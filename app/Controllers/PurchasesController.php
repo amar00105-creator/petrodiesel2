@@ -27,6 +27,9 @@ class PurchasesController extends Controller
 
     public function index()
     {
+        if (!AuthHelper::can('purchases.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         // Filter by current station for everyone (including Super Admin to respect switcher)
         $stationId = $user['station_id'];
@@ -53,6 +56,9 @@ class PurchasesController extends Controller
 
     public function create()
     {
+        if (!AuthHelper::can('purchases.create')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $stationId = $user['station_id']; // For creating local purchase
 
@@ -120,6 +126,9 @@ class PurchasesController extends Controller
     public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!AuthHelper::can('purchases.create')) {
+                $this->unauthorized();
+            }
             $user = AuthHelper::user();
             $data = $_POST;
 
@@ -283,6 +292,10 @@ class PurchasesController extends Controller
     // API: Get Pending Projects (Shipments)
     public function getPending()
     {
+        if (!AuthHelper::can('purchases.view')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         ob_clean();
         header('Content-Type: application/json');
         try {
@@ -323,6 +336,10 @@ class PurchasesController extends Controller
     // API: Process Discharge (From Modal)
     public function processDischarge()
     {
+        if (!AuthHelper::can('purchases.edit')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         ob_clean();
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents('php://input'), true);
@@ -433,6 +450,9 @@ class PurchasesController extends Controller
 
     public function offload()
     {
+        if (!AuthHelper::can('purchases.view')) {
+            $this->unauthorized();
+        }
         $id = $_GET['id'] ?? null;
         if (!$id) $this->redirect('/purchases');
 
@@ -453,6 +473,9 @@ class PurchasesController extends Controller
 
     public function processOffload()
     {
+        if (!AuthHelper::can('purchases.edit')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $purchaseId = $_POST['purchase_id'];
             $tankId = $_POST['tank_id']; // Target Tank
@@ -512,6 +535,11 @@ class PurchasesController extends Controller
 
     public function getDriver()
     {
+        if (!AuthHelper::can('purchases.view')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         if (isset($_GET['name'])) {
             $driverModel = new Driver();
             $driver = $driverModel->findByName($_GET['name']);
@@ -683,7 +711,7 @@ class PurchasesController extends Controller
     {
         // Check permission
         if (!AuthHelper::can('purchases.edit')) {
-            $this->redirect('/purchases?error=access_denied');
+            $this->unauthorized();
             return;
         }
 
@@ -734,6 +762,9 @@ class PurchasesController extends Controller
 
     public function update()
     {
+        if (!AuthHelper::can('purchases.edit')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id = $_POST['id'] ?? null;
             if (!$id) {
@@ -799,6 +830,11 @@ class PurchasesController extends Controller
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             return;
+        }
+        if (!AuthHelper::can('purchases.edit')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
         }
 
         $user = AuthHelper::user();

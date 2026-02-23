@@ -8,8 +8,9 @@ import { toast } from 'sonner';
 import { Phone, MapPin, Building2, Truck, Edit, Trash2, Plus } from 'lucide-react';
 import AddCustomerModal from './AddCustomerModal';
 import GlobalTable from './components/GlobalTable';
+import { can } from './utils/permissions';
 
-export default function SupplierList({ suppliers = [], hideHeader = false }) {
+export default function SupplierList({ suppliers = [], hideHeader = false, user }) {
     // Local state for immediate UI updates
     const [supplierList, setSupplierList] = useState(Array.isArray(suppliers) ? suppliers : []);
     
@@ -109,8 +110,12 @@ export default function SupplierList({ suppliers = [], hideHeader = false }) {
 
     const actions = (item) => (
         <>
+            {can(user, 'partners.edit') && (
             <button onClick={() => handleEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+            )}
+            {can(user, 'partners.delete') && (
             <button onClick={() => openDeleteModal(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+            )}
         </>
     );
 

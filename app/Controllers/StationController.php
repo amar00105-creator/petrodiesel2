@@ -12,10 +12,9 @@ class StationController extends Controller
     public function __construct()
     {
         AuthHelper::requireLogin();
-        // Check if user is Super Admin
-        $user = AuthHelper::user();
-        if ($user['role'] !== 'super_admin') {
-            die("Access Denied: Super Admin only.");
+        // Check if user is Super Admin or has Stations permission
+        if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.stations.view')) {
+            $this->unauthorized();
         }
     }
 
@@ -96,6 +95,10 @@ class StationController extends Controller
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
 
+        if (!AuthHelper::can('stations.delete')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         $data = json_decode(file_get_contents('php://input'), true);
         $id = $data['id'] ?? null;
 
@@ -118,6 +121,11 @@ class StationController extends Controller
         header('Content-Type: application/json');
         $data = json_decode(file_get_contents('php://input'), true);
 
+        $requiredPerm = !empty($data['id']) ? 'stations.edit' : 'stations.create';
+        if (!AuthHelper::can($requiredPerm)) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         $stationModel = new Station();
         $saveData = [
             'name' => $data['name'],
@@ -142,6 +150,12 @@ class StationController extends Controller
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         header('Content-Type: application/json');
+
+        if (!AuthHelper::can('stations.edit')) {
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
+
         $data = json_decode(file_get_contents('php://input'), true);
 
         $userId = $data['user_id'] ?? null;

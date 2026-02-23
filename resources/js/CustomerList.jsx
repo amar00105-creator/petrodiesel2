@@ -7,8 +7,9 @@ import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { toast } from 'sonner';
 import { Phone, MapPin, User, Edit, Trash2 } from 'lucide-react';
 import GlobalTable from './components/GlobalTable';
+import { can } from './utils/permissions';
 
-export default function CustomerList({ customers = [], onUpdate, hideHeader = false }) {
+export default function CustomerList({ customers = [], onUpdate, hideHeader = false, user }) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState(null);
@@ -102,8 +103,12 @@ export default function CustomerList({ customers = [], onUpdate, hideHeader = fa
 
     const actions = (item) => (
         <>
+            {can(user, 'partners.edit') && (
             <button onClick={() => handleEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+            )}
+            {can(user, 'partners.delete') && (
             <button onClick={() => openDeleteModal(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+            )}
         </>
     );
 

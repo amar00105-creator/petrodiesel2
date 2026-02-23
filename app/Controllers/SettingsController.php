@@ -14,9 +14,19 @@ class SettingsController extends Controller
     public function __construct()
     {
         AuthHelper::requireLogin();
-        if (!AuthHelper::can('settings.view')) {
-            http_response_code(403);
-            die('Unauthorized: You do not have permission to access settings.');
+        // Allow access if user has any setting view permission or super admin
+        if (!AuthHelper::isSuperAdmin()) {
+            $perms = $_SESSION['permissions'] ?? [];
+            $hasAnySettingPerm = false;
+            foreach ($perms as $p) {
+                if ($p === '*' || strpos($p, 'settings.') === 0 || strpos($p, 'roles.') === 0 || strpos($p, 'users.') === 0) {
+                    $hasAnySettingPerm = true;
+                    break;
+                }
+            }
+            if (!$hasAnySettingPerm) {
+                $this->unauthorized();
+            }
         }
     }
 
@@ -32,6 +42,7 @@ class SettingsController extends Controller
         $generalSettings = $settingModel->getAllBySection('general');
         $fuelSettings = $settingModel->getAllBySection('fuel');
         $alertSettings = $settingModel->getAllBySection('alerts');
+        $aiSettings = $settingModel->getAllBySection('ai');
 
         $fuelTypeModel = new FuelType();
         $fuelTypes = $fuelTypeModel->getAll();
@@ -41,8 +52,8 @@ class SettingsController extends Controller
         $users = [];
         $stations = [];
 
-        // STRICT: Only super admin can access roles & users (security tab)
-        $canAccessSecurity = $isSuperAdmin;
+        // STRICT: Role/User management access check
+        $canAccessSecurity = AuthHelper::can('settings.security.view') || AuthHelper::can('roles.view') || AuthHelper::can('users.view');
 
         if ($canAccessSecurity) {
             $roleModel = new Role();
@@ -146,6 +157,7 @@ class SettingsController extends Controller
             'alerts' => $alertSettings,
             'roles' => $roles,
             'fuelTypes' => $fuelTypes,
+            'ai' => $aiSettings,
             'stations' => $stations,
             'users' => $users,
             'isSuperAdmin' => $isSuperAdmin,
@@ -157,10 +169,20 @@ class SettingsController extends Controller
     public function update()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // Permission check: require settings.edit
-            if (!AuthHelper::can('settings.edit') && !AuthHelper::isSuperAdmin()) {
-                http_response_code(403);
-                die('Unauthorized: Missing settings.edit permission');
+            $section = $_POST['section'] ?? 'general';
+
+            // Map section to edit permission
+            $permMap = [
+                'general' => 'settings.general.edit',
+                'fuel' => 'settings.fuel.edit',
+                'alerts' => 'settings.alerts.edit',
+                'ai' => 'settings.ai.edit',
+            ];
+
+            $requiredPerm = $permMap[$section] ?? 'settings.edit';
+
+            if (!AuthHelper::can($requiredPerm)) {
+                $this->unauthorized();
             }
 
             $settingModel = new Setting();
@@ -200,9 +222,8 @@ class SettingsController extends Controller
     public function backup()
     {
         // Permission check
-        if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.backup')) {
-            http_response_code(403);
-            die('غير مصرح: لا تملك صلاحية النسخ الاحتياطي');
+        if (!AuthHelper::can('settings.backup.view')) {
+            $this->unauthorized();
         }
 
         // Simple Database Backup using mysqldump or PHP fallback
@@ -287,9 +308,9 @@ class SettingsController extends Controller
     {
         header('Content-Type: application/json');
 
-        // CRITICAL: Only super admin can restore
-        if (!AuthHelper::isSuperAdmin()) {
-            echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه استعادة النسخ الاحتياطية']);
+        // CRITICAL: Restore check
+        if (!AuthHelper::can('settings.backup.create')) {
+            echo json_encode(['success' => false, 'message' => 'غير مصرح: لا تملك صلاحية استعادة النسخ الاحتياطية']);
             exit;
         }
 
@@ -379,9 +400,12 @@ class SettingsController extends Controller
             header('Content-Type: application/json');
             $input = json_decode(file_get_contents('php://input'), true);
 
-            // STRICT: Only super admin can manage roles
-            if (!AuthHelper::isSuperAdmin()) {
-                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه إدارة الأدوار']);
+            $isEditing = isset($input['id']) && $input['id'];
+            $requiredPerm = $isEditing ? 'roles.edit' : 'roles.create';
+
+            // STRICT: Manage roles check
+            if (!AuthHelper::can($requiredPerm)) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية إدارة الأدوار']);
                 exit;
             }
 
@@ -463,10 +487,9 @@ class SettingsController extends Controller
             header('Content-Type: application/json');
 
             // Permission check
-            if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.fuel') && !AuthHelper::can('settings.edit')) {
+            if (!AuthHelper::can('settings.fuel.edit')) {
                 echo json_encode(['success' => false, 'message' => 'غير مصرح: لا تملك صلاحية تعديل الوقود']);
                 exit;
-                return;
             }
 
             $rawInput = file_get_contents('php://input');
@@ -577,10 +600,9 @@ class SettingsController extends Controller
             header('Content-Type: application/json');
 
             // Permission check
-            if (!AuthHelper::isSuperAdmin() && !AuthHelper::can('settings.fuel') && !AuthHelper::can('settings.edit')) {
+            if (!AuthHelper::can('settings.fuel.edit')) {
                 echo json_encode(['success' => false, 'message' => 'غير مصرح: لا تملك صلاحية حذف الوقود']);
                 exit;
-                return;
             }
 
             try {
@@ -615,9 +637,9 @@ class SettingsController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
-            // STRICT: Only super admin can manage users
-            if (!AuthHelper::isSuperAdmin()) {
-                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه تعديل المستخدمين']);
+            // STRICT: Manage users check
+            if (!AuthHelper::can('users.edit')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية تعديل المستخدمين']);
                 exit;
             }
 
@@ -695,9 +717,9 @@ class SettingsController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
-            // STRICT: Only super admin can create users
-            if (!AuthHelper::isSuperAdmin()) {
-                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه إنشاء مستخدمين']);
+            // STRICT: Manage users check
+            if (!AuthHelper::can('users.create')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية إنشاء مستخدمين']);
                 exit;
             }
 
@@ -751,9 +773,9 @@ class SettingsController extends Controller
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Content-Type: application/json');
 
-            // STRICT: Only super admin can delete roles
-            if (!AuthHelper::isSuperAdmin()) {
-                echo json_encode(['success' => false, 'message' => 'غير مصرح: فقط المدير العام يمكنه حذف الأدوار']);
+            // STRICT: Delete roles check
+            if (!AuthHelper::can('roles.delete')) {
+                echo json_encode(['success' => false, 'message' => 'غير مصرح: ليس لديك صلاحية حذف الأدوار']);
                 exit;
             }
 

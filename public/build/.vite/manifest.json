@@ -1,38 +1,38 @@
 {
-  "_AddSupplierModal-aGPYe-om.js": {
-    "file": "assets/AddSupplierModal-aGPYe-om.js",
+  "_AddSupplierModal-B86onr1y.js": {
+    "file": "assets/AddSupplierModal-B86onr1y.js",
     "name": "AddSupplierModal",
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx"
     ]
   },
-  "_DischargeModal-BPVH7G7r.js": {
-    "file": "assets/DischargeModal-BPVH7G7r.js",
+  "_DischargeModal-CxTwscbG.js": {
+    "file": "assets/DischargeModal-CxTwscbG.js",
     "name": "DischargeModal",
     "imports": [
-      "_ui-efqcg3BN.js"
+      "_ui-vl2tznQh.js"
     ]
   },
-  "_SuccessAnimation-BeLlydOt.js": {
-    "file": "assets/SuccessAnimation-BeLlydOt.js",
+  "_SuccessAnimation-DVN_Vgqo.js": {
+    "file": "assets/SuccessAnimation-DVN_Vgqo.js",
     "name": "SuccessAnimation",
     "imports": [
-      "_ui-efqcg3BN.js"
+      "_ui-vl2tznQh.js"
     ]
   },
-  "_SupplierList-4mfA7ylg.js": {
-    "file": "assets/SupplierList-4mfA7ylg.js",
+  "_SupplierList-ttiK4DXd.js": {
+    "file": "assets/SupplierList-ttiK4DXd.js",
     "name": "SupplierList",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
-      "_AddSupplierModal-aGPYe-om.js"
+      "_AddSupplierModal-B86onr1y.js"
     ]
   },
-  "_ui-efqcg3BN.js": {
-    "file": "assets/ui-efqcg3BN.js",
+  "_ui-vl2tznQh.js": {
+    "file": "assets/ui-vl2tznQh.js",
     "name": "ui",
     "imports": [
       "_vendor-C0Dkio3Y.js"
@@ -43,24 +43,24 @@
     "name": "vendor"
   },
   "resources/js/AddPump.jsx": {
-    "file": "assets/AddPump-CIFUbUcG.js",
+    "file": "assets/AddPump-BlAHgD3a.js",
     "name": "AddPump",
     "src": "resources/js/AddPump.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/AddSale.jsx": {
-    "file": "assets/AddSale-D8hxp5TD.js",
+    "file": "assets/AddSale-Buc1dqHY.js",
     "name": "AddSale",
     "src": "resources/js/AddSale.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/main.jsx",
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "_vendor-C0Dkio3Y.js"
     ],
     "dynamicImports": [
@@ -68,25 +68,25 @@
     ]
   },
   "resources/js/BanksPage.jsx": {
-    "file": "assets/BanksPage-DZnTLbSy.js",
+    "file": "assets/BanksPage-D5KzLkxk.js",
     "name": "BanksPage",
     "src": "resources/js/BanksPage.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/CreatePurchase.jsx": {
-    "file": "assets/CreatePurchase-BuE5zRPC.js",
+    "file": "assets/CreatePurchase-Dp_YOWwD.js",
     "name": "CreatePurchase",
     "src": "resources/js/CreatePurchase.jsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/main.jsx",
-      "_ui-efqcg3BN.js",
-      "_AddSupplierModal-aGPYe-om.js",
+      "_ui-vl2tznQh.js",
+      "_AddSupplierModal-B86onr1y.js",
       "_vendor-C0Dkio3Y.js"
     ],
     "dynamicImports": [
@@ -94,196 +94,196 @@
     ]
   },
   "resources/js/CustomerReport.jsx": {
-    "file": "assets/CustomerReport-K2pdg0hl.js",
+    "file": "assets/CustomerReport-SEtKvxQy.js",
     "name": "CustomerReport",
     "src": "resources/js/CustomerReport.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/Dashboard.jsx": {
-    "file": "assets/Dashboard-DQMApMda.js",
+    "file": "assets/Dashboard-VI2l_R1H.js",
     "name": "Dashboard",
     "src": "resources/js/Dashboard.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/EditPurchase.jsx": {
-    "file": "assets/EditPurchase-B1C0Git4.js",
+    "file": "assets/EditPurchase-Dmn1vO_T.js",
     "name": "EditPurchase",
     "src": "resources/js/EditPurchase.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/ExpenseList.jsx": {
-    "file": "assets/ExpenseList-jREvSv8s.js",
+    "file": "assets/ExpenseList-BMJQGsQG.js",
     "name": "ExpenseList",
     "src": "resources/js/ExpenseList.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/FinancialAssetsPage.jsx": {
-    "file": "assets/FinancialAssetsPage-BONanJjR.js",
+    "file": "assets/FinancialAssetsPage-7116JE84.js",
     "name": "FinancialAssetsPage",
     "src": "resources/js/FinancialAssetsPage.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/HumanResources.jsx": {
-    "file": "assets/HumanResources-BgVbhbaO.js",
+    "file": "assets/HumanResources-tN23uSnn.js",
     "name": "HumanResources",
     "src": "resources/js/HumanResources.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "resources/js/WorkerList.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/ManagePump.jsx": {
-    "file": "assets/ManagePump-m5dyY1mP.js",
+    "file": "assets/ManagePump-Ba8meIkE.js",
     "name": "ManagePump",
     "src": "resources/js/ManagePump.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/Partners.jsx": {
-    "file": "assets/Partners-C1DxHacO.js",
+    "file": "assets/Partners-Fp6K_stQ.js",
     "name": "Partners",
     "src": "resources/js/Partners.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
-      "_SupplierList-4mfA7ylg.js",
-      "_AddSupplierModal-aGPYe-om.js",
+      "_SupplierList-ttiK4DXd.js",
+      "_AddSupplierModal-B86onr1y.js",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/PumpList.jsx": {
-    "file": "assets/PumpList-DPleMz6F.js",
+    "file": "assets/PumpList-Cf6mrUjp.js",
     "name": "PumpList",
     "src": "resources/js/PumpList.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
-      "_SuccessAnimation-BeLlydOt.js",
+      "_SuccessAnimation-DVN_Vgqo.js",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/PurchaseList.jsx": {
-    "file": "assets/PurchaseList-S_Elo3BS.js",
+    "file": "assets/PurchaseList-DObFMbth.js",
     "name": "PurchaseList",
     "src": "resources/js/PurchaseList.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
-      "_DischargeModal-BPVH7G7r.js",
+      "_DischargeModal-CxTwscbG.js",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/Reports.jsx": {
-    "file": "assets/Reports-CO8RBH8O.js",
+    "file": "assets/Reports-BSsKK8XN.js",
     "name": "Reports",
     "src": "resources/js/Reports.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "resources/js/CustomerReport.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/SalesList.jsx": {
-    "file": "assets/SalesList-Bzt313KS.js",
+    "file": "assets/SalesList-D1QRm42Q.js",
     "name": "SalesList",
     "src": "resources/js/SalesList.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/Settings.jsx": {
-    "file": "assets/Settings-_hAIuxix.js",
+    "file": "assets/Settings-D5E_xe2V.js",
     "name": "Settings",
     "src": "resources/js/Settings.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "resources/js/StationList.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/StationList.jsx": {
-    "file": "assets/StationList-BWjC6FJa.js",
+    "file": "assets/StationList-BrCe8ttn.js",
     "name": "StationList",
     "src": "resources/js/StationList.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/TankList.jsx": {
-    "file": "assets/TankList-CR8bhGYn.js",
+    "file": "assets/TankList-bAR5xHU6.js",
     "name": "TankList",
     "src": "resources/js/TankList.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
-      "_DischargeModal-BPVH7G7r.js",
-      "_SuccessAnimation-BeLlydOt.js",
+      "_DischargeModal-CxTwscbG.js",
+      "_SuccessAnimation-DVN_Vgqo.js",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/WorkerList.jsx": {
-    "file": "assets/WorkerList-BOMgCSqQ.js",
+    "file": "assets/WorkerList-B_4NxOhz.js",
     "name": "WorkerList",
     "src": "resources/js/WorkerList.jsx",
     "isDynamicEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "resources/js/main.jsx",
       "_vendor-C0Dkio3Y.js"
     ]
   },
   "resources/js/main.jsx": {
-    "file": "assets/main-C2Z0Dlro.js",
+    "file": "assets/main-BYympAk-.js",
     "name": "main",
     "src": "resources/js/main.jsx",
     "isEntry": true,
     "imports": [
-      "_ui-efqcg3BN.js",
+      "_ui-vl2tznQh.js",
       "_vendor-C0Dkio3Y.js"
     ],
     "dynamicImports": [
@@ -292,7 +292,7 @@
       "resources/js/ManagePump.jsx",
       "resources/js/AddSale.jsx",
       "resources/js/WorkerList.jsx",
-      "_SupplierList-4mfA7ylg.js",
+      "_SupplierList-ttiK4DXd.js",
       "resources/js/PurchaseList.jsx",
       "resources/js/TankList.jsx",
       "resources/js/BanksPage.jsx",
@@ -310,7 +310,7 @@
       "resources/js/CustomerReport.jsx"
     ],
     "css": [
-      "assets/main-C8AUqBnf.css"
+      "assets/main-Dm69pVBE.css"
     ]
   },
   "resources/js/utils/serverTime.js": {

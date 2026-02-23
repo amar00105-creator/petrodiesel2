@@ -55,6 +55,9 @@ class PumpController extends \App\Core\Controller
 
     public function index()
     {
+        if (!AuthHelper::can('pumps.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $stationId = $user['station_id'] ?? 1;
         $pumps = $this->pumpModel->getPumpsWithCounters($stationId);
@@ -74,6 +77,9 @@ class PumpController extends \App\Core\Controller
 
     public function create()
     {
+        if (!AuthHelper::can('pumps.create')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $stationId = $user['station_id'] ?? null;
 
@@ -99,6 +105,9 @@ class PumpController extends \App\Core\Controller
 
     public function store()
     {
+        if (!AuthHelper::can('pumps.create')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
 
         $name = $_POST['name'] ?? 'Pump';
@@ -201,6 +210,9 @@ class PumpController extends \App\Core\Controller
     // The Manage Page (Counters & Workers)
     public function manage()
     {
+        if (!AuthHelper::can('pumps.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $pumpId = $_GET['id'] ?? null;
 
@@ -271,6 +283,11 @@ class PumpController extends \App\Core\Controller
     // Ajax or Form Post to update counter details (Reading + Worker)
     public function updateCounter()
     {
+        if (!AuthHelper::can('pumps.edit')) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+            exit;
+        }
         try {
             $counterId = $_POST['counter_id'] ?? null;
             if (!$counterId) throw new \Exception('Counter ID missing');
@@ -393,6 +410,9 @@ class PumpController extends \App\Core\Controller
     // Full Page Edit View
     public function edit()
     {
+        if (!AuthHelper::can('pumps.edit')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $pumpId = $_GET['id'] ?? null;
 

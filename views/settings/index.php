@@ -16,6 +16,9 @@
     data-users='<?= json_encode($users ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
     data-stats='<?= json_encode($stats ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
     data-all-stations='<?= json_encode($allStations ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+    data-stations='<?= json_encode($stations ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+    data-is-super-admin='<?= json_encode($isSuperAdmin ?? false, JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
+    data-user-permissions='<?= json_encode($userPermissions ?? [], JSON_HEX_APOS | JSON_HEX_QUOT) ?>'
     class="min-h-screen bg-slate-50 dark:bg-[#0F172A]">
     <!-- React will mount here -->
     <div class="flex items-center justify-center h-screen">

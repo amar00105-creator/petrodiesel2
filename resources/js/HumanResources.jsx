@@ -7,10 +7,10 @@ import WorkerList from './WorkerList';
 import EmployeeList from './EmployeeList';
 import DriverList from './DriverList';
 import Payroll from './Payroll';
+import { can } from './utils/permissions';
 
 export default function HumanResources(props) {
-    // Props contain the initial data loaded from PHP view
-    const { workers = [], employees = [], drivers = [] } = props;
+    const { workers = [], employees = [], drivers = [], user } = props;
     
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [search, setSearch] = useState('');
@@ -83,6 +83,10 @@ export default function HumanResources(props) {
                             </div>
                             
                             {selectedIndex !== 3 && (
+                              (selectedIndex === 0 && can(user, 'hr.create')) ||
+                              (selectedIndex === 1 && can(user, 'workers.create')) ||
+                              (selectedIndex === 2 && can(user, 'hr.create'))
+                            ) && (
                                 <button 
                                     onClick={handleAddClick}
                                     className={`
@@ -112,7 +116,7 @@ export default function HumanResources(props) {
                                     exit={{ opacity: 0, x: 20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <EmployeeList ref={employeeRef} employees={employees} search={search} />
+                                    <EmployeeList ref={employeeRef} employees={employees} search={search} user={user} />
                                 </motion.div>
                             )}
                             {selectedIndex === 1 && (
@@ -123,7 +127,7 @@ export default function HumanResources(props) {
                                     exit={{ opacity: 0, x: 20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <WorkerList ref={workerRef} workers={workers} search={search} />
+                                    <WorkerList ref={workerRef} workers={workers} search={search} user={user} />
                                 </motion.div>
                             )}
                             {selectedIndex === 2 && (
@@ -134,7 +138,7 @@ export default function HumanResources(props) {
                                     exit={{ opacity: 0, x: 20 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <DriverList ref={driverRef} drivers={drivers} search={search} />
+                                    <DriverList ref={driverRef} drivers={drivers} search={search} user={user} />
                                 </motion.div>
                             )}
                             {selectedIndex === 3 && (

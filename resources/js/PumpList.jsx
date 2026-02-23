@@ -6,8 +6,9 @@ import EditPumpModal from './EditPumpModal';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import SuccessAnimation from './SuccessAnimation';
 import FuelPumpCard from './FuelPumpCard';
+import { can } from './utils/permissions';
 
-export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
+export default function PumpList({ pumps = [], tanks = [], workers = [], user }) {
     // ═══ View Mode (persisted) ═══
     const [viewMode, setViewMode] = useState(() => localStorage.getItem('pumps_view_mode') || 'grid');
     const toggleView = (mode) => { setViewMode(mode); localStorage.setItem('pumps_view_mode', mode); };
@@ -166,13 +167,15 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                     )}
                 </div>
 
-                {/* Right: Add Button */}
+                {/* Right: Add Button - Only shown if user has pumps.create permission */}
+                {can(user, 'pumps.create') && (
                 <a
                     href="/PETRODIESEL2/public/pumps/create"
                     className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all flex items-center gap-2 font-bold dark:bg-blue-600 dark:hover:bg-blue-700 dark:shadow-none"
                 >
                     <Plus className="w-5 h-5" /> إضافة ماكينة
                 </a>
+                )}
             </div>
 
             {/* ═══ Content ═══ */}
@@ -201,8 +204,8 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                                 fuelType={pump.product_type || 'وقود'}
                                 counters={pump.counters || []}
                                 sourceWell={pump.tank_name || 'خزان غير محدد'}
-                                onEdit={() => handleEdit(pump)}
-                                onDelete={() => openDeleteModal(pump)}
+                                onEdit={can(user, 'pumps.edit') ? () => handleEdit(pump) : null}
+                                onDelete={can(user, 'pumps.delete') ? () => openDeleteModal(pump) : null}
                             />
                         </motion.div>
                     ))}
@@ -297,8 +300,9 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                                         {/* ── Vertical Divider ── */}
                                         <div className={`w-px flex-shrink-0 ${isDiesel ? 'bg-blue-200/40 dark:bg-blue-500/15' : 'bg-orange-200/40 dark:bg-orange-500/15'}`} />
 
-                                        {/* ── Right: Actions ── */}
+                                        {/* ── Right: Actions (permission-gated) ── */}
                                         <div className="flex items-center gap-1.5 px-3 flex-shrink-0">
+                                            {can(user, 'pumps.edit') && (
                                             <button
                                                 onClick={() => handleEdit(pump)}
                                                 className="p-2 rounded-lg bg-blue-50/80 dark:bg-blue-500/10 border border-blue-200/50 dark:border-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-all hover:scale-105"
@@ -306,6 +310,8 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                                             >
                                                 <Settings className="w-3.5 h-3.5" />
                                             </button>
+                                            )}
+                                            {can(user, 'pumps.delete') && (
                                             <button
                                                 onClick={() => openDeleteModal(pump)}
                                                 className="p-2 rounded-lg bg-red-50/80 dark:bg-red-500/10 border border-red-200/50 dark:border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 transition-all hover:scale-105"
@@ -313,6 +319,7 @@ export default function PumpList({ pumps = [], tanks = [], workers = [] }) {
                                             >
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

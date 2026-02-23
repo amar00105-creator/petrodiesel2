@@ -4,8 +4,9 @@ import { Card, Title, Text, TextInput, Badge, Button } from '@tremor/react';
 import { Search, Plus, Trash2, Edit, Truck, CheckCircle, AlertTriangle, User, X, Save, Loader2 } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { toast } from 'sonner';
+import { can } from './utils/permissions';
 
-const DriverList = forwardRef(({ drivers = [], search = '' }, ref) => {
+const DriverList = forwardRef(({ drivers = [], search = '', user }, ref) => {
     const [driverList, setDriverList] = useState(Array.isArray(drivers) ? drivers : []);
 
     React.useEffect(() => {
@@ -156,12 +157,16 @@ const DriverList = forwardRef(({ drivers = [], search = '' }, ref) => {
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {can(user, 'hr.edit') && (
                                 <button onClick={() => handleEdit(driver)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300">
                                     <Edit className="w-4 h-4" />
                                 </button>
+                                )}
+                                {can(user, 'hr.delete') && (
                                 <button onClick={() => openDeleteModal(driver)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-red-600 dark:text-red-400">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
+                                )}
                             </div>
                         </div>
 

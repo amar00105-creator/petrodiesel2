@@ -4,6 +4,7 @@ import { Card, Title, Text, Button, Badge } from '@tremor/react';
 import { Plus, Building2, MapPin, Phone, Edit, Trash2, Users, Search, CheckCircle, XCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
+import { can } from './utils/permissions';
 
 const SuccessPopup = ({ message, onClose }) => (
     <div className="fixed inset-0 z-[60] flex items-center justify-center pointer-events-none">
@@ -30,7 +31,7 @@ const SuccessPopup = ({ message, onClose }) => (
     </div>
 );
 
-export default function StationList({ stations = [], users = [] }) {
+export default function StationList({ stations = [], users = [], user }) {
     const [userList, setUserList] = useState(users);
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -160,6 +161,7 @@ export default function StationList({ stations = [], users = [] }) {
                  {/* Only show title if not embedded or make it smaller */}
                  {/* actually, inside a tab, a secondary title is fine but let's make it cleaner */}
                  
+                {can(user, 'stations.create') && (
                 <Button 
                     icon={Plus} 
                     onClick={() => { setEditingStation(null); setIsCreateOpen(true); }}
@@ -167,6 +169,7 @@ export default function StationList({ stations = [], users = [] }) {
                 >
                     إضافة محطة
                 </Button>
+                )}
             </div>
 
             {/* Search */}
@@ -202,8 +205,12 @@ export default function StationList({ stations = [], users = [] }) {
                                     <Building2 className="w-8 h-8 text-blue-600"/>
                                 </div>
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {can(user, 'stations.edit') && (
                                     <button onClick={() => { setEditingStation(station); setIsCreateOpen(true); }} className="p-2 hover:bg-slate-100 rounded-lg text-slate-600"><Edit className="w-4 h-4"/></button>
+                                    )}
+                                    {can(user, 'stations.delete') && (
                                     <button onClick={() => { setItemToDelete(station); setDeleteModalOpen(true); }} className="p-2 hover:bg-red-50 rounded-lg text-red-600"><Trash2 className="w-4 h-4"/></button>
+                                    )}
                                 </div>
                             </div>
 

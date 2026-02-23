@@ -4,9 +4,15 @@ namespace App\Controllers;
 
 use App\Config\Database;
 use App\Models\Setting;
+use App\Helpers\AuthHelper;
 
 class AlertsController extends Controller
 {
+    public function __construct()
+    {
+        AuthHelper::requireLogin();
+    }
+
     /**
      * Main handler for alerts API
      */

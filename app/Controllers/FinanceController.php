@@ -46,6 +46,9 @@ class FinanceController extends Controller
 
     public function index()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $filters = [];
 
@@ -129,6 +132,9 @@ class FinanceController extends Controller
 
     public function createSafe()
     {
+        if (!AuthHelper::can('finance.create')) {
+            $this->unauthorized();
+        }
         try {
             $user = AuthHelper::user();
             $name = $_POST['name'] ?? '';
@@ -169,6 +175,9 @@ class FinanceController extends Controller
 
     public function createBank()
     {
+        if (!AuthHelper::can('finance.create')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $name = $_POST['name'];
         $accNum = $_POST['account_number'];
@@ -195,6 +204,9 @@ class FinanceController extends Controller
     public function updateSafe()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        if (!AuthHelper::can('finance.edit')) {
+            $this->unauthorized();
+        }
 
         $user = AuthHelper::user();
         $id = $_POST['id'];
@@ -218,6 +230,9 @@ class FinanceController extends Controller
     public function deleteSafe()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        if (!AuthHelper::can('finance.delete')) {
+            $this->unauthorized();
+        }
         $id = $_POST['id'];
 
         try {
@@ -254,6 +269,9 @@ class FinanceController extends Controller
     public function updateBank()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        if (!AuthHelper::can('finance.edit')) {
+            $this->unauthorized();
+        }
 
         $user = AuthHelper::user();
         $id = $_POST['id'];
@@ -279,6 +297,9 @@ class FinanceController extends Controller
     public function deleteBank()
     {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        if (!AuthHelper::can('finance.delete')) {
+            $this->unauthorized();
+        }
         $id = $_POST['id'];
 
         try {
@@ -313,6 +334,9 @@ class FinanceController extends Controller
 
     public function transfer()
     {
+        if (!AuthHelper::can('finance.edit')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
 
         $fromType = $_POST['from_type']; // safe, bank
@@ -411,6 +435,9 @@ class FinanceController extends Controller
 
     public function storeTransaction()
     {
+        if (!AuthHelper::can('finance.edit')) { // Usually edit or create, finance.edit is a good catch-all for transactions
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $type = $_POST['type']; // expense, income
         $categoryId = !empty($_POST['category_id']) ? $_POST['category_id'] : null;
@@ -500,6 +527,9 @@ class FinanceController extends Controller
 
     public function reports()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $filters = [
             'start_date' => $_GET['start_date'] ?? date('Y-m-01'),
@@ -539,6 +569,9 @@ class FinanceController extends Controller
 
     public function getBankDetails()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $id = $_GET['id'] ?? null;
         if (!$id) {
             header('Content-Type: application/json');
@@ -571,6 +604,9 @@ class FinanceController extends Controller
 
     public function getSafeDetails()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $id = $_GET['id'] ?? null;
         if (!$id) {
             header('Content-Type: application/json');
@@ -605,6 +641,9 @@ class FinanceController extends Controller
     // صفحة البنوك
     public function banks()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $banks = $this->bankModel->getAll($user['station_id'] ?? null);
 
@@ -633,6 +672,9 @@ class FinanceController extends Controller
     // صفحة الخزائن
     public function safes()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $safes = $this->safeModel->getAll($user['station_id'] ?? null);
 
@@ -661,6 +703,9 @@ class FinanceController extends Controller
     // صفحة الأصول المالية
     public function assets()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
         $stationId = $user['station_id'] ?? null;
         $banks = $this->bankModel->getAll($stationId);
@@ -677,6 +722,9 @@ class FinanceController extends Controller
     }
     public function deleteTransaction()
     {
+        if (!AuthHelper::can('finance.delete')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
 
         $id = $_POST['id'];
@@ -783,6 +831,9 @@ class FinanceController extends Controller
      */
     public function requestTransfer()
     {
+        if (!AuthHelper::can('finance.edit')) {
+            $this->unauthorized();
+        }
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             $this->jsonResponse(['success' => false, 'message' => 'Invalid request method']);
             return;
@@ -1030,6 +1081,9 @@ class FinanceController extends Controller
      */
     public function getBanksForTransfer()
     {
+        if (!AuthHelper::can('finance.view')) {
+            $this->unauthorized();
+        }
         $user = AuthHelper::user();
 
         try {
@@ -1045,5 +1099,12 @@ class FinanceController extends Controller
             error_log("Get banks for transfer error: " . $e->getMessage());
             $this->jsonResponse(['success' => false, 'message' => 'فشل تحميل البنوك']);
         }
+    }
+    protected function jsonResponse($data)
+    {
+        while (ob_get_level()) ob_end_clean();
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit;
     }
 }

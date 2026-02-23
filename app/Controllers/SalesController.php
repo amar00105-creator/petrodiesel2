@@ -20,6 +20,9 @@ class SalesController extends Controller
 
     public function index()
     {
+        if (!AuthHelper::can('sales.view')) {
+            $this->unauthorized();
+        }
         $this->checkAndFixDatabase();
         $user = AuthHelper::user();
         // Filter by current active station (respects station switcher)
@@ -39,6 +42,9 @@ class SalesController extends Controller
 
     public function create()
     {
+        if (!AuthHelper::can('sales.create')) {
+            $this->unauthorized();
+        }
         $this->loadCreateView();
     }
 
@@ -74,6 +80,9 @@ class SalesController extends Controller
 
     public function edit($id = null)
     {
+        if (!AuthHelper::can('sales.edit')) {
+            $this->unauthorized();
+        }
         $id = $id ?? $_GET['id'] ?? null;
 
         if (!$id) {
@@ -105,6 +114,9 @@ class SalesController extends Controller
 
     public function invoice($id = null)
     {
+        if (!AuthHelper::can('sales.view')) {
+            $this->unauthorized();
+        }
         $id = $id ?? $_GET['id'] ?? null;
 
         if (!$id) {
@@ -326,6 +338,9 @@ class SalesController extends Controller
     {
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if (!AuthHelper::can('sales.create')) {
+                $this->unauthorized();
+            }
             try {
                 $db = \App\Config\Database::connect();
                 $user = AuthHelper::user();
@@ -573,7 +588,7 @@ class SalesController extends Controller
         header('Content-Type: application/json');
 
         if (!AuthHelper::can('sales.edit')) {
-            echo json_encode(['success' => false, 'message' => 'غير مصرح']);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized']);
             return;
         }
 

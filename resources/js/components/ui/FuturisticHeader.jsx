@@ -557,9 +557,9 @@ const FuturisticHeader = ({ page, user, stats, allStations }) => {
                 <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 via-transparent to-transparent opacity-50 pointer-events-none"></div>
                 <Globe size={18} className="text-emerald-400 animate-pulse relative z-10" />
                 <span className="text-lg font-black text-white tracking-wide drop-shadow-md relative z-10">
-                  {user?.station_id
+                  {user?.station_id && user?.station_id !== 'all'
                     ? user.station_name || "Station #" + user.station_id
-                    : "Global Access"}
+                    : "Global View"}
                 </span>
               </div>
             )}

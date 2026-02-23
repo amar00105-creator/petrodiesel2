@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, Title, Text, TextInput, Select, SelectItem, Switch, Tab, TabGroup, TabList, Badge } from '@tremor/react';
-import { Settings as SettingsIcon, Fuel, Bell, Shield, Save, Globe, Server, UserCog, Database, Download, Upload, Plus, Trash2, Edit, Building2, Activity, DollarSign, FileText, Calendar, AlertTriangle } from 'lucide-react';
+import { Settings as SettingsIcon, Fuel, Bell, Shield, Save, Globe, Server, UserCog, Database, Download, Upload, Plus, Trash2, Edit, Building2, Activity, DollarSign, FileText, Calendar, AlertTriangle, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import StationList from './StationList';
 import RoleManager from './components/RoleManager';
@@ -9,7 +9,7 @@ import UserManager from './components/UserManager';
 import ActivityLogPanel from './components/ActivityLogPanel';
 import AlertSettingsPanel from './components/AlertSettingsPanel';
 
-export default function Settings({ general = {}, fuel = {}, alerts = {}, roles = [], fuelTypes = [], stations = [], users = [], isSuperAdmin = false, userPermissions = [] }) {
+export default function Settings({ general = {}, fuel = {}, alerts = {}, roles = [], fuelTypes = [], ai = {}, stations = [], users = [], isSuperAdmin = false, userPermissions = [], user }) {
     const [loading, setLoading] = useState(false);
     const [selectedTab, setSelectedTab] = useState(() => {
         const saved = localStorage.getItem('settings_active_tab');
@@ -25,14 +25,17 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
         { id: 'general', label: 'عام', icon: SettingsIcon, permission: 'settings.general' },
         { id: 'stations', label: 'إدارة المحطات', icon: Building2, permission: 'settings.stations' },
         { id: 'fuel', label: 'الوقود والأسعار', icon: Fuel, permission: 'settings.fuel' },
-        { id: 'roles', label: 'الصلاحيات والأمان', icon: Shield, permission: 'settings.security', superAdminOnly: true },
+        { id: 'roles', label: 'الصلاحيات والأمان', icon: Shield, permission: 'settings.security' }, // Note: Removed superAdminOnly
         { id: 'activity', label: 'سجل العمليات', icon: Activity, permission: 'settings.activity' },
-        { id: 'alerts', label: 'التنبيهات', icon: Bell, permission: 'settings.general' },
+        { id: 'alerts', label: 'التنبيهات', icon: Bell, permission: 'settings.alerts' },
+        { id: 'ai', label: 'الذكاء الاصطناعي', icon: SettingsIcon, permission: 'settings.ai' },
         { id: 'backup', label: 'النسخ الاحتياطي', icon: Server, permission: 'settings.backup' },
     ];
 
-    // Permission-based tab filtering
-    const canAccess = (perm) => isSuperAdmin || (Array.isArray(userPermissions) && (userPermissions.includes('*') || userPermissions.includes(perm)));
+    // Permission-based tab filtering (view suffix)
+    const canAccess = (basePerm) => isSuperAdmin || (Array.isArray(userPermissions) && (userPermissions.includes('*') || userPermissions.includes(`${basePerm}.view`) || userPermissions.includes(basePerm)));
+    const canEdit = (basePerm) => isSuperAdmin || (Array.isArray(userPermissions) && (userPermissions.includes('*') || userPermissions.includes(`${basePerm}.edit`) || userPermissions.includes('settings.edit')));
+
     const visibleTabs = settingsTabs.filter(tab => {
         if (tab.superAdminOnly) return isSuperAdmin;
         return canAccess(tab.permission);
@@ -41,6 +44,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
     // settings state
     const [generalSettings, setGeneralSettings] = useState(general);
     const [alertSettings, setAlertSettings] = useState(alerts);
+    const [aiSettings, setAiSettings] = useState(ai);
     
     // Dynamic Fuel Types
     const [fuelTypeList, setFuelTypeList] = useState(fuelTypes);
@@ -54,11 +58,12 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
     useEffect(() => {
         setGeneralSettings(general);
         setFuelTypeList(fuelTypes);
-    }, [general, fuelTypes]);
+        setAiSettings(ai);
+    }, [general, fuelTypes, ai]);
 
     // Handlers
-    const handleGeneralChange = (key, value) => {
-        setGeneralSettings({ ...generalSettings, [key]: value });
+    const handleAIChange = (key, value) => {
+        setAiSettings({ ...aiSettings, [key]: value });
     };
 
     const handleSave = async () => {
@@ -68,7 +73,6 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
             const formData = new FormData();
             formData.append('section', 'general');
             Object.entries(generalSettings).forEach(([k, v]) => formData.append(k, v));
-            
             await fetch('/PETRODIESEL2/public/settings/update', { method: 'POST', body: formData });
 
             // Save Alert Settings
@@ -79,11 +83,15 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                 await fetch('/PETRODIESEL2/public/settings/update', { method: 'POST', body: alertFormData });
             }
 
-            // Save Fuel (Legacy settings if any, but now we use FuelType table)
-            // If there are other fuel settings not in the table, keep this. 
-            // Otherwise, fuel types are saved individually via modal.
+            // Save AI Settings
+            if (aiSettings && Object.keys(aiSettings).length > 0) {
+                const aiFormData = new FormData();
+                aiFormData.append('section', 'ai');
+                Object.entries(aiSettings).forEach(([k, v]) => aiFormData.append(k, v));
+                await fetch('/PETRODIESEL2/public/settings/update', { method: 'POST', body: aiFormData });
+            }
 
-            toast.success('تم حفظ الإعدادات العامة بنجاح');
+            toast.success('تم حفظ الإعدادات بنجاح');
             setTimeout(() => window.location.reload(), 1000);
         } catch (e) {
             toast.error('حدث خطأ أثناء الحفظ');
@@ -718,7 +726,7 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
 
                             {currentTabId === 'stations' && (
                         <div className="mt-6">
-                            <StationList stations={stations} users={users} />
+                            <StationList stations={stations} users={users} user={user} />
                         </div>
                     )}
 
@@ -1014,6 +1022,61 @@ export default function Settings({ general = {}, fuel = {}, alerts = {}, roles =
                             currency={generalSettings.currency || 'SDG'}
                             onSettingsChange={(updated) => setAlertSettings(updated)}
                         />
+                    )}
+
+                    {currentTabId === 'ai' && (
+                        <div className="mt-6">
+                            <Card className="rounded-2xl shadow-lg ring-1 ring-violet-100/50 p-6 space-y-6 bg-white/80 backdrop-blur-xl dark:bg-white/[0.04] dark:backdrop-blur-2xl dark:border dark:border-white/[0.08] dark:ring-white/[0.06] dark:shadow-black/20 relative overflow-hidden">
+                                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-violet-500 via-purple-500 to-violet-600 rounded-t-2xl"></div>
+                                <Title className="mb-4 font-bold flex items-center gap-2 dark:text-white">
+                                    <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/20"><Brain className="w-4 h-4 text-white"/></div>
+                                    إعدادات الذكاء الاصطناعي
+                                </Title>
+                                
+                                <div className="flex items-center justify-between bg-slate-50/80 dark:bg-white/[0.03] p-4 rounded-xl ring-1 ring-black/[0.03] dark:ring-white/[0.04]">
+                                    <div className="space-y-1">
+                                        <span className="text-sm font-bold text-slate-700 dark:text-slate-300 block text-right">تفعيل التحليل الذكي</span>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 block text-right">تفعيل ميزات الذكاء الاصطناعي في التقارير والتحليلات</span>
+                                    </div>
+                                    <Switch 
+                                        checked={aiSettings.enabled === '1'} 
+                                        onChange={(val) => handleAIChange('enabled', val ? '1' : '0')}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block text-right">OpenAI API Key</label>
+                                        <TextInput 
+                                            type="password"
+                                            value={aiSettings.api_key || ''} 
+                                            onChange={(e) => handleAIChange('api_key', e.target.value)}
+                                            placeholder="sk-..." 
+                                            className="rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white text-right" 
+                                        />
+                                        <Text className="text-[10px] text-slate-500 dark:text-slate-400 text-right italic">مفتاح الربط الخاص بك من OpenAI (يتم تخزينه بشكل آمن)</Text>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block text-right">الموديل (AI Model)</label>
+                                        <select 
+                                            value={aiSettings.model || 'gpt-4o-mini'} 
+                                            onChange={(e) => handleAIChange('model', e.target.value)}
+                                            className="w-full rounded-xl border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-white px-3 py-2 text-right focus:ring-2 focus:ring-violet-500 border outline-none transition-all"
+                                        >
+                                            <option value="gpt-4o">GPT-4o (الأفضل والأكثر ذكاءً)</option>
+                                            <option value="gpt-4o-mini">GPT-4o Mini (سريع واقتصادي)</option>
+                                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-orange-50 dark:bg-orange-900/10 border border-orange-200 dark:border-orange-800/30 rounded-xl">
+                                    <p className="text-xs text-orange-700 dark:text-orange-300 leading-relaxed text-right">
+                                        💡 <strong>ملاحظة:</strong> تتطلب هذه الميزة رصيداً كافياً في حساب OpenAI الخاص بك. تأكد من تفعيل الدفع في لوحة تحكم OpenAI لضمان عمل التحليلات بشكل مستمر.
+                                    </p>
+                                </div>
+                            </Card>
+                        </div>
                     )}
                         </>
                     );

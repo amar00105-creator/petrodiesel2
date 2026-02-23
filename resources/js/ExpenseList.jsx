@@ -4,11 +4,9 @@ import { Card, Title, Text, TextInput, Select, SelectItem, Badge, Button } from 
 import { Search, Download, FileText, Trash2, Edit, ChevronLeft, ChevronRight, Tag, Calendar, Filter, Plus } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { toast } from 'sonner';
+import { can } from './utils/permissions';
 
-// Mock Data is removed. Data should be passed from parent or fetched.
-// For now, we assume data is passed as props or we will modify main.jsx if needed.
-// But looking at previous files, props are passed.
-export default function ExpenseList({ expenses = [] }) {
+export default function ExpenseList({ expenses = [], user }) {
     const [search, setSearch] = useState('');
     const [filterCategory, setFilterCategory] = useState('');
 
@@ -84,6 +82,7 @@ export default function ExpenseList({ expenses = [] }) {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div></div>
                 <div className="flex gap-2">
+                    {can(user, 'expenses.create') && (
                     <Button 
                         variant="primary" 
                         icon={Plus} 
@@ -92,6 +91,7 @@ export default function ExpenseList({ expenses = [] }) {
                     >
                         صرف واستلام
                     </Button>
+                    )}
                     <Button variant="secondary" icon={Download} className="rounded-xl font-bold">تصدير Excel</Button>
                     <Button variant="primary" icon={FileText} className="rounded-xl font-bold bg-navy-900 hover:bg-navy-800">تقرير شهري</Button>
                 </div>
@@ -147,12 +147,16 @@ export default function ExpenseList({ expenses = [] }) {
                                     <td className="p-4 text-slate-500 text-xs">{ex.method}</td>
                                     <td className="p-4">
                                         <div className="flex justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {can(user, 'expenses.edit') && (
                                             <button onClick={() => handleEdit(ex)} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-600 transition-colors">
                                                 <Edit className="w-4 h-4"/>
                                             </button>
+                                            )}
+                                            {can(user, 'expenses.delete') && (
                                             <button onClick={() => openDeleteModal(ex)} className="p-1.5 hover:bg-red-50 rounded-lg text-red-600 transition-colors">
                                                 <Trash2 className="w-4 h-4"/>
                                             </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

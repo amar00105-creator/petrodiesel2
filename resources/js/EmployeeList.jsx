@@ -4,8 +4,9 @@ import { Card, Title, Text, TextInput, Badge, Button } from '@tremor/react';
 import { Search, Plus, Trash2, Edit, Shield, Mail } from 'lucide-react';
 import DeleteConfirmationModal from './DeleteConfirmationModal';
 import { toast } from 'sonner';
+import { can } from './utils/permissions';
 
-const EmployeeList = forwardRef(({ employees = [], search = '' }, ref) => {
+const EmployeeList = forwardRef(({ employees = [], search = '', user }, ref) => {
     // Local state
     const [employeeList, setEmployeeList] = useState(Array.isArray(employees) ? employees : []);
 
@@ -136,12 +137,16 @@ const EmployeeList = forwardRef(({ employees = [], search = '' }, ref) => {
                                 </div>
                             </div>
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {can(user, 'hr.edit') && (
                                 <button onClick={() => handleEdit(emp)} className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300">
                                     <Edit className="w-4 h-4" />
                                 </button>
+                                )}
+                                {can(user, 'hr.delete') && (
                                 <button onClick={() => openDeleteModal(emp)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-red-600 dark:text-red-400">
                                     <Trash2 className="w-4 h-4" />
                                 </button>
+                                )}
                             </div>
                         </div>
 

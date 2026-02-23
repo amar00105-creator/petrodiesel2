@@ -16,6 +16,7 @@ class HRController extends Controller
 
     public function __construct()
     {
+        AuthHelper::requireLogin();
         $this->models = [
             'employee' => new Staff(),
             'worker' => new Worker(),
@@ -32,6 +33,10 @@ class HRController extends Controller
         if (!$user) {
             header('Location: ' . BASE_URL . '/login');
             exit;
+        }
+
+        if (!AuthHelper::can('hr.view')) {
+            $this->unauthorized();
         }
 
         $stationId = $user['station_id'] ?? null;
@@ -97,23 +102,33 @@ class HRController extends Controller
 
         // RBAC Checks (Granular)
         $permissionMap = [
-            'employee' => 'employees',
+            'employee' => 'hr',
             'customer' => 'customers',
             'driver' => 'drivers',
-            'worker' => 'workers',
+            'worker' => 'hr', // Workers also fall under HR
             'supplier' => 'suppliers',
-            'payroll' => 'payroll'
+            'payroll' => 'finance' // Payroll is finance related
         ];
 
         $permPrefix = $permissionMap[$entity] ?? $entity;
 
-        if ($action === 'delete') {
+        if ($action === 'list' || $action === 'get') {
+            if (!AuthHelper::can($permPrefix . '.view')) {
+                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '.view permission']);
+                exit;
+            }
+        } elseif ($action === 'delete') {
             if (!AuthHelper::can($permPrefix . '.delete')) {
                 echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '.delete permission']);
                 exit;
             }
-        } elseif (in_array($action, ['store', 'update', 'set_salary', 'add_entry'])) {
-            if (!AuthHelper::can($permPrefix . '.edit')) { // Assume .edit covers create/update
+        } elseif ($action === 'store') {
+            if (!AuthHelper::can($permPrefix . '.create')) {
+                echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '.create permission']);
+                exit;
+            }
+        } elseif (in_array($action, ['update', 'set_salary', 'add_entry'])) {
+            if (!AuthHelper::can($permPrefix . '.edit')) {
                 echo json_encode(['success' => false, 'message' => 'Unauthorized: Missing ' . $permPrefix . '.edit permission']);
                 exit;
             }
@@ -234,11 +249,6 @@ class HRController extends Controller
                 if (!$id) throw new \Exception("Missing ID");
                 $data = $model->find($id);
                 echo json_encode(['success' => true, 'data' => $data]);
-            } elseif ($action === 'fix_ghost_driver') {
-                // Temporary fix for ID 2
-                $sql = "UPDATE drivers SET name = 'Mustafa Haroun Fixed' WHERE id = 2";
-                $this->models['driver']->db->query($sql);
-                echo json_encode(['success' => true, 'message' => 'Driver name fixed']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Invalid action']);
             }

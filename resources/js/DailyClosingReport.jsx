@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Printer, RefreshCw, Loader2, Brain, Clock, Eye, X, Lightbulb, AlertTriangle, TrendingUp, TrendingDown, CheckCircle2, Sparkles } from 'lucide-react';
+import { Printer, RefreshCw, Loader2, Brain, Clock, Eye, X, Lightbulb, AlertTriangle, TrendingUp, TrendingDown, CheckCircle2, Sparkles, CalendarDays } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -7,12 +7,13 @@ export default function DailyClosingReport({ stationId }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [showPreview, setShowPreview] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
             const sid = stationId || 'all';
-            const res = await fetch(`${window.BASE_URL || ''}/reports?action=get_daily_closing&station_id=${sid}`, {
+            const res = await fetch(`${window.BASE_URL || ''}/reports?action=get_daily_closing&station_id=${sid}&date=${selectedDate}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             const result = await res.json();
@@ -29,7 +30,7 @@ export default function DailyClosingReport({ stationId }) {
         }
     };
 
-    useEffect(() => { fetchData(); }, [stationId]);
+    useEffect(() => { fetchData(); }, [stationId, selectedDate]);
 
     const fmt = (n) => parseFloat(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const fmtN = (n) => parseFloat(n || 0).toLocaleString('en-US');
@@ -92,7 +93,7 @@ export default function DailyClosingReport({ stationId }) {
     return (
         <div className="space-y-6">
             {/* ═══ Controls Bar ═══ */}
-            <div className="flex items-center justify-between print:hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 print:hidden">
                 <div className="flex items-center gap-3">
                     <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
                         <Brain className="w-6 h-6 text-white" />
@@ -102,7 +103,24 @@ export default function DailyClosingReport({ stationId }) {
                         <p className="text-xs text-slate-500 dark:text-slate-400">تقرير ذكي مُولّد تلقائياً • {formatDate(data.date)}</p>
                     </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Date Picker */}
+                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/80 dark:bg-white/10 border border-indigo-200 dark:border-indigo-500/30 shadow-sm">
+                        <CalendarDays className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            max={new Date().toISOString().split('T')[0]}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="bg-transparent text-sm font-bold text-slate-700 dark:text-white border-none outline-none cursor-pointer appearance-none"
+                            style={{ colorScheme: document.documentElement.classList.contains('dark') ? 'dark' : 'light' }}
+                        />
+                    </div>
+                    {selectedDate !== new Date().toISOString().split('T')[0] && (
+                        <button onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])} className="px-3 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-400 font-bold text-sm hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-all flex items-center gap-1.5 shadow-sm">
+                            <Clock className="w-3.5 h-3.5" /> اليوم
+                        </button>
+                    )}
                     <button onClick={fetchData} className="px-4 py-2.5 rounded-xl bg-white/80 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-white/20 transition-all flex items-center gap-2 shadow-sm">
                         <RefreshCw className="w-4 h-4" /> تحديث
                     </button>

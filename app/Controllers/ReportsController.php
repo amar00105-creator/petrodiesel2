@@ -2745,7 +2745,11 @@ class ReportsController extends Controller
                 $stationId = $user['station_id'];
             }
 
-            $today = date('Y-m-d');
+            // Accept optional date parameter, default to today
+            $requestedDate = $_GET['date'] ?? date('Y-m-d');
+            // Validate date format
+            $parsedDate = \DateTime::createFromFormat('Y-m-d', $requestedDate);
+            $today = ($parsedDate && $parsedDate->format('Y-m-d') === $requestedDate) ? $requestedDate : date('Y-m-d');
             $db = \App\Config\Database::connect();
 
             // ── 1. Station Info ──
@@ -2836,7 +2840,7 @@ class ReportsController extends Controller
 
                 // Get yesterday's reading or last known
                 $opening = method_exists($this->tankModel, 'getReadingAt')
-                    ? $this->tankModel->getReadingAt($t['id'], date('Y-m-d', strtotime('-1 day')))
+                    ? $this->tankModel->getReadingAt($t['id'], date('Y-m-d', strtotime($today . ' -1 day')))
                     : false;
 
                 if ($opening !== false) {
@@ -3129,7 +3133,7 @@ class ReportsController extends Controller
             }
 
             // ─── Note 6: Cash Flow Health & Comparison (Enhanced) ───
-            $yesterday = date('Y-m-d', strtotime('-1 day'));
+            $yesterday = date('Y-m-d', strtotime($today . ' -1 day'));
             $incSqlY = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'income' AND DATE(date) = ?";
             $expSqlY = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE type = 'expense' AND DATE(date) = ?";
 
